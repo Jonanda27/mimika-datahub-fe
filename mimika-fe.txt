@@ -1,0 +1,2509 @@
+==================================================
+STRUKTUR FOLDER (DAFTAR FILE)
+==================================================
+mimika-datahub-fe/.gitignore
+mimika-datahub-fe/AGENTS.md
+mimika-datahub-fe/CLAUDE.md
+mimika-datahub-fe/components/layout/ManagerSidebar.tsx
+mimika-datahub-fe/copy_project.py
+mimika-datahub-fe/eslint.config.mjs
+mimika-datahub-fe/next-env.d.ts
+mimika-datahub-fe/next.config.ts
+mimika-datahub-fe/package.json
+mimika-datahub-fe/postcss.config.mjs
+mimika-datahub-fe/public/file.svg
+mimika-datahub-fe/public/globe.svg
+mimika-datahub-fe/public/next.svg
+mimika-datahub-fe/public/vercel.svg
+mimika-datahub-fe/public/window.svg
+mimika-datahub-fe/src/app/globals.css
+mimika-datahub-fe/src/app/layout.tsx
+mimika-datahub-fe/src/app/manager/dashboard/page.tsx
+mimika-datahub-fe/src/app/manager/data-brida/page.tsx
+mimika-datahub-fe/src/app/manager/data-non-pemerintah/page.tsx
+mimika-datahub-fe/src/app/manager/data-pemerintah/page.tsx
+mimika-datahub-fe/src/app/manager/data-quality/page.tsx
+mimika-datahub-fe/src/app/manager/layout.tsx
+mimika-datahub-fe/src/app/manager/monitoring-opd/page.tsx
+mimika-datahub-fe/src/app/manager/upload-data/page.tsx
+mimika-datahub-fe/src/app/page.tsx
+mimika-datahub-fe/tsconfig.json
+
+
+==================================================
+ISI KODE
+==================================================
+
+--- START FILE: mimika-datahub-fe/.gitignore ---
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+--- END FILE: mimika-datahub-fe/.gitignore ---
+
+--- START FILE: mimika-datahub-fe/AGENTS.md ---
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
+
+--- END FILE: mimika-datahub-fe/AGENTS.md ---
+
+--- START FILE: mimika-datahub-fe/CLAUDE.md ---
+@AGENTS.md
+
+--- END FILE: mimika-datahub-fe/CLAUDE.md ---
+
+--- START FILE: mimika-datahub-fe/components/layout/ManagerSidebar.tsx ---
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { 
+  LayoutDashboard, Building2, Globe, LineChart, 
+  Upload, BarChart2, Eye, Menu, X 
+} from "lucide-react";
+
+export default function ManagerSidebar() {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false); // State untuk mobile menu
+
+  const menuItems = [
+    { name: "Dashboard", href: "/manager/dashboard", icon: LayoutDashboard },
+    { name: "Data Pemerintah", href: "/manager/data-pemerintah", icon: Building2 },
+    { name: "Data Non Pemerintah", href: "/manager/data-non-pemerintah", icon: Globe },
+    { name: "Data BRIDA", href: "/manager/data-brida", icon: LineChart },
+    { name: "Upload Data", href: "/manager/upload-data", icon: Upload },
+    { name: "Data Quality", href: "/manager/data-quality", icon: BarChart2 },
+    { name: "Monitoring OPD", href: "/manager/monitoring-opd", icon: Eye },
+  ];
+
+  return (
+    <>
+      {/* Tombol Hamburger untuk Mobile */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed top-4 left-4 z-[60] bg-[#144272] text-white p-2 rounded-lg shadow-md"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay saat Sidebar terbuka di Mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Utama */}
+      <aside className={`
+        fixed left-0 top-0 h-screen bg-gradient-to-b from-[#144272] to-[#0A2647] text-white z-[58] shadow-xl transition-transform duration-300 ease-in-out overflow-y-auto
+        w-[260px]
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
+        <div className="p-6 flex flex-col items-center border-b border-white/10">
+          <div className="mb-4 relative w-24 h-20">
+            <Image src="/logo-mimika.png" alt="Logo Mimika" fill className="object-contain" priority />
+          </div>
+          <h1 className="text-xl font-bold tracking-wide">Mimika DataHub</h1>
+          <p className="text-[11px] text-blue-200 mt-1 uppercase text-center font-light">Pusat Data Terintegrasi</p>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1.5 text-sm font-medium mt-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link 
+                key={item.href}
+                href={item.href} 
+                onClick={() => setIsOpen(false)} // Tutup menu setelah klik di mobile
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                  isActive ? "bg-[#ef4444] text-white shadow-lg" : "text-blue-100 hover:bg-white/10"
+                }`}
+              >
+                <Icon size={18} />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
+  );
+}
+--- END FILE: mimika-datahub-fe/components/layout/ManagerSidebar.tsx ---
+
+--- START FILE: mimika-datahub-fe/copy_project.py ---
+import os
+from pathlib import Path    
+
+# --- KONFIGURASI ---
+TARGET_DIRECTORY = "C:\\Users\\ASUS\\Documents\\gthub\\mimika-datahub-fe"
+OUTPUT_FILE = "C:\\Users\\ASUS\\Documents\\gthub\\mimika-datahub-fe\\mimika-fe.txt"
+
+# Tambahkan pengecualian direktori lintas ekosistem
+EXCLUDE_DIRS = {
+    "node_modules", ".git", "dist", "build", "__pycache__", ".vscode", ".idea", "venv",
+    ".next", ".nuxt", ".svelte-kit", ".angular", ".cache", ".parcel-cache", ".vite",
+    ".docusaurus", ".astro", ".storybook", ".turbo",
+    "coverage", ".nyc_output", "jspm_packages", "bower_components", "elm-stuff",
+    ".dart_tool", ".pub", ".pub-cache", "DerivedData", "android", "ios", "web/build",
+    "vendor", "storage", "public/build", "public/storage", "assets",
+    ".venv", "env", ".mypy_cache", ".pytest_cache", ".tox", ".nox",
+    "build", "dist",
+    ".gradle", ".mvn", "target", "out", ".settings", ".cxx",
+    "bin", "obj", ".vs", "packages",
+    "bin", "pkg", "vendor",
+    "target",
+    "Pods", "DerivedData",
+    ".bundle", "log", "tmp", "vendor/bundle", 
+    "dist-newstyle", "cmake-build-debug", "cmake-build-release", ".terraform",
+}
+
+# Tambahkan pengecualian file lintas ekosistem (nama persis)
+EXCLUDE_FILES = {
+    ".DS_Store", "package-lock.json", "yarn.lock", "Readme.md", "README.txt", "README.md",
+
+    # Lockfiles & manifest lain
+    "pnpm-lock.yaml", "bun.lockb", "composer.lock", "pubspec.lock",
+    "Gemfile.lock", "Pipfile.lock", "poetry.lock", "Cargo.lock",
+    "mix-manifest.json", "vite-manifest.json",
+
+    # Env (tanpa wildcard → tambahkan varian umum)
+    ".env.development", ".env.production", ".env.test", ".env.example",
+
+    # Tools/metadata umum
+    ".flutter-plugins", ".flutter-plugins-dependencies", ".packages",
+    ".phpunit.result.cache",
+
+    # Android/iOS/Xcode umpan balik build (file)
+    "Generated.xcconfig", "LocalProperties.kt",
+}
+
+# Opsional: Jika Anda HANYA ingin menyalin ekstensi tertentu, isi daftar ini.
+# Contoh: INCLUDE_EXTENSIONS = {".ts", ".tsx", ".css"}
+# Jika dibiarkan kosong, skrip akan menyalin SEMUA file teks yang ditemukan.
+INCLUDE_EXTENSIONS = {}
+
+def is_binary(file_path: Path) -> bool:
+    try:
+        with open(file_path, 'rb') as f:
+            return b'\x00' in f.read(512)
+    except Exception:
+        return True
+
+def main():
+    target_path = Path(TARGET_DIRECTORY)
+    if not target_path.is_dir():
+        print(f"Error: Folder '{TARGET_DIRECTORY}' tidak ditemukan.")
+        return
+
+    print(f"Memproses folder: {target_path.resolve()}")
+
+    files_to_process = []
+    for file_path in sorted(target_path.rglob("*")):
+        if any(part in EXCLUDE_DIRS for part in file_path.parts):
+            continue
+
+        if file_path.is_file() and file_path.name not in EXCLUDE_FILES:
+            if INCLUDE_EXTENSIONS and file_path.suffix not in INCLUDE_EXTENSIONS:
+                continue
+            if not is_binary(file_path):
+                files_to_process.append(file_path)
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write("="*50 + "\n")
+        f.write("STRUKTUR FOLDER (DAFTAR FILE)\n")
+        f.write("="*50 + "\n")
+        if not files_to_process:
+            f.write("Tidak ada file yang ditemukan.\n")
+        else:
+            for file_path in files_to_process:
+                relative_path = file_path.relative_to(target_path.parent)
+                f.write(str(relative_path).replace("\\", "/"))
+                f.write("\n")
+        f.write("\n\n")
+
+        f.write("="*50 + "\n")
+        f.write("ISI KODE\n")
+        f.write("="*50 + "\n\n")
+        
+        for file_path in files_to_process:
+            try:
+                content = file_path.read_text("utf-8", errors="ignore")
+                relative_path = file_path.relative_to(target_path.parent)
+                
+                f.write(f"--- START FILE: {str(relative_path).replace(os.sep, '/')} ---\n")
+                f.write(content)
+                f.write(f"\n--- END FILE: {str(relative_path).replace(os.sep, '/')} ---\n\n")
+                print(f"-> Menyalin konten: {relative_path}")
+            except Exception as e:
+                print(f"-> Gagal membaca: {relative_path} ({e})")
+
+    print(f"\nProses selesai! Output disimpan di '{OUTPUT_FILE}'.")
+
+if __name__ == "__main__":
+    main()
+
+--- END FILE: mimika-datahub-fe/copy_project.py ---
+
+--- START FILE: mimika-datahub-fe/eslint.config.mjs ---
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+
+--- END FILE: mimika-datahub-fe/eslint.config.mjs ---
+
+--- START FILE: mimika-datahub-fe/next-env.d.ts ---
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+import "./.next/dev/types/routes.d.ts";
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+
+--- END FILE: mimika-datahub-fe/next-env.d.ts ---
+
+--- START FILE: mimika-datahub-fe/next.config.ts ---
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+
+--- END FILE: mimika-datahub-fe/next.config.ts ---
+
+--- START FILE: mimika-datahub-fe/package.json ---
+{
+  "name": "mimika-datahub-fe",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+--- END FILE: mimika-datahub-fe/package.json ---
+
+--- START FILE: mimika-datahub-fe/postcss.config.mjs ---
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+
+--- END FILE: mimika-datahub-fe/postcss.config.mjs ---
+
+--- START FILE: mimika-datahub-fe/public/file.svg ---
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+--- END FILE: mimika-datahub-fe/public/file.svg ---
+
+--- START FILE: mimika-datahub-fe/public/globe.svg ---
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+--- END FILE: mimika-datahub-fe/public/globe.svg ---
+
+--- START FILE: mimika-datahub-fe/public/next.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+--- END FILE: mimika-datahub-fe/public/next.svg ---
+
+--- START FILE: mimika-datahub-fe/public/vercel.svg ---
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+--- END FILE: mimika-datahub-fe/public/vercel.svg ---
+
+--- START FILE: mimika-datahub-fe/public/window.svg ---
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+--- END FILE: mimika-datahub-fe/public/window.svg ---
+
+--- START FILE: mimika-datahub-fe/src/app/globals.css ---
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+--- END FILE: mimika-datahub-fe/src/app/globals.css ---
+
+--- START FILE: mimika-datahub-fe/src/app/layout.tsx ---
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
+
+--- END FILE: mimika-datahub-fe/src/app/layout.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/dashboard/page.tsx ---
+"use client";
+
+import { 
+  Search, 
+  Bell, 
+  Database, 
+  CloudUpload, 
+  Building, 
+  Star, 
+  Clock, 
+  Flame, 
+  TrendingUp,
+  Activity,        
+  AlertTriangle,   
+  Check,           
+  X,               
+  Building2        
+} from "lucide-react";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from "recharts";
+
+// ==========================================
+// 1. REUSABLE UI COMPONENTS
+// ==========================================
+
+const AlertCard = ({ title, desc }: { title: string, desc: string }) => (
+  <div className="bg-[#fff5f6] border-l-[3px] border-[#ef4444] rounded-md p-4 mb-4 last:mb-0 shadow-sm">
+    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <AlertTriangle size={16} className="text-[#f59e0b] fill-[#fef3c7]" /> 
+      {title}
+    </h4>
+    <p className="text-xs text-gray-600">{desc}</p>
+  </div>
+);
+
+const OpdStatusRow = ({ opdName, date, status }: { opdName: string, date: string, status: "Lengkap" | "Kurang" | "Belum Kirim" }) => {
+  let statusClass = "";
+  let StatusIcon = null;
+
+  if (status === "Lengkap") {
+    statusClass = "text-[#10b981]"; 
+    StatusIcon = Check;
+  } else if (status === "Kurang") {
+    statusClass = "text-[#f59e0b]"; 
+    StatusIcon = AlertTriangle;
+  } else {
+    statusClass = "text-[#ef4444]"; 
+    StatusIcon = X;
+  }
+
+  return (
+    <div className="flex justify-between items-center py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-2 -mx-2 rounded-lg">
+      <div>
+        <h4 className="text-sm font-bold text-gray-900">{opdName}</h4>
+        <p className="text-[11px] text-gray-500 mt-1">Terakhir kirim: {date}</p>
+      </div>
+      <div className={`flex items-center gap-1.5 text-sm font-medium ${statusClass}`}>
+        <StatusIcon size={16} />
+        {status}
+      </div>
+    </div>
+  );
+};
+
+const chartData = [
+  { name: 'Jan', score: 71 }, { name: 'Feb', score: 73 },
+  { name: 'Mar', score: 78 }, { name: 'Apr', score: 75 },
+  { name: 'Mei', score: 80 }, { name: 'Jun', score: 82 },
+  { name: 'Jul', score: 84 }, { name: 'Ags', score: 85 },
+  { name: 'Sep', score: 85 }, { name: 'Okt', score: 86 },
+  { name: 'Nov', score: 87 }, { name: 'Des', score: 87 },
+];
+
+// ==========================================
+// 2. MAIN PAGE COMPONENT
+// ==========================================
+
+export default function ManagerDashboardPage() {
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6">
+      {/* HEADER BANNER */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-8 text-white flex justify-between items-center shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-full h-full opacity-20 pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%)' }}>
+        </div>
+        
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-1">Dashboard</h2>
+          <p className="text-blue-100 text-xs tracking-wide">Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika</p>
+        </div>
+
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari dataset..." 
+              suppressHydrationWarning // ✨ INI SOLUSINYA ✨
+              className="pl-9 pr-4 py-2 rounded-full bg-black/10 border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-[280px] text-sm transition-all"
+            />
+          </div>
+          <div className="relative cursor-pointer bg-black/10 p-2 rounded-full border border-white/10 hover:bg-black/20 transition">
+            <Bell size={18} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </div>
+          <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md cursor-pointer border border-red-400">
+            AD
+          </div>
+        </div>
+      </div>
+
+      {/* SUMMARY CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
+          <div className="w-12 h-12 bg-[#7e57c2] rounded-xl flex items-center justify-center text-white mb-4 shadow-sm">
+            <Database size={22} />
+          </div>
+          <h3 className="text-3xl font-extrabold text-gray-800 mb-1">12</h3>
+          <p className="text-gray-500 text-xs font-medium">Total Dataset</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
+          <div className="w-12 h-12 bg-[#ec407a] rounded-xl flex items-center justify-center text-white mb-4 shadow-sm">
+            <CloudUpload size={22} />
+          </div>
+          <h3 className="text-3xl font-extrabold text-gray-800 mb-1">7</h3>
+          <p className="text-gray-500 text-xs font-medium">Sumber Data</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
+          <div className="w-12 h-12 bg-[#29b6f6] rounded-xl flex items-center justify-center text-white mb-4 shadow-sm">
+            <Building size={22} />
+          </div>
+          <h3 className="text-3xl font-extrabold text-gray-800 mb-1">8</h3>
+          <p className="text-gray-500 text-xs font-medium">OPD Aktif</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
+          <div className="w-12 h-12 bg-[#66bb6a] rounded-xl flex items-center justify-center text-white mb-4 shadow-sm">
+            <Star size={22} fill="currentColor" />
+          </div>
+          <h3 className="text-3xl font-extrabold text-[#66bb6a] mb-1">87%</h3>
+          <p className="text-gray-500 text-xs font-medium">Rata-rata Skor Kualitas</p>
+        </div>
+      </div>
+
+      {/* DATA LISTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Clock size={18} className="text-gray-700" />
+              Dataset Terbaru
+            </h3>
+            <span className="text-xs text-[#ef4444] font-medium cursor-pointer">Lihat semua →</span>
+          </div>
+          <div className="space-y-5">
+            {[
+              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", date: "15/3/2025" },
+              { title: "Data Inflasi Bulanan Papua Tengah", src: "BPS Provinsi Papua Tengah", date: "14/3/2025" },
+              { title: "Data Fasilitas Kesehatan per Distrik", src: "Dinas Kesehatan", date: "10/3/2025" },
+              { title: "Data Tenaga Kesehatan Mimika", src: "Dinas Kesehatan", date: "8/3/2025" },
+              { title: "Realisasi APBD Mimika 2025", src: "Bappeda Mimika", date: "5/3/2025" },
+            ].map((item, index) => (
+              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.date}</p>
+                </div>
+                <span className="bg-[#ef4444] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Baru</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Flame size={18} className="text-gray-700" />
+              Dataset Populer
+            </h3>
+            <span className="text-xs text-[#ef4444] font-medium cursor-pointer">Lihat semua →</span>
+          </div>
+          <div className="space-y-5">
+            {[
+              { title: "RPJMD Mimika 2025-2029", src: "Bappeda Mimika", views: "567x" },
+              { title: "RTRW Kabupaten Mimika", src: "BIG", views: "432x" },
+              { title: "Angka Kemiskinan Kabupaten Mimika", src: "BPS Mimika", views: "423x" },
+              { title: "Indeks Pembangunan Manusia (IPM)", src: "BPS Mimika", views: "378x" },
+              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", views: "345x" },
+            ].map((item, index) => (
+              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.views} diakses</p>
+                </div>
+                <TrendingUp size={18} className="text-[#ef4444]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* GRAFIK & ALERT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100/50 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Activity size={18} className="text-gray-700" />
+              Tren Kualitas Data per Bulan
+            </h3>
+          </div>
+          
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <div className="w-8 h-3 border-2 border-[#ef4444] rounded-sm"></div>
+            <span className="text-xs text-gray-600">Skor Kualitas Data (%)</span>
+          </div>
+
+          <div className="h-[250px] w-full bg-[#fdf2f2]/30 rounded-lg p-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 11, fill: '#6b7280'}} 
+                  dy={10} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 11, fill: '#6b7280'}} 
+                  tickFormatter={(value) => `${value}%`} 
+                  domain={[0, 100]} 
+                  ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]} 
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value) => [`${value}%`, "Skor Kualitas"]}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#ef4444" 
+                  strokeWidth={2} 
+                  dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} 
+                  activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <AlertTriangle size={18} className="text-[#111827]" />
+              Peringatan Kualitas Data
+            </h3>
+            <span className="text-xs text-[#ef4444] font-medium cursor-pointer">Kelola →</span>
+          </div>
+          
+          <div className="space-y-4">
+            <AlertCard 
+              title="Dinas Kesehatan" 
+              desc="Data Fasilitas Kesehatan per Distrik - quality score 78%" 
+            />
+            <AlertCard 
+              title="Dinas PU" 
+              desc="Data Jalan Kabupaten Mimika - quality score 75%" 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* STATUS KIRIM OPD */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 p-7">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Building2 size={18} className="text-[#111827]" />
+            Status Kirim Data OPD Bulan Ini
+          </h3>
+          <span className="text-xs text-[#ef4444] font-medium cursor-pointer">Detail →</span>
+        </div>
+        
+        <div className="space-y-1">
+          <OpdStatusRow opdName="Bappeda" date="1/3/2025" status="Lengkap" />
+          <OpdStatusRow opdName="Dinas Kesehatan" date="8/3/2025" status="Kurang" />
+          <OpdStatusRow opdName="Dinas Pendidikan" date="10/3/2025" status="Kurang" />
+          <OpdStatusRow opdName="Dinas PU" date="15/3/2025" status="Kurang" />
+          <OpdStatusRow opdName="Dinas Sosial" date="Belum pernah" status="Belum Kirim" />
+        </div>
+      </div>
+
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/dashboard/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/data-brida/page.tsx ---
+"use client";
+
+import { useState } from "react";
+import { 
+  Search, Bell, Plus, List, BarChart3, Database, 
+  MapPin, Calendar, AlignLeft, Save, Eye, 
+  DownloadCloud, RotateCcw, BarChart2, Star
+} from "lucide-react";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, Legend 
+} from "recharts";
+
+// Data Dummy untuk Grafik Hasil Survey
+const surveyResultData = [
+  { name: 'Q1', score: 69 },
+];
+
+export default function DataBridaPage() {
+  // State untuk mengatur tab yang aktif
+  const [activeTab, setActiveTab] = useState("builder");
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 bg-[#f4f7fb] min-h-screen">
+      
+      {/* 1. HEADER BANNER */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-6 lg:p-7 mb-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-md relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-xl lg:text-2xl font-bold mb-1">Data BRIDA</h2>
+          <p className="text-blue-100 text-[11px] lg:text-xs tracking-wide">Survey Builder | Pengumpulan Data Mandiri | Sensus Lokal</p>
+        </div>
+
+        <div className="flex items-center gap-4 w-full md:w-auto relative z-10">
+          <div className="relative flex-1 md:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari sensus / survey..." 
+              suppressHydrationWarning
+              className="pl-9 pr-4 py-2 rounded-full bg-black/10 border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-full md:w-[240px] lg:w-[280px] text-sm"
+            />
+          </div>
+          <div className="hidden sm:flex w-10 h-10 bg-[#ef4444] rounded-full items-center justify-center font-bold text-sm shadow-md border border-red-400 shrink-0">
+            AD
+          </div>
+        </div>
+      </div>
+
+      {/* 2. STATISTIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Total Survey", value: "2", color: "text-red-500" },
+          { label: "Survey Aktif", value: "1", color: "text-red-500" },
+          { label: "Total Responden", value: "684", color: "text-red-500" },
+          { label: "Dataset Terbentuk", value: "1", color: "text-red-500" },
+        ].map((item, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+            <h3 className={`text-2xl font-bold ${item.color} mb-1`}>{item.value}</h3>
+            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">{item.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 3. TAB NAVIGATION */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button 
+          onClick={() => setActiveTab("builder")}
+          suppressHydrationWarning 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'builder' ? 'bg-[#ef4444] text-white shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+        >
+          <Plus size={16} /> Survey Builder
+        </button>
+        <button 
+          onClick={() => setActiveTab("daftar")}
+          suppressHydrationWarning 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'daftar' ? 'bg-[#ef4444] text-white shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+        >
+          <List size={16} /> Daftar Survey
+        </button>
+        <button 
+          onClick={() => setActiveTab("hasil")}
+          suppressHydrationWarning 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'hasil' ? 'bg-[#ef4444] text-white shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+        >
+          <BarChart3 size={16} /> Hasil Survey
+        </button>
+        <button 
+          onClick={() => setActiveTab("sensus")}
+          suppressHydrationWarning 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'sensus' ? 'bg-[#ef4444] text-white shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+        >
+          <Database size={16} /> Data Sensus Lokal
+        </button>
+      </div>
+
+      {/* 4. CONTENT AREA BASED ON TAB */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">
+        
+        {/* --- TAB: SURVEY BUILDER --- */}
+        {activeTab === "builder" && (
+          <>
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-6">
+              <Plus size={18} className="text-red-500" /> Buat Survey Baru
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Nama Survey <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="Contoh: Survey Kepuasan Layanan Publik 2025" suppressHydrationWarning className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Lokasi / Kecamatan</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input type="text" placeholder="Mimika Baru, Mimika Timur, dll" suppressHydrationWarning className="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Tanggal Mulai</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input type="date" suppressHydrationWarning className="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Tanggal Selesai</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input type="date" suppressHydrationWarning className="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2 mb-8">
+              <label className="text-sm font-semibold text-gray-700">Deskripsi Survey</label>
+              <textarea rows={3} placeholder="Jelaskan tujuan survey..." suppressHydrationWarning className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none resize-none"></textarea>
+            </div>
+            <div className="border-t border-gray-100 pt-6 mb-6">
+              <button suppressHydrationWarning className="bg-[#0f2a50] text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-[#1a3a63]">
+                <Plus size={14} /> Tambah Pertanyaan
+              </button>
+            </div>
+            <div className="flex justify-end border-t border-gray-100 pt-6">
+              <button suppressHydrationWarning className="bg-[#10b981] text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-600 shadow-md">
+                <Save size={18} /> Simpan & Generate Dataset
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* --- TAB: DAFTAR SURVEY --- */}
+        {activeTab === "daftar" && (
+          <>
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-6">
+              <List size={18} className="text-red-500" /> Daftar Survey yang Tersedia
+            </h3>
+            <input type="text" placeholder="Cari survey..." suppressHydrationWarning className="mb-6 w-full max-w-sm border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none" />
+            
+            <div className="space-y-4">
+              {[
+                { title: "Survey Kepuasan Layanan Publik 2025", location: "Mimika Baru", questions: "1", respondents: "450", period: "2025-02-01 s/d 2025-02-28", status: "Selesai", statusColor: "bg-gray-100 text-gray-600" },
+                { title: "Survey Kesejahteraan Masyarakat", location: "Seluruh Mimika", questions: "2", respondents: "234", period: "2025-03-01 s/d 2025-03-31", status: "Aktif", statusColor: "bg-green-100 text-green-700" }
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col md:flex-row justify-between items-start md:items-center p-5 border border-gray-100 rounded-2xl hover:shadow-md transition-all gap-4">
+                  <div>
+                    <h4 className="font-bold text-gray-800 mb-1">{item.title}</h4>
+                    <p className="text-xs text-gray-500">{item.location} • {item.questions} pertanyaan • {item.respondents} responden</p>
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">Periode: {item.period}</p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${item.statusColor}`}>{item.status}</span>
+                    <button suppressHydrationWarning className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-700 hover:bg-gray-50"><Eye size={14}/> Preview</button>
+                    <button suppressHydrationWarning className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-700 hover:bg-gray-50"><Database size={14}/> Generate Dataset</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* --- TAB: HASIL SURVEY --- */}
+        {activeTab === "hasil" && (
+          <>
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-6">
+              <BarChart3 size={18} className="text-red-500" /> Hasil Pengumpulan Data
+            </h3>
+            <select suppressHydrationWarning className="mb-4 border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none bg-white font-medium">
+              <option>Survey Kepuasan Layanan Publik 2025</option>
+            </select>
+            <div className="mb-8">
+              <p className="text-sm font-bold text-gray-800">Total Responden: <span className="font-normal">450 orang</span></p>
+              <p className="text-sm font-bold text-gray-800">Periode Pengumpulan: <span className="font-normal">2025-02-01 s/d 2025-02-28</span></p>
+            </div>
+            
+            {/* Chart Area */}
+            <div className="h-[300px] w-full max-w-2xl mb-10">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={surveyResultData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{fill: 'transparent'}} />
+                  <Legend verticalAlign="top" align="center" iconType="rect" wrapperStyle={{paddingBottom: '20px'}} />
+                  <Bar dataKey="score" name="Tingkat Kepuasan (%)" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={300} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <table className="w-full text-left text-sm mb-6 overflow-hidden rounded-xl">
+              <thead className="bg-gray-50 text-gray-600 font-bold">
+                <tr>
+                  <th className="px-4 py-3">Pertanyaan</th>
+                  <th className="px-4 py-3">Rata-rata Jawaban</th>
+                  <th className="px-4 py-3">Distribusi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="px-4 py-4 text-gray-700">Seberapa puas dengan layanan?</td>
+                  <td className="px-4 py-4 font-bold">4.5 / 5</td>
+                  <td className="px-4 py-4 flex items-center gap-1.5"><Star size={16} className="text-yellow-400 fill-yellow-400" /> 4.5 dari 5</td>
+                </tr>
+              </tbody>
+            </table>
+            <button suppressHydrationWarning className="bg-[#10b981] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-emerald-600">
+              <DownloadCloud size={16} /> Export Data (CSV)
+            </button>
+          </>
+        )}
+
+        {/* --- TAB: DATA SENSUS LOKAL --- */}
+        {activeTab === "sensus" && (
+          <>
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-6">
+              <Database size={18} className="text-red-500" /> Data Sensus Lokal - BRIDA
+            </h3>
+            <div className="flex flex-wrap gap-3 mb-6">
+              <input type="text" placeholder="Cari nama dataset..." suppressHydrationWarning className="flex-1 min-w-[200px] border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none" />
+              <select suppressHydrationWarning className="border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none bg-white">
+                <option>Semua Tahun</option>
+              </select>
+              <button suppressHydrationWarning className="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2"><Search size={14}/> Cari</button>
+              <button suppressHydrationWarning className="bg-gray-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2"><RotateCcw size={14}/> Reset</button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-100">
+                  <tr>
+                    <th className="px-4 py-4">Nama Dataset</th>
+                    <th className="px-4 py-4">Tahun</th>
+                    <th className="px-4 py-4">Jenis</th>
+                    <th className="px-4 py-4">Jumlah Record</th>
+                    <th className="px-4 py-4">Kualitas</th>
+                    <th className="px-4 py-4">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {[
+                    { name: "Survey Kepuasan Layanan Publik 2025", year: "2025", type: "Survey", record: "450", quality: "90%" },
+                    { name: "Sensus Penduduk Lokal Mimika 2024", year: "2024", type: "Sensus", record: "125,000", quality: "92%" },
+                    { name: "Pendataan Potensi Desa (Podes) 2024", year: "2024", type: "Sensus", record: "185", quality: "94%" },
+                    { name: "Data UMKM Binaan BRIDA 2025", year: "2025", type: "Pendataan", record: "1,245", quality: "88%" }
+                  ].map((item, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-4 font-bold text-gray-800">{item.name}</td>
+                      <td className="px-4 py-4">{item.year}</td>
+                      <td className="px-4 py-4">{item.type}</td>
+                      <td className="px-4 py-4">{item.record}</td>
+                      <td className="px-4 py-4">
+                        <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded text-[11px] font-bold border border-green-100">{item.quality}</span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <button suppressHydrationWarning className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-700 hover:bg-gray-50"><Eye size={14}/> Preview</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+      </div>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/data-brida/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/data-non-pemerintah/page.tsx ---
+"use client";
+
+import { 
+  Search, Bell, Filter, RotateCcw, 
+  FileSpreadsheet, DownloadCloud, Eye 
+} from "lucide-react";
+
+const nonGovData = [
+  { nama: "Indonesia Economic Prospects - Papua", sumber: "World Bank", jenis: "Organisasi Internasional", kategori: "Ekonomi & PDRB", tahun: "2024", kualitas: "94% (Tinggi)", status: "tinggi" },
+  { nama: "Papua Sustainable Development Goals Report", sumber: "UNDP", jenis: "Organisasi Internasional", kategori: "Sosial & Kemiskinan", tahun: "2024", kualitas: "91% (Tinggi)", status: "tinggi" },
+  { nama: "Indigenous Communities in Mimika", sumber: "AMAN", jenis: "NGO / Non-Profit", kategori: "Sosial & Kemiskinan", tahun: "2024", kualitas: "86% (Tinggi)", status: "tinggi" },
+  { nama: "Environmental Impact of Mining in Mimika", sumber: "WALHI", jenis: "NGO / Non-Profit", kategori: "Infrastruktur", tahun: "2024", kualitas: "88% (Tinggi)", status: "tinggi" },
+];
+
+export default function DataNonPemerintahPage() {
+  return (
+    <div className="p-4 md:p-6 lg:p-8">
+      
+      {/* HEADER BANNER - Responsive Flex */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-6 lg:p-7 mb-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-md relative overflow-hidden">
+        <div className="relative z-10 max-w-xl">
+          <h2 className="text-xl lg:text-2xl font-bold mb-1">Data Non-Pemerintah</h2>
+          <p className="text-blue-100 text-[11px] lg:text-xs tracking-wide">Data dari organisasi internasional, NGO, akademisi, dan sektor swasta</p>
+        </div>
+
+        <div className="flex items-center gap-4 w-full md:w-auto relative z-10">
+          <div className="relative flex-1 md:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari dataset..." 
+              suppressHydrationWarning
+              className="pl-9 pr-4 py-2 rounded-full bg-black/10 border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-full md:w-[240px] lg:w-[280px] text-sm"
+            />
+          </div>
+          <div className="hidden sm:flex w-10 h-10 bg-[#ef4444] rounded-full items-center justify-center font-bold text-sm shadow-md border border-red-400 shrink-0">
+            AD
+          </div>
+        </div>
+      </div>
+
+      {/* FILTER SECTION - Responsive Grid */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 lg:p-6 mb-6">
+        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-5">
+          <Filter size={16} /> Filter Data
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-[11px] font-medium text-gray-400 mb-1.5 uppercase">Sumber Data</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500">
+              <option>Semua</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-400 mb-1.5 uppercase">Jenis Sumber</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500">
+              <option>Semua</option>
+              <option>Organisasi Internasional</option>
+              <option>NGO / Non-Profit</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-400 mb-1.5 uppercase">Kategori</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500">
+              <option>Semua</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-400 mb-1.5 uppercase">Tahun</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500">
+              <option>Semua</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Action Buttons - Stack on mobile, inline on desktop */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 mt-6">
+          <button suppressHydrationWarning className="flex items-center justify-center gap-2 bg-[#ef4444] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm hover:bg-red-600 transition-all">
+            <Search size={14} /> Terapkan Filter
+          </button>
+          <button suppressHydrationWarning className="flex items-center justify-center gap-2 bg-slate-500 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm hover:bg-slate-600 transition-all">
+            <RotateCcw size={14} /> Reset
+          </button>
+          <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
+            <button suppressHydrationWarning className="flex items-center justify-center gap-2 bg-[#10b981] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm hover:bg-emerald-600 transition-all">
+              <DownloadCloud size={14} /> Export CSV
+            </button>
+            <button suppressHydrationWarning className="flex items-center justify-center gap-2 bg-[#10b981] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm hover:bg-emerald-600 transition-all">
+              <FileSpreadsheet size={14} /> Export Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE SECTION - Responsive Overflow */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-100 text-[10px] lg:text-[11px] uppercase tracking-wider text-gray-500">
+              <tr>
+                <th className="px-6 py-4 font-bold">Nama Dataset</th>
+                <th className="px-6 py-4 font-bold">Sumber</th>
+                <th className="px-6 py-4 font-bold">Jenis Sumber</th>
+                <th className="px-6 py-4 font-bold">Kategori</th>
+                <th className="px-6 py-4 font-bold text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {nonGovData.map((row, index) => (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-semibold text-gray-800 max-w-[200px] truncate">{row.nama}</td>
+                  <td className="px-6 py-4 text-gray-600">{row.sumber}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 rounded-md text-[9px] lg:text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100 uppercase">
+                      {row.jenis}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500">{row.kategori}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button suppressHydrationWarning className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-md text-[11px] font-medium text-gray-700 hover:bg-gray-100">
+                      <Eye size={14} /> Detail
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/data-non-pemerintah/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/data-pemerintah/page.tsx ---
+"use client";
+
+import { 
+  Search, 
+  Bell, 
+  Filter, 
+  RotateCcw, 
+  FileSpreadsheet, 
+  DownloadCloud, 
+  Eye 
+} from "lucide-react";
+
+// ==========================================
+// DATA DUMMY UNTUK TABEL
+// ==========================================
+const tableData = [
+  { nama: "Jumlah Penduduk per Distrik 2025", sumber: "BPS Mimika", kategori: "Kependudukan", tahun: "2025", update: "15/3/2025", kualitasScore: "92%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+  { nama: "PDRB Mimika 2024", sumber: "BPS Mimika", kategori: "Ekonomi & PDRB", tahun: "2024", update: "20/2/2025", kualitasScore: "95%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+  { nama: "Angka Kemiskinan Kabupaten Mimika", sumber: "BPS Mimika", kategori: "Sosial & Kemiskinan", tahun: "2024", update: "15/1/2025", kualitasScore: "88%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+  { nama: "Data Fasilitas Kesehatan per Distrik", sumber: "Dinas Kesehatan", kategori: "Kesehatan", tahun: "2025", update: "10/3/2025", kualitasScore: "78%", kualitasLabel: "Sedang", kualitasStatus: "sedang" },
+  { nama: "Data Sekolah & Siswa per Distrik", sumber: "Dinas Pendidikan", kategori: "Pendidikan", tahun: "2025", update: "1/3/2025", kualitasScore: "85%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+  { nama: "Data Jalan Kabupaten Mimika", sumber: "Dinas PU", kategori: "Infrastruktur", tahun: "2024", update: "15/12/2024", kualitasScore: "75%", kualitasLabel: "Sedang", kualitasStatus: "sedang" },
+  { nama: "Realisasi APBD Mimika 2025", sumber: "Bappeda Mimika", kategori: "Anggaran & Keuangan", tahun: "2025", update: "5/3/2025", kualitasScore: "88%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+  { nama: "Indeks Pembangunan Manusia (IPM)", sumber: "BPS Mimika", kategori: "Sosial & Kemiskinan", tahun: "2024", update: "20/11/2024", kualitasScore: "91%", kualitasLabel: "Tinggi", kualitasStatus: "tinggi" },
+];
+
+export default function DataPemerintahPage() {
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6">
+      
+      {/* HEADER BANNER */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-6 text-white flex justify-between items-center shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-full h-full opacity-20 pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%)' }}>
+        </div>
+        
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-1">Data Pemerintah</h2>
+          <p className="text-blue-100 text-xs tracking-wide">Data resmi dari BPS, OPD, Kementerian, Lembaga Negara, dan Pemda Mimika</p>
+        </div>
+
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari dataset..." 
+              suppressHydrationWarning 
+              className="pl-9 pr-4 py-2 rounded-full bg-black/10 border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-[280px] text-sm transition-all"
+            />
+          </div>
+          <div className="relative cursor-pointer bg-black/10 p-2 rounded-full border border-white/10 hover:bg-black/20 transition">
+            <Bell size={18} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </div>
+          <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md cursor-pointer border border-red-400">
+            AD
+          </div>
+        </div>
+      </div>
+
+      {/* FILTER SECTION */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 p-6 mb-6">
+        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-5">
+          <Filter size={18} />
+          Filter Data
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Sumber Data</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white">
+              <option>Semua</option>
+              <option>BPS Mimika</option>
+              <option>Dinas Kesehatan</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Kategori</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white">
+              <option>Semua</option>
+              <option>Kependudukan</option>
+              <option>Kesehatan</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Tahun</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white">
+              <option>Semua</option>
+              <option>2025</option>
+              <option>2024</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Kualitas Data</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white">
+              <option>Semua</option>
+              <option>Tinggi</option>
+              <option>Sedang</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Tanggal Update dari</label>
+            <input type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white" />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-gray-500 mb-1.5">Tanggal Update sampai</label>
+            <input type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1e61d0] bg-white" />
+          </div>
+        </div>
+
+        {/* Tambahkan suppressHydrationWarning pada button-button ini */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button suppressHydrationWarning className="flex items-center gap-2 bg-[#ef4444] hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors shadow-sm">
+            <Search size={14} /> Terapkan Filter
+          </button>
+          <button suppressHydrationWarning className="flex items-center gap-2 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors shadow-sm">
+            <RotateCcw size={14} /> Reset
+          </button>
+          <button suppressHydrationWarning className="flex items-center gap-2 bg-[#10b981] hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors shadow-sm ml-auto">
+            <DownloadCloud size={14} /> Export CSV
+          </button>
+          <button suppressHydrationWarning className="flex items-center gap-2 bg-[#10b981] hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors shadow-sm">
+            <FileSpreadsheet size={14} /> Export Excel
+          </button>
+        </div>
+      </div>
+
+      {/* DATA TABLE SECTION */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Nama Dataset</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Sumber</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Kategori</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Tahun</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Terakhir Update</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Kualitas</th>
+                <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {tableData.map((row, index) => (
+                <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-800">{row.nama}</td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-green-50 text-green-700 border border-green-200">
+                      {row.sumber}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">{row.kategori}</td>
+                  <td className="px-6 py-4 text-gray-600">{row.tahun}</td>
+                  <td className="px-6 py-4 text-gray-600">{row.update}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+                      row.kualitasStatus === 'tinggi' 
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                    }`}>
+                      {row.kualitasScore} ({row.kualitasLabel})
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {/* Tambahkan juga di tombol aksi di dalam loop tabel */}
+                    <button suppressHydrationWarning className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+                      <Eye size={14} /> Detail
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/data-pemerintah/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/data-quality/page.tsx ---
+"use client";
+
+import { useState, useEffect } from "react";
+import { 
+  Database, Inbox, Brush, CheckCheck, CheckCircle, 
+  Eye, Play, Bell, Info, AlertTriangle, 
+  ArrowRight, Activity, X
+} from "lucide-react"; // Perbaikan: Broom -> Brush, CheckDouble -> CheckCheck
+
+// --- Types ---
+interface Dataset {
+  id: string;
+  name: string;
+  source_name: string;
+  upload_date?: string;
+  approved_date?: string;
+  quality_score?: number;
+  issues?: string[] | null;
+  validation_result?: string;
+}
+
+export default function DataQualityPage() {
+  // --- States ---
+  const [stagingDatasets, setStagingDatasets] = useState<Dataset[]>([]);
+  const [cleaningDatasets, setCleaningDatasets] = useState<Dataset[]>([]);
+  const [validationDatasets, setValidationDatasets] = useState<Dataset[]>([]);
+  const [approvedDatasets, setApprovedDatasets] = useState<Dataset[]>([]);
+  const [activeTab, setActiveTab] = useState("staging");
+  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- Initial Data Simulation ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setStagingDatasets([
+        { id: "STG-001", name: "Data Kependudukan Distrik Agimuga", source_name: "Dinas Dukcapil", upload_date: "2025-05-01" },
+        { id: "STG-002", name: "Laporan Perikanan Tangkap 2025", source_name: "Dinas Perikanan", upload_date: "2025-05-03" }
+      ]);
+      setApprovedDatasets([
+        { id: "APP-001", name: "PDRB Kabupaten Mimika 2024", source_name: "BPS Mimika", quality_score: 95, approved_date: "2025-04-20" }
+      ]);
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // --- Pipeline Actions ---
+  const moveToCleaning = (id: string) => {
+    const ds = stagingDatasets.find(d => d.id === id);
+    if (ds) {
+      const updatedDs = { ...ds, issues: ["Format perlu distandarisasi", "Cek konsistensi unit"] };
+      setCleaningDatasets([...cleaningDatasets, updatedDs]);
+      setStagingDatasets(stagingDatasets.filter(d => d.id !== id));
+    }
+  };
+
+  const runCleaning = (id: string) => {
+    alert(`🧹 Cleaning dataset ID ${id}: Format distandarisasi & duplikasi dihapus.`);
+    setCleaningDatasets(prev => prev.map(d => d.id === id ? { ...d, issues: null } : d));
+  };
+
+  const moveToValidation = (id: string) => {
+    const ds = cleaningDatasets.find(d => d.id === id);
+    if (ds) {
+      const score = Math.floor(Math.random() * (95 - 70 + 1) + 70);
+      const updatedDs = { 
+        ...ds, 
+        quality_score: score,
+        validation_result: score >= 85 ? "Lolos validasi" : "Validasi dengan catatan"
+      };
+      setValidationDatasets([...validationDatasets, updatedDs]);
+      setCleaningDatasets(cleaningDatasets.filter(d => d.id !== id));
+    }
+  };
+
+  const approveDataset = (id: string) => {
+    const ds = validationDatasets.find(d => d.id === id);
+    if (ds) {
+      const updatedDs = { ...ds, approved_date: new Date().toISOString().split('T')[0] };
+      setApprovedDatasets([...approvedDatasets, updatedDs]);
+      setValidationDatasets(validationDatasets.filter(d => d.id !== id));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Activity className="animate-spin text-[#ef4444] mb-4" size={48} />
+        <p className="text-gray-500 font-medium font-sans">Memuat Data Quality Management...</p>
+      </div>
+    );
+  }
+
+  const avgQuality = approvedDatasets.length > 0 
+    ? Math.round(approvedDatasets.reduce((a, b) => a + (b.quality_score || 0), 0) / approvedDatasets.length) 
+    : 0;
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+      {/* HEADER BANNER - Matching Manager Style [cite: 56] */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-8 text-white flex justify-between items-center shadow-md relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-1">Data Quality Management</h2>
+          <p className="text-blue-100 text-xs tracking-wide">Pusat Validasi & Pembersihan Data Terintegrasi </p>
+        </div>
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="relative cursor-pointer bg-black/10 p-2 rounded-full border border-white/10 hover:bg-black/20 transition">
+            <Bell size={18} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </div>
+          <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md border border-red-400">AD</div>
+        </div>
+      </div>
+
+      {/* STATS GRID - Responsive [cite: 60, 63] */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard label="Staging Data" value={stagingDatasets.length} color="text-blue-600" />
+        <StatCard label="Perlu Cleaning" value={cleaningDatasets.length} color="text-red-500" />
+        <StatCard label="Perlu Validasi" value={validationDatasets.length} color="text-amber-500" />
+        <StatCard label="Rata-rata Kualitas" value={`${avgQuality}%`} color="text-emerald-500" />
+      </div>
+
+      {/* PIPELINE VISUALIZATION */}
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-wrap justify-between items-center gap-4">
+        <PipelineStep icon={<Inbox size={20} />} label="Staging" active={stagingDatasets.length > 0} />
+        <ArrowRight className="text-gray-300 hidden md:block" />
+        <PipelineStep icon={<Brush size={20} />} label="Cleaning" active={cleaningDatasets.length > 0} />
+        <ArrowRight className="text-gray-300 hidden md:block" />
+        <PipelineStep icon={<CheckCheck size={20} />} label="Validation" active={validationDatasets.length > 0} />
+        <ArrowRight className="text-gray-300 hidden md:block" />
+        <PipelineStep icon={<Database size={20} />} label="Approved" completed={approvedDatasets.length > 0} />
+      </div>
+
+      {/* TABS NAVIGATION */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <TabButton label={`Staging (${stagingDatasets.length})`} active={activeTab === "staging"} onClick={() => setActiveTab("staging")} />
+        <TabButton label={`Cleaning (${cleaningDatasets.length})`} active={activeTab === "cleaning"} onClick={() => setActiveTab("cleaning")} />
+        <TabButton label={`Validation (${validationDatasets.length})`} active={activeTab === "validation"} onClick={() => setActiveTab("validation")} />
+        <TabButton label={`Approved (${approvedDatasets.length})`} active={activeTab === "approved"} onClick={() => setActiveTab("approved")} />
+      </div>
+
+      {/* TABLE SECTION [cite: 150, 174] */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            {activeTab === "staging" && (
+              <>
+                <TableHeader columns={["ID", "Dataset", "Sumber", "Upload Date", "Aksi"]} />
+                <tbody className="divide-y divide-gray-100">
+                  {stagingDatasets.length > 0 ? stagingDatasets.map(d => (
+                    <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs">{d.id}</td>
+                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
+                      <td className="px-6 py-4 text-gray-600">{d.source_name}</td>
+                      <td className="px-6 py-4 text-gray-500">{d.upload_date}</td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => moveToCleaning(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0b3370] text-white rounded-lg text-xs font-semibold hover:bg-blue-800 transition">
+                          <Brush size={14} /> Proses Cleaning
+                        </button>
+                      </td>
+                    </tr>
+                  )) : <EmptyState colSpan={5} />}
+                </tbody>
+              </>
+            )}
+            
+            {/* Tab Cleaning */}
+            {activeTab === "cleaning" && (
+              <>
+                <TableHeader columns={["ID", "Dataset", "Isu", "Proses", "Aksi"]} />
+                <tbody className="divide-y divide-gray-100">
+                  {cleaningDatasets.length > 0 ? cleaningDatasets.map(d => (
+                    <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs">{d.id}</td>
+                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
+                      <td className="px-6 py-4 text-red-500 text-xs font-medium">{d.issues?.join(', ') || 'Format Bersih'}</td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => runCleaning(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold hover:bg-gray-50 transition">
+                          <Play size={14} className="text-blue-600" /> Run Cleaning
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => moveToValidation(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#10b981] text-white rounded-lg text-xs font-semibold hover:bg-emerald-600 transition">
+                          <CheckCheck size={14} /> Kirim ke Validasi
+                        </button>
+                      </td>
+                    </tr>
+                  )) : <EmptyState colSpan={5} />}
+                </tbody>
+              </>
+            )}
+
+            {/* Tab Validation */}
+            {activeTab === "validation" && (
+              <>
+                <TableHeader columns={["ID", "Dataset", "Skor Kualitas", "Hasil", "Aksi"]} />
+                <tbody className="divide-y divide-gray-100">
+                  {validationDatasets.length > 0 ? validationDatasets.map(d => (
+                    <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs">{d.id}</td>
+                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">{d.quality_score}%</td>
+                      <td className="px-6 py-4 text-gray-600 text-xs">{d.validation_result}</td>
+                      <td className="px-6 py-4 flex gap-2">
+                        <button onClick={() => approveDataset(d.id)} className="px-3 py-1.5 bg-[#ef4444] text-white rounded-lg text-xs font-semibold">Approve</button>
+                        <button onClick={() => setSelectedDataset(d)} className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold"><Eye size={14} /></button>
+                      </td>
+                    </tr>
+                  )) : <EmptyState colSpan={5} />}
+                </tbody>
+              </>
+            )}
+
+            {/* Tab Approved */}
+            {activeTab === "approved" && (
+              <>
+                <TableHeader columns={["ID", "Dataset", "Sumber", "Skor Final", "Tgl Setuju"]} />
+                <tbody className="divide-y divide-gray-100">
+                  {approvedDatasets.map(d => (
+                    <tr key={d.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-mono text-xs">{d.id}</td>
+                      <td className="px-6 py-4 font-bold">{d.name}</td>
+                      <td className="px-6 py-4">{d.source_name}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">{d.quality_score}%</td>
+                      <td className="px-6 py-4 text-gray-500">{d.approved_date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </>
+            )}
+          </table>
+        </div>
+      </div>
+
+      {/* DETAIL MODAL */}
+      {selectedDataset && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Info size={18} className="text-blue-500" /> Detail Validasi</h3>
+              <button onClick={() => setSelectedDataset(null)}><X size={20} /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Nama Dataset</p>
+                <p className="text-sm font-bold text-gray-800">{selectedDataset.name}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                  <p className="text-xs font-bold text-emerald-600 uppercase mb-1">Quality Score</p>
+                  <p className="text-2xl font-black text-emerald-700">{selectedDataset.quality_score}%</p>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                  <p className="text-xs font-bold text-blue-600 uppercase mb-1">Status</p>
+                  <p className="text-sm font-bold text-blue-700 leading-tight">{selectedDataset.validation_result}</p>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setSelectedDataset(null)} className="w-full mt-6 py-3 bg-[#0b3370] text-white rounded-xl font-bold">Tutup</button>
+          </div>
+        </div>
+      )}
+
+      <footer className="mt-8 text-center text-gray-400 text-xs">
+        © 2025 Mimika DataHub - Sistem Pembersihan Data Terintegrasi [cite: 12]
+      </footer>
+    </div>
+  );
+}
+
+// --- Sub-components ---
+function StatCard({ label, value, color }: { label: string, value: any, color: string }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+      <h2 className={`text-3xl font-extrabold ${color} mb-1`}>{value}</h2>
+      <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">{label}</p>
+    </div>
+  );
+}
+
+function PipelineStep({ icon, label, active = false, completed = false }: { icon: any, label: string, active?: boolean, completed?: boolean }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+        completed ? 'bg-emerald-500 text-white' : active ? 'bg-[#ef4444] text-white' : 'bg-gray-100 text-gray-400'
+      }`}>
+        {completed ? <CheckCircle size={20} /> : icon}
+      </div>
+      <p className={`text-[10px] font-bold uppercase mt-2 tracking-wider ${active || completed ? 'text-gray-800' : 'text-gray-400'}`}>{label}</p>
+    </div>
+  );
+}
+
+function TabButton({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+        active ? 'bg-[#ef4444] text-white shadow-md' : 'bg-white text-gray-600 border border-gray-100'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TableHeader({ columns }: { columns: string[] }) {
+  return (
+    <thead className="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+      <tr>{columns.map((c, i) => <th key={i} className="px-6 py-4">{c}</th>)}</tr>
+    </thead>
+  );
+}
+
+function EmptyState({ colSpan }: { colSpan: number }) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-6 py-12 text-center text-gray-400 italic">Tidak ada data di tahapan ini.</td>
+    </tr>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/data-quality/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/layout.tsx ---
+import ManagerSidebar from "@/components/layout/ManagerSidebar";
+
+export default function ManagerLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#f4f7fb]">
+      <ManagerSidebar />
+      {/* ml-0 di mobile, ml-[260px] di layar besar (lg) */}
+      <div className="lg:ml-[260px] transition-all duration-300">
+        {children}
+      </div>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/layout.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/monitoring-opd/page.tsx ---
+"use client";
+
+import { useState, useMemo } from "react";
+import { 
+  Search, Bell, Filter, Calendar, 
+  Download, FileSpreadsheet, FileText, 
+  Info, CheckCircle, AlertTriangle, XCircle, 
+  ChevronRight, Activity, Users, Send, X
+} from "lucide-react";
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid
+} from "recharts";
+
+// --- Types ---
+interface OpdPerformance {
+  opd_name: string;
+  datasets_sent: number;
+  datasets_required: number;
+  last_submit: string | null;
+  status: 'lengkap' | 'kurang' | 'belum';
+  quality_avg: number;
+  contact: string;
+  phone: string;
+}
+
+export default function MonitoringOpdPage() {
+  // --- Data Dummy ---
+  const [opdData] = useState<OpdPerformance[]>([
+    { opd_name: "Bappeda", datasets_sent: 12, datasets_required: 12, last_submit: "2025-03-01", status: "lengkap", quality_avg: 88, contact: "bappeda@mimikakab.go.id", phone: "0821-1234-5678" },
+    { opd_name: "Dinas Kesehatan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-08", status: "kurang", quality_avg: 75, contact: "dinkes@mimikakab.go.id", phone: "0821-1234-5679" },
+    { opd_name: "Dinas Pendidikan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-10", status: "kurang", quality_avg: 82, contact: "disdik@mimikakab.go.id", phone: "0821-1234-5680" },
+    { opd_name: "Dinas PU", datasets_sent: 7, datasets_required: 12, last_submit: "2025-03-15", status: "kurang", quality_avg: 68, contact: "dinaspu@mimikakab.go.id", phone: "0821-1234-5681" },
+    { opd_name: "Dinas Sosial", datasets_sent: 0, datasets_required: 12, last_submit: null, status: "belum", quality_avg: 0, contact: "dinsos@mimikakab.go.id", phone: "0821-1234-5682" },
+    { opd_name: "Dinas Perhubungan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-14", status: "kurang", quality_avg: 81, contact: "dishub@mimikakab.go.id", phone: "0821-1234-5683" },
+    { opd_name: "Dinas Kependudukan", datasets_sent: 12, datasets_required: 12, last_submit: "2025-03-04", status: "lengkap", quality_avg: 92, contact: "dukcapil@mimikakab.go.id", phone: "0821-1234-5686" },
+  ]);
+
+  // --- States ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedOpd, setSelectedOpd] = useState<OpdPerformance | null>(null);
+
+  // --- Filtering Logic ---
+  const filteredData = useMemo(() => {
+    return opdData.filter(o => {
+      const matchesSearch = o.opd_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || o.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchTerm, statusFilter, opdData]);
+
+  // --- Stats Calculation ---
+  const stats = useMemo(() => ({
+    total: opdData.length,
+    lengkap: opdData.filter(o => o.status === 'lengkap').length,
+    kurang: opdData.filter(o => o.status === 'kurang').length,
+    belum: opdData.filter(o => o.status === 'belum').length,
+  }), [opdData]);
+
+  // --- Chart Data ---
+  const pieData = [
+    { name: 'Lengkap', value: stats.lengkap, color: '#10b981' },
+    { name: 'Kurang', value: stats.kurang, color: '#f59e0b' },
+    { name: 'Belum Kirim', value: stats.belum, color: '#ef4444' },
+  ];
+
+  const trendData = [
+    { name: 'Okt', score: 68 }, { name: 'Nov', score: 72 }, { name: 'Des', score: 70 },
+    { name: 'Jan', score: 75 }, { name: 'Feb', score: 78 }, { name: 'Mar', score: 82 },
+  ];
+
+  // --- Action Handlers ---
+  const handleExportCSV = () => {
+    const headers = "No,OPD,Terkirim,Target,Status,Terakhir Kirim\n";
+    const rows = filteredData.map((o, i) => 
+      `${i+1},${o.opd_name},${o.datasets_sent},${o.datasets_required},${o.status},${o.last_submit || '-'}`
+    ).join("\n");
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `monitoring_opd_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+      {/* HEADER BANNER */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-md relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-1">Monitoring OPD</h2>
+          <p className="text-blue-100 text-xs tracking-wide">Pantau kepatuhan dan status pengiriman data dari seluruh OPD Kabupaten Mimika</p>
+        </div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="relative cursor-pointer bg-black/10 p-2 rounded-full border border-white/10 hover:bg-black/20 transition">
+            <Bell size={20} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </div>
+          <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md border border-red-400">AD</div>
+        </div>
+      </div>
+
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard title="Total OPD" value={stats.total} icon={<Users size={22} />} color="text-blue-600" />
+        <StatCard title="Lengkap" value={stats.lengkap} icon={<CheckCircle size={22} />} color="text-emerald-500" />
+        <StatCard title="Kurang / Telat" value={stats.kurang} icon={<AlertTriangle size={22} />} color="text-amber-500" />
+        <StatCard title="Belum Kirim" value={stats.belum} icon={<XCircle size={22} />} color="text-red-500" />
+      </div>
+
+      {/* CHARTS CONTAINER */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Activity size={18} className="text-gray-400" /> Status Pengiriman Data (Bulan Ini)
+          </h3>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+                <RechartsTooltip />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Activity size={18} className="text-gray-400" /> Tren Kepatuhan OPD (6 Bulan)
+          </h3>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} />
+                <RechartsTooltip />
+                <Line type="monotone" dataKey="score" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 items-center">
+        <div className="flex flex-wrap gap-4 flex-1 w-full lg:w-auto">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari nama OPD..." 
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select 
+            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Semua Status</option>
+            <option value="lengkap">Lengkap</option>
+            <option value="kurang">Kurang</option>
+            <option value="belum">Belum Kirim</option>
+          </select>
+        </div>
+        <div className="flex gap-2 w-full lg:w-auto">
+          <button onClick={() => alert("🔔 Reminder massal dikirim ke OPD yang belum lengkap!")} className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[#ef4444] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-600 transition">
+            <Send size={16} /> Reminder Massal
+          </button>
+          <button onClick={handleExportCSV} className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[#10b981] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-600 transition">
+            <Download size={16} /> Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* TABLE CONTAINER */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-4">Nama OPD</th>
+                <th className="px-6 py-4">Terakhir Kirim</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Progres</th>
+                <th className="px-6 py-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredData.map((o, idx) => (
+                <tr key={idx} className="hover:bg-gray-50/50 transition">
+                  <td className="px-6 py-4 font-bold text-gray-800">{o.opd_name}</td>
+                  <td className="px-6 py-4 text-gray-500 font-medium">{o.last_submit ? new Date(o.last_submit).toLocaleDateString('id-ID') : '-'}</td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={o.status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-emerald-500 rounded-full" 
+                          style={{ width: `${(o.datasets_sent / o.datasets_required) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400">{o.datasets_sent}/{o.datasets_required}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center gap-2">
+                      <button 
+                        onClick={() => alert(`🔔 Reminder dikirim ke ${o.opd_name}`)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                        title="Kirim Reminder"
+                      >
+                        <Bell size={16} />
+                      </button>
+                      <button 
+                        onClick={() => setSelectedOpd(o)}
+                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                        title="Detail OPD"
+                      >
+                        <Info size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* DETAIL MODAL */}
+      {selectedOpd && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <Activity size={18} className="text-blue-500" /> Detail OPD: {selectedOpd.opd_name}
+              </h3>
+              <button onClick={() => setSelectedOpd(null)} className="p-2 hover:bg-gray-100 rounded-full transition">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-2xl">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                  <StatusBadge status={selectedOpd.status} />
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Kualitas Data</p>
+                  <p className="text-lg font-black text-blue-600">{selectedOpd.quality_avg}%</p>
+                </div>
+              </div>
+              <div className="space-y-4 text-sm">
+                <DetailRow label="Email" value={selectedOpd.contact} />
+                <DetailRow label="Telepon" value={selectedOpd.phone} />
+                <DetailRow label="Datasets Terkirim" value={`${selectedOpd.datasets_sent} dari ${selectedOpd.datasets_required}`} />
+                <DetailRow label="Terakhir Submit" value={selectedOpd.last_submit || "Belum pernah"} />
+              </div>
+              <button 
+                onClick={() => { alert(`Reminder terkirim ke ${selectedOpd.opd_name}`); setSelectedOpd(null); }}
+                className="w-full bg-[#ef4444] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-red-100 flex items-center justify-center gap-2 hover:bg-red-600 transition"
+              >
+                <Send size={16} /> Kirim Reminder Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
+        © 2025 Mimika DataHub - Pemerintah Kabupaten Mimika
+      </footer>
+    </div>
+  );
+}
+
+// --- Sub-components ---
+function StatCard({ title, value, icon, color }: { title: string, value: any, icon: any, color: string }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+      <div className={`w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center ${color}`}>
+        {icon}
+      </div>
+      <div>
+        <h2 className="text-2xl font-black text-gray-800">{value}</h2>
+        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">{title}</p>
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: OpdPerformance['status'] }) {
+  const styles = {
+    lengkap: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    kurang: "bg-amber-50 text-amber-600 border-amber-100",
+    belum: "bg-red-50 text-red-600 border-red-100",
+  };
+  const labels = { lengkap: "Lengkap", kurang: "Kurang", belum: "Belum Kirim" };
+
+  return (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function DetailRow({ label, value }: { label: string, value: string }) {
+  return (
+    <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+      <span className="text-gray-400 font-medium">{label}:</span>
+      <span className="text-gray-800 font-bold">{value}</span>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/monitoring-opd/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/manager/upload-data/page.tsx ---
+"use client";
+
+import { useState, useRef } from "react";
+import { 
+  CloudUpload, FileText, Info, Plus, Send, 
+  History, Database, Tag, X, CheckCircle, 
+  AlertCircle, FolderOpen, Bell
+} from "lucide-react"; // 
+
+// --- Types ---
+interface UploadLog {
+  date: string;
+  name: string;
+  source: string;
+  status: "approved" | "cleaning" | "staging";
+  quality: number | null;
+}
+
+interface Item {
+  id: string | number;
+  name: string;
+}
+
+export default function UploadDataPage() {
+  // --- States --- 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
+  
+  const [sources, setSources] = useState<Item[]>([
+    { id: "bps", name: "BPS Mimika" },
+    { id: "dinkes", name: "Dinas Kesehatan" },
+  ]);
+  
+  const [categories, setCategories] = useState<Item[]>([
+    { id: "ekonomi", name: "Ekonomi & PDRB" },
+    { id: "kesehatan", name: "Kesehatan" },
+  ]);
+  
+  const [logs, setLogs] = useState<UploadLog[]>([
+    { date: "2025-03-15 10:23", name: "PDRB Mimika Q1-2025", source: "BPS Mimika", status: "approved", quality: 92 },
+    { date: "2025-03-14 14:45", name: "Data Puskesmas 2025", source: "Dinas Kesehatan", status: "approved", quality: 78 },
+    { date: "2025-03-12 09:15", name: "Realisasi Anggaran PU", source: "Dinas PU", status: "cleaning", quality: null },
+  ]);
+
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Handlers ---
+  const showAlert = (message: string, type: "success" | "danger" | "info") => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert(null), 4000);
+  };
+
+  const handleFileChange = (file: File) => {
+    const validTypes = [".xlsx", ".csv", ".json"];
+    const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
+    
+    if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
+      showAlert("Format file tidak didukung. Gunakan .xlsx, .csv, atau .json", "danger");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert("Ukuran file maksimal 10MB", "danger");
+      return;
+    }
+    
+    setSelectedFile(file);
+    showAlert(`File "${file.name}" berhasil dipilih`, "success");
+  };
+
+  const handleUpload = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      showAlert("Silakan pilih file terlebih dahulu", "danger");
+      return;
+    }
+
+    showAlert("Mengupload file...", "info");
+
+    setTimeout(() => {
+      const now = new Date();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      
+      const newLog: UploadLog = {
+        date: now.toLocaleString("id-ID").replace(/\//g, "-"),
+        name: formData.get("datasetName") as string,
+        source: sources.find(s => s.id === formData.get("dataSource"))?.name || "Kustom",
+        status: "staging",
+        quality: null
+      };
+
+      setLogs([newLog, ...logs]);
+      showAlert("Dataset berhasil diupload! Data akan diproses di staging area.", "success");
+      setSelectedFile(null);
+      form.reset();
+    }, 2000);
+  };
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6">
+      {/* HEADER BANNER - Style match with dashboard [cite: 56] */}
+      <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-8 text-white flex justify-between items-center shadow-md relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-1">Upload Data</h2>
+          <p className="text-blue-100 text-xs tracking-wide">Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)</p>
+        </div>
+        <div className="flex items-center gap-5 relative z-10">
+          <Bell size={20} className="text-blue-200 cursor-pointer hover:text-white transition" />
+          <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md border border-red-400">
+            AD
+          </div>
+        </div>
+      </div>
+
+      {/* ALERT MESSAGE */}
+      {alert && (
+        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
+          alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 
+          'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
+        }`}>
+          {alert.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          <span className="text-sm font-medium">{alert.message}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* DRAG & DROP AREA */}
+        <div 
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            if (e.dataTransfer.files.length > 0) handleFileChange(e.dataTransfer.files[0]);
+          }}
+          onClick={() => fileInputRef.current?.click()}
+          className={`bg-white rounded-2xl p-10 flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
+            isDragging ? "border-[#ef4444] bg-red-50" : "border-gray-200 hover:border-[#ef4444]"
+          }`}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
+            className="hidden" 
+            accept=".xlsx,.csv,.json"
+          />
+          <CloudUpload size={64} className="text-[#ef4444] mb-4" />
+          <h3 className="text-lg font-bold text-gray-800">Drag & Drop File</h3>
+          <p className="text-gray-500 text-sm mb-6 text-center">atau klik untuk memilih file dari komputer Anda</p>
+          <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-4">Support: .xlsx, .csv, .json (Max 10MB)</p>
+          
+          <button className="bg-[#ef4444] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-sm hover:bg-red-600 transition shadow-lg shadow-red-200">
+            <FolderOpen size={18} /> Pilih File
+          </button>
+
+          {selectedFile && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl flex items-center gap-3 w-full border border-gray-100 animate-in zoom-in-95">
+              <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                <FileText size={20} />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-bold text-gray-800 truncate">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+              </div>
+              <X 
+                size={18} 
+                className="text-gray-400 cursor-pointer hover:text-red-500" 
+                onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* FORM SECTION */}
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
+            <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
+          </h3>
+          <form onSubmit={handleUpload} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Dataset <span className="text-red-500">*</span></label>
+              <input 
+                name="datasetName" 
+                type="text" 
+                placeholder="Contoh: Jumlah Penduduk Mimika 2025" 
+                required 
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sumber Data <span className="text-red-500">*</span></label>
+                <select name="dataSource" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]">
+                  <option value="">Pilih Sumber</option>
+                  {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <button 
+                  type="button" 
+                  onClick={() => setShowSourceModal(true)}
+                  className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline"
+                >
+                  <Plus size={12} /> Tambah Sumber Baru
+                </button>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori <span className="text-red-500">*</span></label>
+                <select name="category" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]">
+                  <option value="">Pilih Kategori</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button 
+                  type="button" 
+                  onClick={() => setShowCategoryModal(true)}
+                  className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline"
+                >
+                  <Plus size={12} /> Tambah Kategori Baru
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tahun <span className="text-red-500">*</span></label>
+                <input name="year" type="number" defaultValue="2025" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Periode Data</label>
+                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]">
+                  <option>Bulanan</option>
+                  <option>Triwulan</option>
+                  <option>Semester</option>
+                  <option>Tahunan</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Deskripsi</label>
+              <textarea rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]" placeholder="Jelaskan isi dataset ini..."></textarea>
+            </div>
+
+            <button type="submit" className="w-full bg-[#0a2647] text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#144272] transition shadow-lg">
+              <Send size={18} /> Upload & Proses Dataset
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* LOG SECTION */}
+      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+          <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+            <History size={18} className="text-gray-400" /> Log Pengiriman Data
+          </h3>
+          <span className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Real-time Staging</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-4">Tanggal</th>
+                <th className="px-6 py-4">Nama Dataset</th>
+                <th className="px-6 py-4">Sumber</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Kualitas</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {logs.map((log, idx) => (
+                <tr key={idx} className="hover:bg-gray-50/50 transition">
+                  <td className="px-6 py-4 text-xs text-gray-500 font-medium">{log.date}</td>
+                  <td className="px-6 py-4 font-bold text-gray-800">{log.name}</td>
+                  <td className="px-6 py-4 text-gray-600">{log.source}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                      log.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {log.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-bold text-gray-700">{log.quality ? `${log.quality}%` : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <footer className="mt-8 text-center text-gray-400 text-xs">
+        © 2025 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
+      </footer>
+
+      {/* MODALS */}
+      {(showSourceModal || showCategoryModal) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                {showSourceModal ? <Database size={18} className="text-green-500" /> : <Tag size={18} className="text-blue-500" />}
+                Tambah {showSourceModal ? "Sumber" : "Kategori"} Baru
+              </h3>
+              <X 
+                size={20} 
+                className="text-gray-400 cursor-pointer hover:text-red-500 transition" 
+                onClick={() => { setShowSourceModal(false); setShowCategoryModal(false); setNewItemName(""); }}
+              />
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Item</label>
+                <input 
+                  type="text" 
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  placeholder={`Contoh: ${showSourceModal ? 'Dinas Perikanan' : 'Infrastruktur'}`}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button 
+                onClick={() => {
+                  if (!newItemName) return;
+                  const newItem = { id: Date.now(), name: newItemName };
+                  if (showSourceModal) setSources([...sources, newItem]);
+                  else setCategories([...categories, newItem]);
+                  showAlert(`Berhasil menambahkan "${newItemName}"`, "success");
+                  setShowSourceModal(false);
+                  setShowCategoryModal(false);
+                  setNewItemName("");
+                }}
+                className="w-full bg-[#10b981] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-emerald-600 transition"
+              >
+                Simpan Item Baru
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/manager/upload-data/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/page.tsx ---
+import Image from "next/image";
+
+export default function Home() {
+  return (
+    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            To get started, edit the page.tsx file.
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <a
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+--- END FILE: mimika-datahub-fe/src/app/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/tsconfig.json ---
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+
+--- END FILE: mimika-datahub-fe/tsconfig.json ---
+
