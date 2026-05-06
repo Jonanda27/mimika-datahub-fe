@@ -1,0 +1,256 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { AlertCircle } from "lucide-react";
+
+// Import Komponen Global
+import PageHeader from "@/components/layout/PageHeader";
+import LoadingState from "@/components/ui/LoadingState";
+import { StatusType } from "@/components/ui/StatusBadge";
+
+// Import Komponen Lokal
+import FileUploadArea from "./components/FileUploadArea";
+import DatasetForm from "./components/DatasetForm";
+import UploadLogTable from "./components/UploadLogTable";
+import AddItemModal from "./components/AddItemModal";
+
+// Integrasi Service & Store
+import { ingestService } from "./../../services/ingest.service";
+import { useIngestStore } from "./../../store/useIngestStore";
+import { useSourceStore } from "./../../store/useSourceStore";
+import { useCategoryStore } from "./../../store/useCategoryStore";
+import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
+
+// --- Types ---
+export interface UploadLog {
+  date: string;
+  name: string;
+  source: string;
+  status: StatusType;
+  quality: number | null;
+}
+
+export interface Item {
+  id: string | number;
+  name: string;
+}
+
+export default function UploadDataPage() {
+  // --- States ---
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
+
+  // Store Integration
+  const { isProcessing, setProcessing, setResult, setError } = useIngestStore();
+  const { sources, fetchSources, addSource } = useSourceStore();
+  const { categories, fetchCategories, addCategory } = useCategoryStore();
+  const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+
+  const [logs, setLogs] = useState<UploadLog[]>([]);
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showSourceTypeModal, setShowSourceTypeModal] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+
+  // --- Initial Data Fetching ---
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      // Fetch semua data master dari database [cite: 49, 57, 82]
+      await Promise.all([
+        fetchSources(), 
+        fetchCategories(), 
+        fetchSourceTypes()
+      ]);
+      setIsLoading(false);
+    };
+    loadInitialData();
+  }, [fetchSources, fetchCategories, fetchSourceTypes]);
+
+  // --- Handlers ---
+  const showAlert = (message: string, type: "success" | "danger" | "info") => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert(null), 4000);
+  };
+
+  const handleFileChange = (file: File) => {
+    const validTypes = [".xlsx", ".csv", ".json"];
+    const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
+    if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
+      showAlert("Format file tidak didukung. Gunakan .xlsx, .csv, atau .json", "danger");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert("Ukuran file maksimal 10MB", "danger");
+      return;
+    }
+    setSelectedFile(file);
+    showAlert(`File "${file.name}" berhasil dipilih`, "success");
+  };
+
+  const handleSaveNewItem = async () => {
+    if (!newItemName) return;
+    setIsLoading(true);
+    try {
+      if (showSourceModal) {
+        await addSource({ name: newItemName, type: "opd", icon: "fa-database" }); 
+        showAlert(`Sumber "${newItemName}" berhasil ditambahkan`, "success");
+      } else if (showCategoryModal) {
+        await addCategory({ name: newItemName }); 
+        showAlert(`Kategori "${newItemName}" berhasil ditambahkan`, "success");
+      } else if (showSourceTypeModal) {
+        await addSourceType({ name: newItemName });
+        showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
+      }
+      
+      // Reset Modal State
+      setShowSourceModal(false);
+      setShowCategoryModal(false);
+      setShowSourceTypeModal(false);
+      setNewItemName("");
+    } catch (err: any) {
+      showAlert(err.message || "Gagal menambahkan item baru", "danger");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      showAlert("Silakan pilih file terlebih dahulu", "danger");
+      return;
+    }
+
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
+
+    const title = formData.get("datasetName") as string;
+    const datasetType = formData.get("dataset_type") as string;
+    const sourceId = formData.get("dataSource");
+    const categoryId = formData.get("category");
+    const sourceTypeId = formData.get("source_type_id");
+    const year = formData.get("year");
+    const period = formData.get("period") as string;
+    const description = formData.get("description") as string;
+
+    if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
+      showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
+      return;
+    }
+
+    setProcessing(true);
+    setError(null);
+    showAlert("Sedang memproses dan membersihkan data...", "info");
+
+    try {
+      const result = await ingestService.uploadProcess({ 
+        title,
+        dataset_type: datasetType,
+        source_id: Number(sourceId),
+        category_id: Number(categoryId),
+        source_type_id: Number(sourceTypeId),
+        year: Number(year),
+        period,
+        description,
+        file: selectedFile
+      });
+
+      setResult(result);
+
+      const newLog: UploadLog = {
+        date: new Date().toLocaleString("id-ID").replace(/\//g, "-"),
+        name: title,
+        source: sources.find(s => s.id === Number(sourceId))?.name || "Kustom",
+        status: "staging",
+        quality: result.stats.quality_score 
+      };
+
+      setLogs([newLog, ...logs]);
+      showAlert(result.message, "success");
+      
+      setSelectedFile(null);
+      formElement.reset();
+
+    } catch (err: any) {
+      const msg = err.message || "Gagal mengupload dataset";
+      setError(msg);
+      showAlert(msg, "danger");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (isLoading && sources.length === 0) {
+    return (
+      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+        <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
+        <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
+      <PageHeader 
+        title="Upload Data" 
+        subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
+      />
+
+      {alert && (
+        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
+          alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 
+          'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
+        }`}>
+          <AlertCircle size={20} />
+          <span className="text-sm font-medium">{alert.message}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <FileUploadArea 
+          selectedFile={selectedFile} 
+          isProcessing={isProcessing} 
+          onFileChange={handleFileChange} 
+          onRemoveFile={() => setSelectedFile(null)} 
+        />
+        
+        <DatasetForm 
+          sources={sources} 
+          categories={categories} 
+          sourceTypes={sourceTypes}
+          isProcessing={isProcessing} 
+          onSubmit={handleUpload} 
+          onAddSource={() => setShowSourceModal(true)} 
+          onAddCategory={() => setShowCategoryModal(true)} 
+          onAddSourceType={() => setShowSourceTypeModal(true)}
+        />
+      </div>
+
+      <UploadLogTable logs={logs} />
+
+      <footer className="mt-8 text-center text-gray-400 text-xs">
+        © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
+      </footer>
+
+      {/* Modal Universal */}
+      <AddItemModal 
+        isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
+        onClose={() => { 
+            setShowSourceModal(false); 
+            setShowCategoryModal(false); 
+            setShowSourceTypeModal(false);
+            setNewItemName(""); 
+        }}
+        onSave={handleSaveNewItem}
+        title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}
+        placeholder={showSourceModal ? "Contoh: Dinas Perikanan" : showCategoryModal ? "Contoh: Infrastruktur" : "Contoh: Statistik Sektoral"}
+        value={newItemName}
+        onChange={setNewItemName}
+        type={showSourceModal ? "source" : "category"}
+      />
+    </div>
+  );
+}

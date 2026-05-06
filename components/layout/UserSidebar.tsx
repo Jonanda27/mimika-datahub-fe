@@ -14,13 +14,12 @@ export default function ManagerSidebar() {
   const [isOpen, setIsOpen] = useState(false); // State untuk mobile menu
 
   const menuItems = [
-    { name: "Dashboard", href: "/manager/dashboard", icon: LayoutDashboard },
-    { name: "Data Pemerintah", href: "/manager/data-pemerintah", icon: Building2 },
-    { name: "Data Non Pemerintah", href: "/manager/data-non-pemerintah", icon: Globe },
-    { name: "Data BRIDA", href: "/manager/data-brida", icon: LineChart },
-    { name: "Upload Data", href: "/manager/upload-data", icon: Upload },
-    { name: "Data Quality", href: "/manager/data-quality", icon: BarChart2 },
-    { name: "Monitoring OPD", href: "/manager/monitoring-opd", icon: Eye },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Data Pemerintah", href: "/data-pemerintah", icon: Building2 },
+    { name: "Data Non Pemerintah", href: "/data-non-pemerintah", icon: Globe },
+    { name: "Data BRIDA", href: "/data-brida", icon: LineChart },
+    { name: "Upload Data", href: "/upload-data", icon: Upload },
+    { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
   ];
 
   return (
