@@ -10,9 +10,10 @@ interface AuthState {
   error: string | null;
 
   // Actions
-  setAuth: (token: string, role: string, username: string) => void; [cite: 583]
+  setAuth: (token: string, role: string, username: string) => void; 
   fetchProfile: () => Promise<void>; // Fungsi untuk memanggil endpoint /me
-  clearAuth: () => void; [cite: 584]
+  logout: () => Promise<void>;
+  clearAuth: () => void; 
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -20,6 +21,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   profile: null,
   isLoading: false,
   error: null,
+
+  /**
+   * Action untuk logout: Memanggil API dan mereset state global
+   */
+  logout: async () => {
+    set({ isLoading: true });
+    try {
+      await authService.logout();
+    } catch (err: any) {
+      console.error("Logout error:", err.message);
+    } finally {
+      // Reset state terlepas dari hasil API (karena token lokal sudah dihapus)
+      set({ 
+        user: null, 
+        profile: null, 
+        isLoading: false, 
+        error: null 
+      });
+    }
+  },
+  
 
   setAuth: (token, role, username) => {
     localStorage.setItem("auth_token", token); 

@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { 
-  Search, Bell, Filter, Download, 
+  Search, Filter, Download, 
   Info, CheckCircle, AlertTriangle, XCircle, 
-  Activity, Users, Send, X 
+  Activity, Users, Send, X, Bell 
 } from "lucide-react";
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
@@ -14,115 +14,113 @@ import {
 // Import Komponen Global
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
 
-// --- Types ---
-interface OpdPerformance {
-  opd_name: string;
-  datasets_sent: number;
-  datasets_required: number;
-  last_submit: string | null;
-  status: StatusType;
-  quality_avg: number;
-  contact: string;
-  phone: string;
-}
+// Integrasi Store & Types
+import { useMonitoringStore } from "@/src/app/store/useMonitoringStore";
+import { MonitoringTableData } from "@/src/app/types/monitoring";
 
 export default function MonitoringOpdPage() {
-  // --- States ---
-  const [isLoading, setIsLoading] = useState(true);
+  // 1. Tambahkan state isMounted untuk mencegah Hydration Error
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // --- Store States & Actions ---
+  const { summaryData, fetchSummary, sendReminder, isLoading, error } = useMonitoringStore();
+
+  // --- Local UI States ---
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedOpd, setSelectedOpd] = useState<OpdPerformance | null>(null);
+  const [selectedOpd, setSelectedOpd] = useState<MonitoringTableData | null>(null);
 
-  // --- Data Dummy ---
-  const [opdData] = useState<OpdPerformance[]>([
-    { opd_name: "Bappeda", datasets_sent: 12, datasets_required: 12, last_submit: "2025-03-01", status: "Lengkap", quality_avg: 88, contact: "bappeda@mimikakab.go.id", phone: "0821-1234-5678" },
-    { opd_name: "Dinas Kesehatan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-08", status: "Kurang", quality_avg: 75, contact: "dinkes@mimikakab.go.id", phone: "0821-1234-5679" },
-    { opd_name: "Dinas Pendidikan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-10", status: "Kurang", quality_avg: 82, contact: "disdik@mimikakab.go.id", phone: "0821-1234-5680" },
-    { opd_name: "Dinas PU", datasets_sent: 7, datasets_required: 12, last_submit: "2025-03-15", status: "Kurang", quality_avg: 68, contact: "dinaspu@mimikakab.go.id", phone: "0821-1234-5681" },
-    { opd_name: "Dinas Sosial", datasets_sent: 0, datasets_required: 12, last_submit: null, status: "Belum Kirim", quality_avg: 0, contact: "dinsos@mimikakab.go.id", phone: "0821-1234-5682" },
-    { opd_name: "Dinas Perhubungan", datasets_sent: 10, datasets_required: 12, last_submit: "2025-03-14", status: "Kurang", quality_avg: 81, contact: "dishub@mimikakab.go.id", phone: "0821-1234-5683" },
-    { opd_name: "Dinas Kependudukan", datasets_sent: 12, datasets_required: 12, last_submit: "2025-03-04", status: "Lengkap", quality_avg: 92, contact: "dukcapil@mimikakab.go.id", phone: "0821-1234-5686" },
-  ]);
-
-  // Simulasi Loading
+  // 2. Set isMounted menjadi true setelah komponen terpasang di browser
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    setIsMounted(true);
+    fetchSummary();
+  }, [fetchSummary]);
 
-  // --- Filtering Logic ---
+  // --- Filtering Logic (Client-side) ---
   const filteredData = useMemo(() => {
-    return opdData.filter(o => {
+    if (!summaryData) return [];
+    return summaryData.table_data.filter(o => {
       const matchesSearch = o.opd_name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || o.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [searchTerm, statusFilter, opdData]);
+  }, [searchTerm, statusFilter, summaryData]);
 
-  // --- Stats Calculation ---
-  const summaryStats = useMemo(() => ({
-    total: opdData.length,
-    lengkap: opdData.filter(o => o.status === 'Lengkap').length,
-    kurang: opdData.filter(o => o.status === 'Kurang').length,
-    belum: opdData.filter(o => o.status === 'Belum Kirim').length,
-  }), [opdData]);
+  // --- Chart Data Mapping ---
+  const pieData = useMemo(() => {
+    if (!summaryData) return [];
+    return [
+      { name: 'Lengkap', value: summaryData.pie_chart.Lengkap, color: '#10b981' },
+      { name: 'Kurang', value: summaryData.pie_chart.Kurang, color: '#f59e0b' },
+      { name: 'Belum Kirim', value: summaryData.pie_chart["Belum Kirim"], color: '#ef4444' },
+    ];
+  }, [summaryData]);
 
-  // --- Chart Data ---
-  const pieData = [
-    { name: 'Lengkap', value: summaryStats.lengkap, color: '#10b981' },
-    { name: 'Kurang', value: summaryStats.kurang, color: '#f59e0b' },
-    { name: 'Belum Kirim', value: summaryStats.belum, color: '#ef4444' },
-  ];
-
-  const trendData = [
-    { name: 'Okt', score: 68 }, { name: 'Nov', score: 72 }, { name: 'Des', score: 70 },
-    { name: 'Jan', score: 75 }, { name: 'Feb', score: 78 }, { name: 'Mar', score: 82 },
-  ];
-
+  // --- Handlers ---
   const handleExportCSV = () => {
-    const headers = "No,OPD,Terkirim,Target,Status,Terakhir Kirim\n";
+    if (filteredData.length === 0) return;
+    const headers = "No,OPD,Username,Email,Terkirim,Status,Kualitas Rerata,Terakhir Kirim\n";
     const rows = filteredData.map((o, i) => 
-      `${i+1},${o.opd_name},${o.datasets_sent},${o.datasets_required},${o.status},${o.last_submit || '-'}`
+      `${i+1},${o.opd_name},${o.username},${o.email},${o.upload_count},${o.status},${o.avg_quality}%,${o.last_submit || '-'}`
     ).join("\n");
+    
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `monitoring_opd_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
+    window.URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
+  const handleSendReminder = async (userId: number) => {
+    if (confirm("Kirim notifikasi pengingat ke OPD ini?")) {
+      await sendReminder(userId);
+    }
+  };
+
+  // 3. Tampilkan Loading State jika belum mounted atau sedang fetch data
+  if (!isMounted || (isLoading && !summaryData)) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
         <PageHeader title="Monitoring OPD" subtitle="Menghubungkan ke profil kepatuhan..." />
-        <LoadingState message="Menganalisis data pengiriman seluruh OPD..." />
+        <LoadingState message="Menyiapkan sistem monitoring..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-[#f4f7fb] min-h-screen p-6 flex items-center justify-center">
+        <div className="text-center bg-white p-10 rounded-3xl shadow-sm border border-red-100">
+           <XCircle className="text-red-500 mx-auto mb-4" size={48} />
+           <h3 className="text-lg font-bold text-gray-800">Gagal Memuat Data</h3>
+           <p className="text-gray-500 mb-6">{error}</p>
+           <button onClick={() => fetchSummary()} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">Coba Lagi</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
-      {/* 1. HEADER BANNER - Global Component */}
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500 text-black">
       <PageHeader 
         title="Monitoring OPD" 
         subtitle="Pantau kepatuhan dan status pengiriman data dari seluruh OPD Kabupaten Mimika" 
       />
 
-      {/* 2. STATS GRID - Global Component */}
+      {/* STATS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total OPD" value={summaryStats.total} icon={<Users size={22} />} iconBg="bg-blue-600" />
-        <StatCard label="Lengkap" value={summaryStats.lengkap} icon={<CheckCircle size={22} />} iconBg="bg-emerald-500" />
-        <StatCard label="Kurang / Telat" value={summaryStats.kurang} icon={<AlertTriangle size={22} />} iconBg="bg-amber-500" />
-        <StatCard label="Belum Kirim" value={summaryStats.belum} icon={<XCircle size={22} />} iconBg="bg-red-500" />
+        <StatCard label="Total OPD" value={summaryData?.cards.total_opd || 0} icon={<Users size={22} />} iconBg="bg-blue-600" />
+        <StatCard label="Lengkap" value={summaryData?.cards.lengkap || 0} icon={<CheckCircle size={22} />} iconBg="bg-emerald-500" />
+        <StatCard label="Kurang" value={summaryData?.cards.kurang || 0} icon={<AlertTriangle size={22} />} iconBg="bg-amber-500" />
+        <StatCard label="Belum Kirim" value={summaryData?.cards.belum_kirim || 0} icon={<XCircle size={22} />} iconBg="bg-red-500" />
       </div>
 
-      {/* 3. CHARTS CONTAINER */}
+      {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <h3 className="text-sm font-bold text-gray-800 mb-8 flex items-center gap-2">
@@ -143,23 +141,23 @@ export default function MonitoringOpdPage() {
 
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <h3 className="text-sm font-bold text-gray-800 mb-8 flex items-center gap-2">
-            <Activity size={18} className="text-gray-400" /> Tren Kepatuhan OPD (6 Bulan)
+            <Activity size={18} className="text-gray-400" /> Tren Kepatuhan OPD (Persentase Lengkap)
           </h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
+              <LineChart data={summaryData?.line_chart || []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 'bold', fill: '#94a3b8'}} dy={10} />
+                <XAxis dataKey="bulan" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 'bold', fill: '#94a3b8'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} />
                 <RechartsTooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                <Line type="monotone" dataKey="score" stroke="#ef4444" strokeWidth={4} dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} activeDot={{r: 6}} />
+                <Line type="monotone" dataKey="persentase" stroke="#ef4444" strokeWidth={4} dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} activeDot={{r: 6}} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* 4. FILTER BAR */}
+      {/* FILTER BAR */}
       <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 items-center">
         <div className="flex flex-wrap gap-4 flex-1 w-full lg:w-auto">
           <div className="relative flex-1 min-w-[200px]">
@@ -173,7 +171,7 @@ export default function MonitoringOpdPage() {
             />
           </div>
           <select 
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all text-black"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -184,53 +182,58 @@ export default function MonitoringOpdPage() {
           </select>
         </div>
         <div className="flex gap-2 w-full lg:w-auto">
-          <button onClick={() => alert("🔔 Reminder massal dikirim!")} className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[#ef4444] text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-red-100 active:scale-95 transition-all">
-            <Send size={16} /> REMINDER
-          </button>
           <button onClick={handleExportCSV} className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[#10b981] text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-emerald-100 active:scale-95 transition-all">
-            <Download size={16} /> CSV
+            <Download size={16} /> EXPORT CSV
           </button>
         </div>
       </div>
 
-      {/* 5. TABLE CONTAINER */}
+      {/* DATA TABLE */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50 border-b border-gray-100 text-[11px] font-black text-gray-400 uppercase tracking-widest">
               <tr>
-                <th className="px-6 py-4 font-black">Nama OPD</th>
-                <th className="px-6 py-4 font-black">Terakhir Kirim</th>
-                <th className="px-6 py-4 text-center font-black">Status</th>
-                <th className="px-6 py-4 font-black">Progres Wajib</th>
-                <th className="px-6 py-4 text-center font-black">Aksi</th>
+                <th className="px-6 py-4">Nama OPD</th>
+                <th className="px-6 py-4">Terakhir Kirim</th>
+                <th className="px-6 py-4 text-center">Status</th>
+                <th className="px-6 py-4">Progres Wajib</th>
+                <th className="px-6 py-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredData.map((o, idx) => (
-                <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
+              {filteredData.map((o) => (
+                <tr key={o.user_id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4 font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors">{o.opd_name}</td>
                   <td className="px-6 py-4 text-gray-400 font-medium">{o.last_submit ? new Date(o.last_submit).toLocaleDateString('id-ID') : '-'}</td>
                   <td className="px-6 py-4 text-center">
-                    <StatusBadge status={o.status} />
+                    <StatusBadge status={o.status as any} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-emerald-500 rounded-full" 
-                          style={{ width: `${(o.datasets_sent / o.datasets_required) * 100}%` }}
+                          className={`h-full rounded-full ${o.upload_count >= 12 ? 'bg-emerald-500' : 'bg-amber-500'}`} 
+                          style={{ width: `${Math.min((o.upload_count / 12) * 100, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] font-black text-gray-400">{o.datasets_sent}/{o.datasets_required}</span>
+                      <span className="text-[10px] font-black text-gray-400">{o.progress}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex justify-center gap-2">
-                      <button onClick={() => alert(`🔔 Reminder dikirim ke ${o.opd_name}`)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                      <button 
+                        onClick={() => handleSendReminder(o.user_id)} 
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                        title="Kirim Reminder"
+                      >
                         <Bell size={18} />
                       </button>
-                      <button onClick={() => setSelectedOpd(o)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                      <button 
+                        onClick={() => setSelectedOpd(o)} 
+                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
+                        title="Detail Profil"
+                      >
                         <Info size={18} />
                       </button>
                     </div>
@@ -242,7 +245,7 @@ export default function MonitoringOpdPage() {
         </div>
       </div>
 
-      {/* 6. DETAIL MODAL */}
+      {/* DETAIL MODAL */}
       {selectedOpd && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
@@ -260,23 +263,23 @@ export default function MonitoringOpdPage() {
                  <h4 className="text-lg font-black text-gray-800">{selectedOpd.opd_name}</h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status Saat Ini</p>
-                  <StatusBadge status={selectedOpd.status} />
+                <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-center">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</p>
+                  <StatusBadge status={selectedOpd.status as any} />
                 </div>
-                <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-center">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Rerata Kualitas</p>
-                  <p className="text-2xl font-black text-blue-600">{selectedOpd.quality_avg}%</p>
+                  <p className="text-2xl font-black text-blue-600">{selectedOpd.avg_quality}%</p>
                 </div>
               </div>
               <div className="space-y-4 text-sm bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <DetailRow label="Kontak Email" value={selectedOpd.contact} />
-                <DetailRow label="No. Telepon" value={selectedOpd.phone} />
-                <DetailRow label="Dataset Terkirim" value={`${selectedOpd.datasets_sent} dari ${selectedOpd.datasets_required}`} />
-                <DetailRow label="Terakhir Submit" value={selectedOpd.last_submit || "Belum pernah"} />
+                <DetailRow label="Username" value={`@${selectedOpd.username}`} />
+                <DetailRow label="Kontak Email" value={selectedOpd.email} />
+                <DetailRow label="Dataset Bulan Ini" value={`${selectedOpd.upload_count} Dataset`} />
+                <DetailRow label="Terakhir Submit" value={selectedOpd.last_submit ? new Date(selectedOpd.last_submit).toLocaleDateString('id-ID') : "Belum pernah"} />
               </div>
               <button 
-                onClick={() => { alert(`Reminder terkirim ke ${selectedOpd.opd_name}`); setSelectedOpd(null); }}
+                onClick={() => { handleSendReminder(selectedOpd.user_id); setSelectedOpd(null); }}
                 className="w-full bg-[#ef4444] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-100 flex items-center justify-center gap-2 hover:bg-red-600 transition-all active:scale-95"
               >
                 <Send size={16} /> Kirim Pesan Reminder

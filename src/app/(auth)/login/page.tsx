@@ -99,7 +99,7 @@ export default function LoginPage() {
               <span className="text-blue-400">Kabupaten Mimika.</span>
             </h2>
             <p className="text-slate-300 text-lg max-w-md font-medium leading-relaxed">
-              Masuk untuk mengakses dasbor sektoral, mengelola dataset, dan memantau statistik pembangunan daerah secara *real-time*.
+              Masuk untuk mengakses dasbor sektoral, mengelola dataset, dan memantau statistik pembangunan daerah secara.
             </p>
           </div>
 

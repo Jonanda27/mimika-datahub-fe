@@ -21,3 +21,8 @@ export interface UserProfile {
   is_active: boolean;
   created_at?: string;
 }
+
+export interface LogoutResponse {
+  status: string;
+  message: string;
+}
