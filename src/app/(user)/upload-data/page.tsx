@@ -20,6 +20,7 @@ import { useIngestStore } from "./../../store/useIngestStore";
 import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
+import { useDatasetStore } from "./../../store/useDatasetStore"; // Tambahkan ini
 
 // --- Types ---
 export interface UploadLog {
@@ -46,8 +47,10 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+  
+  // Integrasi Dataset Store untuk mengambil data 'My Datasets'
+  const { myDatasets, fetchMyDatasets } = useDatasetStore();
 
-  const [logs, setLogs] = useState<UploadLog[]>([]);
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSourceTypeModal, setShowSourceTypeModal] = useState(false);
@@ -57,16 +60,31 @@ export default function UploadDataPage() {
   useEffect(() => {
     const loadInitialData = async () => {
       setIsLoading(true);
-      // Fetch semua data master dari database [cite: 49, 57, 82]
-      await Promise.all([
-        fetchSources(), 
-        fetchCategories(), 
-        fetchSourceTypes()
-      ]);
-      setIsLoading(false);
+      try {
+        // Fetch semua data master dan riwayat dataset user secara paralel [cite: 438, 439]
+        await Promise.all([
+          fetchSources(), 
+          fetchCategories(), 
+          fetchSourceTypes(),
+          fetchMyDatasets() // Panggil service getMyDatasets melalui store
+        ]);
+      } catch (error) {
+        console.error("Gagal memuat data awal:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+
+  // Transformasi data API ke format UploadLog untuk tabel
+  const logs: UploadLog[] = myDatasets.map((ds) => ({
+    date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
+    name: ds.title,
+    source: sources.find(s => s.id === ds.source_id)?.name || "Sumber External",
+    status: ds.status as StatusType,
+    quality: ds.quality_score
+  }));
 
   // --- Handlers ---
   const showAlert = (message: string, type: "success" | "danger" | "info") => {
@@ -104,7 +122,6 @@ export default function UploadDataPage() {
         showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
       }
       
-      // Reset Modal State
       setShowSourceModal(false);
       setShowCategoryModal(false);
       setShowSourceTypeModal(false);
@@ -158,17 +175,10 @@ export default function UploadDataPage() {
       });
 
       setResult(result);
-
-      const newLog: UploadLog = {
-        date: new Date().toLocaleString("id-ID").replace(/\//g, "-"),
-        name: title,
-        source: sources.find(s => s.id === Number(sourceId))?.name || "Kustom",
-        status: "staging",
-        quality: result.stats.quality_score 
-      };
-
-      setLogs([newLog, ...logs]);
       showAlert(result.message, "success");
+      
+      // Refresh data riwayat setelah upload berhasil
+      await fetchMyDatasets();
       
       setSelectedFile(null);
       formElement.reset();
@@ -192,7 +202,7 @@ export default function UploadDataPage() {
   }
 
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500 text-black">
       <PageHeader 
         title="Upload Data" 
         subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
@@ -235,7 +245,6 @@ export default function UploadDataPage() {
         © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
       </footer>
 
-      {/* Modal Universal */}
       <AddItemModal 
         isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
         onClose={() => { 

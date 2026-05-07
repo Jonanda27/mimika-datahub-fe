@@ -11,3 +11,13 @@ export interface UserAuth {
   role: string;
   isAuthenticated: boolean;
 }
+
+export interface UserProfile {
+  id: number;
+  username: string;
+  email: string | null;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  created_at?: string;
+}

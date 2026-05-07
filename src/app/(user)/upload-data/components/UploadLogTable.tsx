@@ -9,7 +9,7 @@ interface UploadLogTableProps {
 
 export default function UploadLogTable({ logs }: UploadLogTableProps) {
   return (
-    <div className="mt-8 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="mt-8 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-black">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
         <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
           <History size={18} className="text-gray-400" /> Log Pengiriman Data
@@ -37,7 +37,9 @@ export default function UploadLogTable({ logs }: UploadLogTableProps) {
                   <td className="px-6 py-4 text-center">
                     <StatusBadge status={log.status} />
                   </td>
-                  <td className="px-6 py-4 font-black text-gray-300 text-right">{log.quality ? `${log.quality}%` : '-'}</td>
+                  <td className="px-6 py-4 font-black text-gray-400 text-right">
+                    {log.quality !== null ? `${log.quality}%` : '-'}
+                  </td>
                 </tr>
               ))
             ) : (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { 
   Database, CloudUpload, Building, Star, Clock, 
-  Flame, TrendingUp, Activity, AlertTriangle, Building2 
+  Flame, TrendingUp, Activity, AlertTriangle, Building2, Users 
 } from "lucide-react";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -16,6 +16,9 @@ import StatCard from "@/components/ui/StatCard";
 import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
 
+// Integrasi Store
+import { useStatsStore } from "@/src/app/store/useStatsStore";
+
 // --- Internal Reusable Components ---
 const AlertCard = ({ title, desc }: { title: string, desc: string }) => (
   <div className="bg-[#fff5f6] border-l-[3px] border-[#ef4444] rounded-xl p-4 mb-4 last:mb-0 shadow-sm transition-all hover:shadow-md">
@@ -27,69 +30,83 @@ const AlertCard = ({ title, desc }: { title: string, desc: string }) => (
   </div>
 );
 
-const OpdStatusRow = ({ opdName, date, status }: { opdName: string, date: string, status: StatusType }) => (
+const OpdStatusRow = ({ opdName, terkirim, target, status }: { opdName: string, terkirim: number, target: number, status: string }) => (
   <div className="flex justify-between items-center py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-4 -mx-4 rounded-xl group">
     <div>
       <h4 className="text-sm font-bold text-gray-900 group-hover:text-[#1e61d0] transition-colors">{opdName}</h4>
-      <p className="text-[11px] text-gray-500 mt-1">Terakhir kirim: {date}</p>
+      <p className="text-[11px] text-gray-500 mt-1">Progres: {terkirim}/{target} Dataset</p>
     </div>
-    <StatusBadge status={status} />
+    <StatusBadge status={status === "Lengkap" ? "Lengkap" : "Kurang"} />
   </div>
 );
 
-// --- Chart Data ---
-const chartData = [
-  { name: 'Jan', score: 71 }, { name: 'Feb', score: 73 }, { name: 'Mar', score: 78 },
-  { name: 'Apr', score: 75 }, { name: 'Mei', score: 80 }, { name: 'Jun', score: 82 },
-  { name: 'Jul', score: 84 }, { name: 'Ags', score: 85 }, { name: 'Sep', score: 85 },
-  { name: 'Okt', score: 86 }, { name: 'Nov', score: 87 }, { name: 'Des', score: 87 },
-];
-
 export default function ManagerDashboardPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const { dashboardData, fetchMainStats, isLoading } = useStatsStore();
 
-  // Simulasi Loading Data Awal
+  // Fetch Data dari API saat komponen dimuat
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchMainStats();
+  }, [fetchMainStats]);
 
-  if (isLoading) {
+  if (isLoading || !dashboardData) {
     return (
-      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+      <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans text-black">
         <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
         <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
       </div>
     );
   }
 
+  // Mapping data trend untuk Recharts (Bulan 1-12 ke Nama)
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+  const formattedTrendData = dashboardData.quality_trend.map(item => ({
+    name: monthNames[item.bulan - 1],
+    score: item.skor
+  }));
+
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
+    <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans animate-in fade-in duration-500 text-black">
       
-      {/* 1. HEADER BANNER - Menggunakan Komponen Global */}
+      {/* 1. HEADER BANNER */}
       <PageHeader 
-        title="Dashboard" 
+        title="Dashboard Utama" 
         subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika" 
         withSearch 
       />
 
-      {/* 2. SUMMARY CARDS - Menggunakan Komponen Global */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total Dataset" value="12" icon={<Database size={22} />} iconBg="bg-[#7e57c2]" />
-        <StatCard label="Sumber Data" value="7" icon={<CloudUpload size={22} />} iconBg="bg-[#ec407a]" />
-        <StatCard label="OPD Aktif" value="8" icon={<Building size={22} />} iconBg="bg-[#29b6f6]" />
+      {/* 2. SUMMARY CARDS - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <StatCard 
-          label="Rata-rata Kualitas" value="87%" 
-          icon={<Star size={22} fill="currentColor" />} iconBg="bg-[#66bb6a]" valueColor="text-[#66bb6a]" 
+          label="Total Dataset" 
+          value={dashboardData.cards.total_dataset} 
+          icon={<Database size={22} />} 
+          iconBg="bg-[#7e57c2]" 
+        />
+        <StatCard 
+          label="OPD Aktif" 
+          value={dashboardData.cards.total_sumber} 
+          icon={<Building size={22} />} 
+          iconBg="bg-[#29b6f6]" 
+        />
+        <StatCard 
+          label="User Aktif" 
+          value={dashboardData.cards.user_aktif} 
+          icon={<Users size={22} />} 
+          iconBg="bg-[#ec407a]" 
+        />
+        <StatCard 
+          label="Rata-rata Kualitas" 
+          value={dashboardData.cards.rata_rata_kualitas} 
+          icon={<Star size={22} fill="currentColor" />} 
+          iconBg="bg-[#66bb6a]" 
+          valueColor="text-[#66bb6a]" 
         />
       </div>
 
-      {/* 3. DATA LISTS */}
+      {/* 3. DATA LISTS - Responsive Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Dataset Terbaru */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Clock size={18} className="text-gray-700" /> Dataset Terbaru
@@ -97,26 +114,20 @@ export default function ManagerDashboardPage() {
             <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
           </div>
           <div className="space-y-5">
-            {[
-              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", date: "15/3/2025" },
-              { title: "Data Inflasi Bulanan Papua Tengah", src: "BPS Provinsi Papua Tengah", date: "14/3/2025" },
-              { title: "Data Fasilitas Kesehatan per Distrik", src: "Dinas Kesehatan", date: "10/3/2025" },
-              { title: "Data Tenaga Kesehatan Mimika", src: "Dinas Kesehatan", date: "8/3/2025" },
-              { title: "Realisasi APBD Mimika 2025", src: "Bappeda Mimika", date: "5/3/2025" },
-            ].map((item, index) => (
-              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                <div>
-                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors">{item.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.date}</p>
+            {dashboardData.recent.map((item) => (
+              <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div className="max-w-[70%]">
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">Tahun {item.year} • {new Date(item.created_at).toLocaleDateString('id-ID')}</p>
                 </div>
-                <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-red-100">Baru</span>
+                <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-red-100 shrink-0">Baru</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Dataset Populer */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Flame size={18} className="text-gray-700" /> Dataset Populer
@@ -124,30 +135,24 @@ export default function ManagerDashboardPage() {
             <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
           </div>
           <div className="space-y-5">
-            {[
-              { title: "RPJMD Mimika 2025-2029", src: "Bappeda Mimika", views: "567x" },
-              { title: "RTRW Kabupaten Mimika", src: "BIG", views: "432x" },
-              { title: "Angka Kemiskinan Kabupaten Mimika", src: "BPS Mimika", views: "423x" },
-              { title: "Indeks Pembangunan Manusia (IPM)", src: "BPS Mimika", views: "378x" },
-              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", views: "345x" },
-            ].map((item, index) => (
-              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                <div>
-                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors">{item.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.views} diakses</p>
+            {dashboardData.popular.map((item) => (
+              <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div className="max-w-[80%]">
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.total_rows} Record • {item.quality_score}% Kualitas</p>
                 </div>
-                <TrendingUp size={18} className="text-[#ef4444]" />
+                <TrendingUp size={18} className="text-[#ef4444] shrink-0" />
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 4. GRAFIK & ALERT */}
+      {/* 4. GRAFIK & ALERT - Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Tren Kualitas Data */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-7 overflow-hidden">
-          <div className="flex justify-between items-center mb-8">
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Activity size={18} className="text-gray-700" /> Tren Kualitas Data per Bulan
             </h3>
@@ -158,7 +163,7 @@ export default function ManagerDashboardPage() {
           </div>
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+              <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
@@ -179,8 +184,8 @@ export default function ManagerDashboardPage() {
           </div>
         </div>
 
-        {/* Peringatan Kualitas */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+        {/* Peringatan Kualitas (Contoh Statis Berdasarkan Skor Terendah) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <AlertTriangle size={18} className="text-[#ef4444]" /> Notifikasi Kualitas
@@ -188,35 +193,41 @@ export default function ManagerDashboardPage() {
             <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Kelola →</span>
           </div>
           <div className="space-y-4">
-            <AlertCard title="Dinas Kesehatan" desc="Data Fasilitas Kesehatan - Skor Kualitas: 78%" />
-            <AlertCard title="Dinas PU" desc="Data Jalan Kabupaten - Skor Kualitas: 75%" />
+            {dashboardData.popular.filter(d => d.quality_score < 80).length > 0 ? (
+                dashboardData.popular.filter(d => d.quality_score < 80).map(d => (
+                    <AlertCard key={d.id} title={d.title} desc={`Skor Kualitas terdeteksi rendah: ${d.quality_score}%`} />
+                ))
+            ) : (
+                <p className="text-xs text-gray-400 italic text-center py-10">Tidak ada peringatan kualitas saat ini.</p>
+            )}
           </div>
         </div>
       </div>
 
       {/* 5. STATUS KIRIM OPD */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
         <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <Building2 size={18} className="text-gray-700" /> Kepatuhan Pengiriman OPD
+            <Building2 size={18} className="text-gray-700" /> Kepatuhan Pengiriman OPD (Bulan Ini)
           </h3>
           <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Detail →</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
           <div className="space-y-1">
-            <OpdStatusRow opdName="Bappeda" date="01/03/2025" status="Lengkap" />
-            <OpdStatusRow opdName="Dinas Kesehatan" date="08/03/2025" status="Kurang" />
-            <OpdStatusRow opdName="Dinas Pendidikan" date="10/03/2025" status="Kurang" />
+            {dashboardData.opd_monthly_monitoring.slice(0, Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
+               <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+            ))}
           </div>
           <div className="space-y-1">
-            <OpdStatusRow opdName="Dinas PU" date="15/03/2025" status="Kurang" />
-            <OpdStatusRow opdName="Dinas Sosial" date="Belum pernah" status="Belum Kirim" />
+            {dashboardData.opd_monthly_monitoring.slice(Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
+               <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+            ))}
           </div>
         </div>
       </div>
 
       <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
-        © 2025 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+        © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
       </footer>
     </div>
   );

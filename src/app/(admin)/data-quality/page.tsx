@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { 
   Database, CheckCheck, CheckCircle, 
-  Eye, Info, ArrowRight, X
+  Eye, Info, ArrowRight, X, Clock
 } from "lucide-react";
 
 // Import Komponen Global
@@ -18,38 +18,46 @@ import { Dataset } from "../../types/dataset";
 export default function DataQualityPage() {
   // --- States ---
   const { 
-    pendingDatasets, 
+    pendingDatasets,
+    approvedDatasets, // Menampilkan data yang sudah disetujui [cite: 593]
     isLoading: isStoreLoading, 
-    fetchPendingDatasets, 
+    fetchPendingDatasets,
+    fetchApprovedDatasets, // Service baru untuk mengambil data approved [cite: 594]
     approveDataset 
   } = useDatasetStore();
   
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
 
   // --- Initial Data Fetching ---
   useEffect(() => {
     const loadData = async () => {
       setIsInitialLoading(true);
       try {
-        // Hanya mengambil data pending sesuai ketersediaan service
-        await fetchPendingDatasets();
+        // Mengambil data pending dan approved secara paralel [cite: 550, 551]
+        await Promise.all([
+          fetchPendingDatasets(),
+          fetchApprovedDatasets()
+        ]);
       } catch (error) {
-        console.error("Gagal memuat data pending:", error);
+        console.error("Gagal memuat data:", error);
       } finally {
         setIsInitialLoading(false);
       }
     };
     loadData();
-  }, [fetchPendingDatasets]);
+  }, [fetchPendingDatasets, fetchApprovedDatasets]);
 
   // --- Actions ---
   const handleApprove = async (id: number) => {
     if (confirm("Apakah Anda yakin ingin menyetujui dataset ini untuk dipublikasikan?")) {
       try {
-        // Panggil action store untuk update status di DB ke 'approved' [cite: 78, 79]
+        // Panggil action store untuk update status di DB ke 'approved' [cite: 555, 596]
         await approveDataset(id);
         alert("Dataset berhasil disetujui!");
+        // Refresh data approved setelah disetujui
+        await fetchApprovedDatasets();
       } catch (error: any) {
         alert(error.message || "Gagal menyetujui dataset");
       }
@@ -65,6 +73,9 @@ export default function DataQualityPage() {
     );
   }
 
+  // Menentukan data mana yang akan ditampilkan di tabel berdasarkan tab
+  const displayData = activeTab === "pending" ? pendingDatasets : approvedDatasets;
+
   return (
     <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
       {/* 1. HEADER BANNER */}
@@ -74,7 +85,7 @@ export default function DataQualityPage() {
       />
 
       {/* 2. STATS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard 
           label="Menunggu Validasi" 
           value={pendingDatasets.length} 
@@ -82,9 +93,15 @@ export default function DataQualityPage() {
           iconBg="bg-amber-500" 
         />
         <StatCard 
+          label="Telah Disetujui" 
+          value={approvedDatasets.length} 
+          icon={<CheckCircle size={22} />} 
+          iconBg="bg-blue-500" 
+        />
+        <StatCard 
           label="Sistem Status" 
           value="Aktif" 
-          icon={<CheckCircle size={22} />} 
+          icon={<Activity size={22} className="text-white" />} 
           iconBg="bg-emerald-500" 
           valueColor="text-emerald-500" 
         />
@@ -96,29 +113,48 @@ export default function DataQualityPage() {
           icon={<CheckCheck size={20} />} 
           label="Validation (Pending)" 
           active={pendingDatasets.length > 0} 
+          completed={pendingDatasets.length === 0 && approvedDatasets.length > 0}
         />
         <ArrowRight className="text-gray-300" />
         <PipelineStep 
           icon={<Database size={20} />} 
           label="Approved" 
-          completed={false} 
+          active={activeTab === "approved"}
+          completed={approvedDatasets.length > 0} 
         />
       </div>
 
       {/* 4. TABS NAVIGATION */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <div className="px-5 py-2.5 rounded-xl text-xs font-black bg-[#ef4444] text-white shadow-xl shadow-red-100 uppercase tracking-tighter">
+        <button 
+          onClick={() => setActiveTab("pending")}
+          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-tighter transition-all ${
+            activeTab === "pending" 
+            ? "bg-[#ef4444] text-white shadow-xl shadow-red-100" 
+            : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
+          }`}
+        >
           Validation ({pendingDatasets.length})
-        </div>
+        </button>
+        <button 
+          onClick={() => setActiveTab("approved")}
+          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-tighter transition-all ${
+            activeTab === "approved" 
+            ? "bg-blue-600 text-white shadow-xl shadow-blue-100" 
+            : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
+          }`}
+        >
+          Approved ({approvedDatasets.length})
+        </button>
       </div>
 
       {/* 5. TABLE SECTION */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <TableHeader columns={["ID", "Dataset", "Skor Kualitas", "Tahun/Periode", "Aksi"]} />
+            <TableHeader columns={["ID", "Dataset", "Skor Kualitas", "Status", "Aksi"]} />
             <tbody className="divide-y divide-gray-50">
-              {pendingDatasets.length > 0 ? pendingDatasets.map(d => (
+              {displayData.length > 0 ? displayData.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-gray-400">#{d.id}</td>
                   <td className="px-6 py-4">
@@ -132,14 +168,26 @@ export default function DataQualityPage() {
                         {d.quality_score}%
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500 font-medium">{d.year} / {d.period}</td>
+                  <td className="px-6 py-4">
+                    {d.status === "approved" ? (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase">
+                        <CheckCircle size={12} /> Approved
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase">
+                        <Clock size={12} /> Pending
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 flex gap-2">
-                    <button 
-                      onClick={() => handleApprove(d.id)} 
-                      className="px-4 py-2 bg-[#ef4444] text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-100 uppercase tracking-tighter"
-                    >
-                      Setujui
-                    </button>
+                    {d.status === "pending" && (
+                      <button 
+                        onClick={() => handleApprove(d.id)} 
+                        className="px-4 py-2 bg-[#ef4444] text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-100 uppercase tracking-tighter"
+                      >
+                        Setujui
+                      </button>
+                    )}
                     <button 
                       onClick={() => setSelectedDataset(d)} 
                       className="p-2 border border-gray-200 rounded-xl text-gray-400 hover:bg-gray-50 transition-all"
@@ -148,7 +196,7 @@ export default function DataQualityPage() {
                     </button>
                   </td>
                 </tr>
-              )) : <EmptyState colSpan={5} />}
+              )) : <EmptyState colSpan={5} message={activeTab === "approved" ? "Belum ada data yang disetujui" : "Tidak ada data yang menunggu validasi"} />}
             </tbody>
           </table>
         </div>
@@ -180,6 +228,10 @@ export default function DataQualityPage() {
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Tahun Data</p>
                   <p className="text-lg font-bold text-blue-700 leading-tight">{selectedDataset.year}</p>
                 </div>
+              </div>
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Publikasi</p>
+                <p className="text-sm font-bold text-gray-800 capitalize">{selectedDataset.status}</p>
               </div>
             </div>
             <button onClick={() => setSelectedDataset(null)} className="w-full mt-8 py-4 bg-[#0a2647] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-[#144272] transition-all active:scale-95">Tutup Detail</button>
@@ -217,15 +269,35 @@ function TableHeader({ columns }: { columns: string[] }) {
   );
 }
 
-function EmptyState({ colSpan }: { colSpan: number }) {
+function EmptyState({ colSpan, message }: { colSpan: number, message: string }) {
   return (
     <tr>
       <td colSpan={colSpan} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-xs italic">
         <div className="flex flex-col items-center gap-2 opacity-50">
            <Database size={40} />
-           Tidak ada data yang menunggu validasi
+           {message}
         </div>
       </td>
     </tr>
+  );
+}
+
+// Komponen internal yang digunakan di Dashboard
+function Activity({ size, className }: { size: number, className: string }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+    </svg>
   );
 }

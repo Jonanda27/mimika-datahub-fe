@@ -23,6 +23,7 @@ mimika-datahub-fe/public/vercel.svg
 mimika-datahub-fe/public/window.svg
 mimika-datahub-fe/src/app/(admin)/admin-dashboard/page.tsx
 mimika-datahub-fe/src/app/(admin)/akun-management/page.tsx
+mimika-datahub-fe/src/app/(admin)/data-quality/page.tsx
 mimika-datahub-fe/src/app/(admin)/layout.tsx
 mimika-datahub-fe/src/app/(admin)/monitoring-opd/page.tsx
 mimika-datahub-fe/src/app/(auth)/login/page.tsx
@@ -30,12 +31,34 @@ mimika-datahub-fe/src/app/(user)/dashboard/page.tsx
 mimika-datahub-fe/src/app/(user)/data-brida/page.tsx
 mimika-datahub-fe/src/app/(user)/data-non-pemerintah/page.tsx
 mimika-datahub-fe/src/app/(user)/data-pemerintah/page.tsx
-mimika-datahub-fe/src/app/(user)/data-quality/page.tsx
 mimika-datahub-fe/src/app/(user)/layout.tsx
+mimika-datahub-fe/src/app/(user)/upload-data/components/AddItemModal.tsx
+mimika-datahub-fe/src/app/(user)/upload-data/components/DatasetForm.tsx
+mimika-datahub-fe/src/app/(user)/upload-data/components/FileUploadArea.tsx
+mimika-datahub-fe/src/app/(user)/upload-data/components/UploadLogTable.tsx
 mimika-datahub-fe/src/app/(user)/upload-data/page.tsx
 mimika-datahub-fe/src/app/globals.css
 mimika-datahub-fe/src/app/layout.tsx
+mimika-datahub-fe/src/app/lib/config.ts
 mimika-datahub-fe/src/app/page.tsx
+mimika-datahub-fe/src/app/services/auth.service.ts
+mimika-datahub-fe/src/app/services/category.service.ts
+mimika-datahub-fe/src/app/services/dataset.service.ts
+mimika-datahub-fe/src/app/services/ingest.service.ts
+mimika-datahub-fe/src/app/services/source-type.service.ts
+mimika-datahub-fe/src/app/services/source.service.ts
+mimika-datahub-fe/src/app/store/useAuthStore.ts
+mimika-datahub-fe/src/app/store/useCategoryStore.ts
+mimika-datahub-fe/src/app/store/useDatasetStore.ts
+mimika-datahub-fe/src/app/store/useIngestStore.ts
+mimika-datahub-fe/src/app/store/useSourceStore.ts
+mimika-datahub-fe/src/app/store/useSourceTypeStore.ts
+mimika-datahub-fe/src/app/types/auth.ts
+mimika-datahub-fe/src/app/types/category.ts
+mimika-datahub-fe/src/app/types/dataset.ts
+mimika-datahub-fe/src/app/types/ingest.ts
+mimika-datahub-fe/src/app/types/source-type.ts
+mimika-datahub-fe/src/app/types/source.ts
 mimika-datahub-fe/tsconfig.json
 
 
@@ -122,6 +145,7 @@ export default function ManagerSidebar() {
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Manajemen Akun", href: "/akun-management", icon: BarChart2 },
     { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
+     { name: "Data Quality", href: "/data-quality", icon: Globe },
   ];
 
   return (
@@ -184,6 +208,7 @@ export default function ManagerSidebar() {
 --- START FILE: mimika-datahub-fe/components/layout/PageHeader.tsx ---
 // components/layout/PageHeader.tsx
 import { Search, Bell } from "lucide-react";
+import Image from "next/image";
 
 interface PageHeaderProps {
   title: string;
@@ -194,12 +219,27 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, withSearch, onSearch }: PageHeaderProps) {
   return (
-    <div className="bg-[#1e61d0] bg-gradient-to-r from-[#1e61d0] to-[#0b3370] rounded-2xl p-7 mb-8 text-white flex justify-between items-center shadow-md relative overflow-hidden">
-      <div className="relative z-10">
-        <h2 className="text-2xl font-bold mb-1">{title}</h2>
-        <p className="text-blue-100 text-xs tracking-wide">{subtitle}</p>
+    <div className="rounded-2xl p-7 mb-8 text-white flex justify-between items-center shadow-md relative overflow-hidden min-h-[140px]">
+      {/* 1. Background Image Layer */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+          src="/background-papua.jpg" 
+          alt="Background Papua"
+          fill
+          priority
+          className="object-cover object-center grayscale-[20%]"
+        />
+        {/* Overlay Gradient agar teks tetap mudah dibaca di atas gambar */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1e61d0]/90 to-[#0b3370]/80"></div>
       </div>
 
+      {/* 2. Content Layer (Title & Subtitle) */}
+      <div className="relative z-10">
+        <h2 className="text-2xl font-bold mb-1 drop-shadow-md">{title}</h2>
+        <p className="text-blue-100 text-xs tracking-wide font-medium">{subtitle}</p>
+      </div>
+
+      {/* 3. Action Layer (Search & Notifications) */}
       <div className="flex items-center gap-5 relative z-10">
         {withSearch && (
           <div className="relative">
@@ -208,15 +248,15 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
               type="text" 
               placeholder="Cari..." 
               onChange={(e) => onSearch?.(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-full bg-black/10 border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-[280px] text-sm transition-all"
+              className="pl-9 pr-4 py-2 rounded-full bg-black/20 backdrop-blur-md border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-[280px] text-sm transition-all"
             />
           </div>
         )}
-        <div className="relative cursor-pointer bg-black/10 p-2 rounded-full border border-white/10 hover:bg-black/20 transition">
+        <div className="relative cursor-pointer bg-black/20 backdrop-blur-md p-2 rounded-full border border-white/10 hover:bg-black/30 transition">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
         </div>
-        <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md cursor-pointer border border-red-400">
+        <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center font-bold text-sm shadow-md cursor-pointer border border-red-400 hover:scale-105 transition-transform">
           AD
         </div>
       </div>
@@ -242,13 +282,12 @@ export default function ManagerSidebar() {
   const [isOpen, setIsOpen] = useState(false); // State untuk mobile menu
 
   const menuItems = [
-    { name: "Dashboard", href: "/manager/dashboard", icon: LayoutDashboard },
-    { name: "Data Pemerintah", href: "/manager/data-pemerintah", icon: Building2 },
-    { name: "Data Non Pemerintah", href: "/manager/data-non-pemerintah", icon: Globe },
-    { name: "Data BRIDA", href: "/manager/data-brida", icon: LineChart },
-    { name: "Upload Data", href: "/manager/upload-data", icon: Upload },
-    { name: "Data Quality", href: "/manager/data-quality", icon: BarChart2 },
-    { name: "Monitoring OPD", href: "/manager/monitoring-opd", icon: Eye },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Data Pemerintah", href: "/data-pemerintah", icon: Building2 },
+    { name: "Data Non Pemerintah", href: "/data-non-pemerintah", icon: Globe },
+    { name: "Data BRIDA", href: "/data-brida", icon: LineChart },
+    { name: "Upload Data", href: "/upload-data", icon: Upload },
+    { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
   ];
 
   return (
@@ -594,7 +633,8 @@ export default nextConfig;
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -642,12 +682,468 @@ export default config;
 --- END FILE: mimika-datahub-fe/public/window.svg ---
 
 --- START FILE: mimika-datahub-fe/src/app/(admin)/admin-dashboard/page.tsx ---
+"use client";
 
+import { useState, useEffect } from "react";
+import { 
+  Database, CloudUpload, Building, Star, Clock, 
+  Flame, TrendingUp, Activity, AlertTriangle, Building2 
+} from "lucide-react";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer 
+} from "recharts";
+
+// Import Komponen Global
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
+import LoadingState from "@/components/ui/LoadingState";
+
+// --- Internal Reusable Components ---
+const AlertCard = ({ title, desc }: { title: string, desc: string }) => (
+  <div className="bg-[#fff5f6] border-l-[3px] border-[#ef4444] rounded-xl p-4 mb-4 last:mb-0 shadow-sm transition-all hover:shadow-md">
+    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <AlertTriangle size={16} className="text-[#f59e0b] fill-[#fef3c7]" /> 
+      {title}
+    </h4>
+    <p className="text-xs text-gray-600">{desc}</p>
+  </div>
+);
+
+const OpdStatusRow = ({ opdName, date, status }: { opdName: string, date: string, status: StatusType }) => (
+  <div className="flex justify-between items-center py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-4 -mx-4 rounded-xl group">
+    <div>
+      <h4 className="text-sm font-bold text-gray-900 group-hover:text-[#1e61d0] transition-colors">{opdName}</h4>
+      <p className="text-[11px] text-gray-500 mt-1">Terakhir kirim: {date}</p>
+    </div>
+    <StatusBadge status={status} />
+  </div>
+);
+
+// --- Chart Data ---
+const chartData = [
+  { name: 'Jan', score: 71 }, { name: 'Feb', score: 73 }, { name: 'Mar', score: 78 },
+  { name: 'Apr', score: 75 }, { name: 'Mei', score: 80 }, { name: 'Jun', score: 82 },
+  { name: 'Jul', score: 84 }, { name: 'Ags', score: 85 }, { name: 'Sep', score: 85 },
+  { name: 'Okt', score: 86 }, { name: 'Nov', score: 87 }, { name: 'Des', score: 87 },
+];
+
+export default function ManagerDashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulasi Loading Data Awal
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+        <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
+        <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
+      
+      {/* 1. HEADER BANNER - Menggunakan Komponen Global */}
+      <PageHeader 
+        title="Dashboard" 
+        subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika" 
+        withSearch 
+      />
+
+      {/* 2. SUMMARY CARDS - Menggunakan Komponen Global */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard label="Total Dataset" value="12" icon={<Database size={22} />} iconBg="bg-[#7e57c2]" />
+        <StatCard label="Sumber Data" value="7" icon={<CloudUpload size={22} />} iconBg="bg-[#ec407a]" />
+        <StatCard label="OPD Aktif" value="8" icon={<Building size={22} />} iconBg="bg-[#29b6f6]" />
+        <StatCard 
+          label="Rata-rata Kualitas" value="87%" 
+          icon={<Star size={22} fill="currentColor" />} iconBg="bg-[#66bb6a]" valueColor="text-[#66bb6a]" 
+        />
+      </div>
+
+      {/* 3. DATA LISTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Dataset Terbaru */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Clock size={18} className="text-gray-700" /> Dataset Terbaru
+            </h3>
+            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
+          </div>
+          <div className="space-y-5">
+            {[
+              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", date: "15/3/2025" },
+              { title: "Data Inflasi Bulanan Papua Tengah", src: "BPS Provinsi Papua Tengah", date: "14/3/2025" },
+              { title: "Data Fasilitas Kesehatan per Distrik", src: "Dinas Kesehatan", date: "10/3/2025" },
+              { title: "Data Tenaga Kesehatan Mimika", src: "Dinas Kesehatan", date: "8/3/2025" },
+              { title: "Realisasi APBD Mimika 2025", src: "Bappeda Mimika", date: "5/3/2025" },
+            ].map((item, index) => (
+              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.date}</p>
+                </div>
+                <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-red-100">Baru</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dataset Populer */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Flame size={18} className="text-gray-700" /> Dataset Populer
+            </h3>
+            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
+          </div>
+          <div className="space-y-5">
+            {[
+              { title: "RPJMD Mimika 2025-2029", src: "Bappeda Mimika", views: "567x" },
+              { title: "RTRW Kabupaten Mimika", src: "BIG", views: "432x" },
+              { title: "Angka Kemiskinan Kabupaten Mimika", src: "BPS Mimika", views: "423x" },
+              { title: "Indeks Pembangunan Manusia (IPM)", src: "BPS Mimika", views: "378x" },
+              { title: "Jumlah Penduduk per Distrik 2025", src: "BPS Mimika", views: "345x" },
+            ].map((item, index) => (
+              <div key={index} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors">{item.title}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.src} • {item.views} diakses</p>
+                </div>
+                <TrendingUp size={18} className="text-[#ef4444]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 4. GRAFIK & ALERT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Tren Kualitas Data */}
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-7 overflow-hidden">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Activity size={18} className="text-gray-700" /> Tren Kualitas Data per Bulan
+            </h3>
+            <div className="flex items-center gap-2">
+               <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
+               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
+            </div>
+          </div>
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
+                  formatter={(v) => [`${v}%`, "Skor"]} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#ef4444" 
+                  strokeWidth={4} 
+                  dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} 
+                  activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Peringatan Kualitas */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <AlertTriangle size={18} className="text-[#ef4444]" /> Notifikasi Kualitas
+            </h3>
+            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Kelola →</span>
+          </div>
+          <div className="space-y-4">
+            <AlertCard title="Dinas Kesehatan" desc="Data Fasilitas Kesehatan - Skor Kualitas: 78%" />
+            <AlertCard title="Dinas PU" desc="Data Jalan Kabupaten - Skor Kualitas: 75%" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. STATUS KIRIM OPD */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-7">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Building2 size={18} className="text-gray-700" /> Kepatuhan Pengiriman OPD
+          </h3>
+          <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Detail →</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+          <div className="space-y-1">
+            <OpdStatusRow opdName="Bappeda" date="01/03/2025" status="Lengkap" />
+            <OpdStatusRow opdName="Dinas Kesehatan" date="08/03/2025" status="Kurang" />
+            <OpdStatusRow opdName="Dinas Pendidikan" date="10/03/2025" status="Kurang" />
+          </div>
+          <div className="space-y-1">
+            <OpdStatusRow opdName="Dinas PU" date="15/03/2025" status="Kurang" />
+            <OpdStatusRow opdName="Dinas Sosial" date="Belum pernah" status="Belum Kirim" />
+          </div>
+        </div>
+      </div>
+
+      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
+        © 2025 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+      </footer>
+    </div>
+  );
+}
 --- END FILE: mimika-datahub-fe/src/app/(admin)/admin-dashboard/page.tsx ---
 
 --- START FILE: mimika-datahub-fe/src/app/(admin)/akun-management/page.tsx ---
 
 --- END FILE: mimika-datahub-fe/src/app/(admin)/akun-management/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/(admin)/data-quality/page.tsx ---
+"use client";
+
+import { useState, useEffect } from "react";
+import { 
+  Database, CheckCheck, CheckCircle, 
+  Eye, Info, ArrowRight, X
+} from "lucide-react";
+
+// Import Komponen Global
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import LoadingState from "@/components/ui/LoadingState";
+
+// Integrasi Store & Service
+import { useDatasetStore } from "./../../store/useDatasetStore";
+import { Dataset } from "../../types/dataset";
+
+export default function DataQualityPage() {
+  // --- States ---
+  const { 
+    pendingDatasets, 
+    isLoading: isStoreLoading, 
+    fetchPendingDatasets, 
+    approveDataset 
+  } = useDatasetStore();
+  
+  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // --- Initial Data Fetching ---
+  useEffect(() => {
+    const loadData = async () => {
+      setIsInitialLoading(true);
+      try {
+        // Hanya mengambil data pending sesuai ketersediaan service
+        await fetchPendingDatasets();
+      } catch (error) {
+        console.error("Gagal memuat data pending:", error);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchPendingDatasets]);
+
+  // --- Actions ---
+  const handleApprove = async (id: number) => {
+    if (confirm("Apakah Anda yakin ingin menyetujui dataset ini untuk dipublikasikan?")) {
+      try {
+        // Panggil action store untuk update status di DB ke 'approved' [cite: 78, 79]
+        await approveDataset(id);
+        alert("Dataset berhasil disetujui!");
+      } catch (error: any) {
+        alert(error.message || "Gagal menyetujui dataset");
+      }
+    }
+  };
+
+  if (isInitialLoading || isStoreLoading) {
+    return (
+      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
+        <PageHeader title="Data Quality" subtitle="Menyiapkan data audit..." />
+        <LoadingState message="Menghubungkan ke pusat validasi data Mimika..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
+      {/* 1. HEADER BANNER */}
+      <PageHeader 
+        title="Data Quality Management" 
+        subtitle="Moderasi Dataset | Validasi Kualitas | Persetujuan Publikasi" 
+      />
+
+      {/* 2. STATS GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <StatCard 
+          label="Menunggu Validasi" 
+          value={pendingDatasets.length} 
+          icon={<CheckCheck size={22} />} 
+          iconBg="bg-amber-500" 
+        />
+        <StatCard 
+          label="Sistem Status" 
+          value="Aktif" 
+          icon={<CheckCircle size={22} />} 
+          iconBg="bg-emerald-500" 
+          valueColor="text-emerald-500" 
+        />
+      </div>
+
+      {/* 3. PIPELINE VISUALIZATION */}
+      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8 flex justify-center items-center gap-12">
+        <PipelineStep 
+          icon={<CheckCheck size={20} />} 
+          label="Validation (Pending)" 
+          active={pendingDatasets.length > 0} 
+        />
+        <ArrowRight className="text-gray-300" />
+        <PipelineStep 
+          icon={<Database size={20} />} 
+          label="Approved" 
+          completed={false} 
+        />
+      </div>
+
+      {/* 4. TABS NAVIGATION */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="px-5 py-2.5 rounded-xl text-xs font-black bg-[#ef4444] text-white shadow-xl shadow-red-100 uppercase tracking-tighter">
+          Validation ({pendingDatasets.length})
+        </div>
+      </div>
+
+      {/* 5. TABLE SECTION */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <TableHeader columns={["ID", "Dataset", "Skor Kualitas", "Tahun/Periode", "Aksi"]} />
+            <tbody className="divide-y divide-gray-50">
+              {pendingDatasets.length > 0 ? pendingDatasets.map(d => (
+                <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 font-mono text-xs text-gray-400">#{d.id}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                        <span className="font-bold text-gray-800">{d.title}</span>
+                        <span className="text-[10px] text-gray-400 uppercase font-black">{d.dataset_type}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`font-black text-base ${d.quality_score >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {d.quality_score}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 font-medium">{d.year} / {d.period}</td>
+                  <td className="px-6 py-4 flex gap-2">
+                    <button 
+                      onClick={() => handleApprove(d.id)} 
+                      className="px-4 py-2 bg-[#ef4444] text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-100 uppercase tracking-tighter"
+                    >
+                      Setujui
+                    </button>
+                    <button 
+                      onClick={() => setSelectedDataset(d)} 
+                      className="p-2 border border-gray-200 rounded-xl text-gray-400 hover:bg-gray-50 transition-all"
+                    >
+                      <Eye size={16} />
+                    </button>
+                  </td>
+                </tr>
+              )) : <EmptyState colSpan={5} />}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 6. DETAIL MODAL */}
+      {selectedDataset && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                <Info size={20} className="text-blue-500" /> Detail Dataset
+              </h3>
+              <button onClick={() => setSelectedDataset(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Judul Dataset</p>
+                <p className="text-sm font-bold text-gray-800 leading-relaxed">{selectedDataset.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Quality Score</p>
+                  <p className="text-3xl font-black text-emerald-700">{selectedDataset.quality_score}%</p>
+                </div>
+                <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex flex-col justify-center">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Tahun Data</p>
+                  <p className="text-lg font-bold text-blue-700 leading-tight">{selectedDataset.year}</p>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setSelectedDataset(null)} className="w-full mt-8 py-4 bg-[#0a2647] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-[#144272] transition-all active:scale-95">Tutup Detail</button>
+          </div>
+        </div>
+      )}
+
+      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
+        © 2026 Mimika DataHub - Sistem Pembersihan & Validasi Terintegrasi
+      </footer>
+    </div>
+  );
+}
+
+// --- Local Sub-components ---
+
+function PipelineStep({ icon, label, active = false, completed = false }: { icon: any, label: string, active?: boolean, completed?: boolean }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm ${
+        completed ? 'bg-emerald-500 text-white' : active ? 'bg-amber-500 text-white' : 'bg-gray-50 text-gray-300 border border-gray-100'
+      }`}>
+        {completed ? <CheckCircle size={22} /> : icon}
+      </div>
+      <p className={`text-[10px] font-black uppercase mt-3 tracking-tighter ${active || completed ? 'text-gray-800' : 'text-gray-300'}`}>{label}</p>
+    </div>
+  );
+}
+
+function TableHeader({ columns }: { columns: string[] }) {
+  return (
+    <thead className="bg-gray-50/50 text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+      <tr>{columns.map((c, i) => <th key={i} className="px-6 py-4 font-black">{c}</th>)}</tr>
+    </thead>
+  );
+}
+
+function EmptyState({ colSpan }: { colSpan: number }) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-xs italic">
+        <div className="flex flex-col items-center gap-2 opacity-50">
+           <Database size={40} />
+           Tidak ada data yang menunggu validasi
+        </div>
+      </td>
+    </tr>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/(admin)/data-quality/page.tsx ---
 
 --- START FILE: mimika-datahub-fe/src/app/(admin)/layout.tsx ---
 import AdminSidebar from "@/components/layout/AdminSidebar";
@@ -975,9 +1471,10 @@ function DetailRow({ label, value }: { label: string, value: string }) {
 --- START FILE: mimika-datahub-fe/src/app/(auth)/login/page.tsx ---
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   Lock, 
@@ -986,26 +1483,70 @@ import {
   EyeOff, 
   ChevronRight,
   ShieldCheck,
-  LayoutDashboard
+  LayoutDashboard,
+  AlertCircle
 } from "lucide-react";
 
+// Integrasi Service dan Store
+import { authService } from "./../../services/auth.service";
+import { useAuthStore } from "./../../store/useAuthStore";
+
 export default function LoginPage() {
+  const router = useRouter();
+  const setAuth = useAuthStore((state: any) => state.setAuth);
+
+  // State untuk form input
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Solusi Hydration: Pastikan komponen sudah "mounted" di client sebelum interaksi storage/browser
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Handler Login terintegrasi ke Backend
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulasi loading proses masuk
-    setTimeout(() => setIsLoading(false), 2000);
+    setErrorMsg(null);
+
+    try {
+      // 1. Panggil service login (mengirim FormData ke Backend)
+      const data = await authService.login(username, password);
+      
+      // 2. Simpan data ke Zustand Store (Global State)
+      setAuth(data.access_token, data.role, username);
+      
+      // 3. Redirect berdasarkan Role dari Backend
+      if (data.role === "admin") {
+        router.push("/admin-dashboard");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      // Menampilkan pesan error dari Backend
+      setErrorMsg(err.message || "Terjadi kesalahan saat login");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Jangan render konten interaktif/form secara penuh sebelum mounted untuk mencegah hydration mismatch
+  if (!isMounted) {
+    return <div className="min-h-screen bg-white" />; // Placeholder putih saat loading awal
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white">
       
       {/* --- KIRI: VISUAL BRANDING (HIDDEN ON MOBILE) --- */}
       <div className="hidden md:flex md:w-1/2 lg:w-[60%] relative bg-slate-900 overflow-hidden">
-        {/* Background Image dengan Overlay */}
         <Image 
           src="/mimika.jpg" 
           alt="Mimika Landscape"
@@ -1015,7 +1556,6 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-slate-900/90 to-slate-950"></div>
         
-        {/* Konten Dekoratif */}
         <div className="relative z-10 w-full h-full p-16 flex flex-col justify-between">
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-all">
@@ -1041,7 +1581,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Ornamen Abstrak */}
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
       </div>
 
@@ -1049,7 +1588,6 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-8 lg:p-24 bg-slate-50/50">
         <div className="w-full max-w-md space-y-10">
           
-          {/* Header Form */}
           <div className="space-y-3">
             <div className="md:hidden flex justify-center mb-8">
                <div className="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
@@ -1061,7 +1599,14 @@ export default function LoginPage() {
             <p className="text-slate-500 font-medium">Silakan masukkan akun resmi Anda untuk melanjutkan ke sistem.</p>
           </div>
 
-          {/* Form Utama */}
+          {/* Menampilkan Pesan Error dari Backend */}
+          {errorMsg && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <AlertCircle className="text-red-500" size={20} />
+              <p className="text-red-800 text-sm font-bold">{errorMsg}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-5">
               {/* Email/Username Field */}
@@ -1073,6 +1618,8 @@ export default function LoginPage() {
                   </div>
                   <input 
                     type="text" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="nama@mimika.go.id"
                     className="w-full bg-white border border-slate-200 py-4 pl-14 pr-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300 shadow-sm"
                     required
@@ -1092,9 +1639,12 @@ export default function LoginPage() {
                   </div>
                   <input 
                     type={showPassword ? "text" : "password"} 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="w-full bg-white border border-slate-200 py-4 pl-14 pr-12 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300 shadow-sm"
                     required
+                    autoComplete="current-password"
                   />
                   <button 
                     type="button"
@@ -2076,327 +2626,6 @@ export default function DataPemerintahPage() {
 }
 --- END FILE: mimika-datahub-fe/src/app/(user)/data-pemerintah/page.tsx ---
 
---- START FILE: mimika-datahub-fe/src/app/(user)/data-quality/page.tsx ---
-"use client";
-
-import { useState, useEffect } from "react";
-import { 
-  Database, Inbox, Brush, CheckCheck, CheckCircle, 
-  Eye, Play, Info, ArrowRight, X
-} from "lucide-react";
-
-// Import Komponen Global
-import PageHeader from "@/components/layout/PageHeader";
-import StatCard from "@/components/ui/StatCard";
-import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
-import LoadingState from "@/components/ui/LoadingState";
-
-// --- Types ---
-interface Dataset {
-  id: string;
-  name: string;
-  source_name: string;
-  upload_date?: string;
-  approved_date?: string;
-  quality_score?: number;
-  issues?: string[] | null;
-  validation_result?: string;
-}
-
-export default function DataQualityPage() {
-  // --- States ---
-  const [stagingDatasets, setStagingDatasets] = useState<Dataset[]>([]);
-  const [cleaningDatasets, setCleaningDatasets] = useState<Dataset[]>([]);
-  const [validationDatasets, setValidationDatasets] = useState<Dataset[]>([]);
-  const [approvedDatasets, setApprovedDatasets] = useState<Dataset[]>([]);
-  const [activeTab, setActiveTab] = useState("staging");
-  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // --- Initial Data Simulation ---
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setStagingDatasets([
-        { id: "STG-001", name: "Data Kependudukan Distrik Agimuga", source_name: "Dinas Dukcapil", upload_date: "01/05/2025" },
-        { id: "STG-002", name: "Laporan Perikanan Tangkap 2025", source_name: "Dinas Perikanan", upload_date: "03/05/2025" }
-      ]);
-      setApprovedDatasets([
-        { id: "APP-001", name: "PDRB Kabupaten Mimika 2024", source_name: "BPS Mimika", quality_score: 95, approved_date: "20/04/2025" }
-      ]);
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // --- Pipeline Actions ---
-  const moveToCleaning = (id: string) => {
-    const ds = stagingDatasets.find(d => d.id === id);
-    if (ds) {
-      const updatedDs = { ...ds, issues: ["Format perlu distandarisasi", "Cek konsistensi unit"] };
-      setCleaningDatasets([...cleaningDatasets, updatedDs]);
-      setStagingDatasets(stagingDatasets.filter(d => d.id !== id));
-    }
-  };
-
-  const runCleaning = (id: string) => {
-    alert(`🧹 Cleaning dataset ID ${id}: Format distandarisasi & duplikasi dihapus.`);
-    setCleaningDatasets(prev => prev.map(d => d.id === id ? { ...d, issues: null } : d));
-  };
-
-  const moveToValidation = (id: string) => {
-    const ds = cleaningDatasets.find(d => d.id === id);
-    if (ds) {
-      const score = Math.floor(Math.random() * (95 - 70 + 1) + 70);
-      const updatedDs = { 
-        ...ds, 
-        quality_score: score,
-        validation_result: score >= 85 ? "Lolos validasi" : "Validasi dengan catatan"
-      };
-      setValidationDatasets([...validationDatasets, updatedDs]);
-      setCleaningDatasets(cleaningDatasets.filter(d => d.id !== id));
-    }
-  };
-
-  const approveDataset = (id: string) => {
-    const ds = validationDatasets.find(d => d.id === id);
-    if (ds) {
-      const updatedDs = { ...ds, approved_date: new Date().toLocaleDateString("id-ID") };
-      setApprovedDatasets([...approvedDatasets, updatedDs]);
-      setValidationDatasets(validationDatasets.filter(d => d.id !== id));
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
-        <PageHeader title="Data Quality" subtitle="Menyiapkan data audit..." />
-        <LoadingState message="Menghubungkan ke pusat validasi data Mimika..." />
-      </div>
-    );
-  }
-
-  const avgQuality = approvedDatasets.length > 0 
-    ? Math.round(approvedDatasets.reduce((a, b) => a + (b.quality_score || 0), 0) / approvedDatasets.length) 
-    : 0;
-
-  return (
-    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
-      {/* 1. HEADER BANNER - Global Component */}
-      <PageHeader 
-        title="Data Quality Management" 
-        subtitle="Staging Area | Cleaning Engine | Validasi Data" 
-      />
-
-      {/* 2. STATS GRID - Global Component */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Staging Data" value={stagingDatasets.length} icon={<Inbox size={22} />} iconBg="bg-blue-600" />
-        <StatCard label="Perlu Cleaning" value={cleaningDatasets.length} icon={<Brush size={22} />} iconBg="bg-red-500" />
-        <StatCard label="Perlu Validasi" value={validationDatasets.length} icon={<CheckCheck size={22} />} iconBg="bg-amber-500" />
-        <StatCard label="Rata-rata Kualitas" value={`${avgQuality}%`} icon={<CheckCircle size={22} />} iconBg="bg-emerald-500" valueColor="text-emerald-500" />
-      </div>
-
-      {/* 3. PIPELINE VISUALIZATION */}
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8 flex flex-wrap justify-between items-center gap-4">
-        <PipelineStep icon={<Inbox size={20} />} label="Staging" active={stagingDatasets.length > 0} />
-        <ArrowRight className="text-gray-300 hidden md:block" />
-        <PipelineStep icon={<Brush size={20} />} label="Cleaning" active={cleaningDatasets.length > 0} />
-        <ArrowRight className="text-gray-300 hidden md:block" />
-        <PipelineStep icon={<CheckCheck size={20} />} label="Validation" active={validationDatasets.length > 0} />
-        <ArrowRight className="text-gray-300 hidden md:block" />
-        <PipelineStep icon={<Database size={20} />} label="Approved" completed={approvedDatasets.length > 0} />
-      </div>
-
-      {/* 4. TABS NAVIGATION */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <TabButton label={`Staging (${stagingDatasets.length})`} active={activeTab === "staging"} onClick={() => setActiveTab("staging")} />
-        <TabButton label={`Cleaning (${cleaningDatasets.length})`} active={activeTab === "cleaning"} onClick={() => setActiveTab("cleaning")} />
-        <TabButton label={`Validation (${validationDatasets.length})`} active={activeTab === "validation"} onClick={() => setActiveTab("validation")} />
-        <TabButton label={`Approved (${approvedDatasets.length})`} active={activeTab === "approved"} onClick={() => setActiveTab("approved")} />
-      </div>
-
-      {/* 5. TABLE SECTION */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            {activeTab === "staging" && (
-              <>
-                <TableHeader columns={["ID", "Dataset", "Sumber", "Upload Date", "Status", "Aksi"]} />
-                <tbody className="divide-y divide-gray-50">
-                  {stagingDatasets.length > 0 ? stagingDatasets.map(d => (
-                    <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-400">{d.id}</td>
-                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
-                      <td className="px-6 py-4 text-gray-500 font-medium">{d.source_name}</td>
-                      <td className="px-6 py-4 text-gray-400">{d.upload_date}</td>
-                      <td className="px-6 py-4"><StatusBadge status="staging" /></td>
-                      <td className="px-6 py-4">
-                        <button onClick={() => moveToCleaning(d.id)} className="flex items-center gap-1.5 px-4 py-2 bg-[#0a2647] text-white rounded-xl text-xs font-bold hover:bg-[#144272] transition-all active:scale-95 shadow-lg shadow-blue-100">
-                          <Brush size={14} /> PROSES CLEANING
-                        </button>
-                      </td>
-                    </tr>
-                  )) : <EmptyState colSpan={6} />}
-                </tbody>
-              </>
-            )}
-            
-            {activeTab === "cleaning" && (
-              <>
-                <TableHeader columns={["ID", "Dataset", "Isu Terdeteksi", "Status", "Aksi"]} />
-                <tbody className="divide-y divide-gray-50">
-                  {cleaningDatasets.length > 0 ? cleaningDatasets.map(d => (
-                    <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-400">{d.id}</td>
-                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
-                      <td className="px-6 py-4 text-red-500 text-xs font-black uppercase tracking-tighter">{d.issues?.join(', ') || 'SIAP DIVALIDASI'}</td>
-                      <td className="px-6 py-4"><StatusBadge status="cleaning" /></td>
-                      <td className="px-6 py-4 flex gap-2">
-                        <button onClick={() => runCleaning(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[10px] font-black text-blue-600 hover:bg-blue-50 transition-all">
-                          <Play size={12} /> RUN
-                        </button>
-                        <button onClick={() => moveToValidation(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#10b981] text-white rounded-lg text-[10px] font-black hover:bg-emerald-600 transition-all shadow-md">
-                          <CheckCheck size={12} /> VALIDASI
-                        </button>
-                      </td>
-                    </tr>
-                  )) : <EmptyState colSpan={5} />}
-                </tbody>
-              </>
-            )}
-
-            {activeTab === "validation" && (
-              <>
-                <TableHeader columns={["ID", "Dataset", "Skor", "Hasil Validasi", "Aksi"]} />
-                <tbody className="divide-y divide-gray-100">
-                  {validationDatasets.length > 0 ? validationDatasets.map(d => (
-                    <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-400">{d.id}</td>
-                      <td className="px-6 py-4 font-bold text-gray-800">{d.name}</td>
-                      <td className="px-6 py-4 font-black text-emerald-600 text-base">{d.quality_score}%</td>
-                      <td className="px-6 py-4 text-gray-500 text-xs font-medium italic">"{d.validation_result}"</td>
-                      <td className="px-6 py-4 flex gap-2">
-                        <button onClick={() => approveDataset(d.id)} className="px-4 py-2 bg-[#ef4444] text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-100">APPROVE</button>
-                        <button onClick={() => setSelectedDataset(d)} className="p-2 border border-gray-200 rounded-xl text-gray-400 hover:bg-gray-50 transition-all"><Eye size={16} /></button>
-                      </td>
-                    </tr>
-                  )) : <EmptyState colSpan={5} />}
-                </tbody>
-              </>
-            )}
-
-            {activeTab === "approved" && (
-              <>
-                <TableHeader columns={["ID", "Dataset", "Sumber", "Skor Final", "Tgl Setuju", "Status"]} />
-                <tbody className="divide-y divide-gray-100">
-                  {approvedDatasets.map(d => (
-                    <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-400">{d.id}</td>
-                      <td className="px-6 py-4 font-bold text-gray-800 whitespace-normal max-w-xs">{d.name}</td>
-                      <td className="px-6 py-4 text-gray-500 font-medium">{d.source_name}</td>
-                      <td className="px-6 py-4 font-black text-emerald-600">{d.quality_score}%</td>
-                      <td className="px-6 py-4 text-gray-400 text-xs">{d.approved_date}</td>
-                      <td className="px-6 py-4"><StatusBadge status="approved" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </>
-            )}
-          </table>
-        </div>
-      </div>
-
-      {/* 6. DETAIL MODAL */}
-      {selectedDataset && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                <Info size={20} className="text-blue-500" /> Detail Validasi
-              </h3>
-              <button onClick={() => setSelectedDataset(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={20} className="text-gray-400" />
-              </button>
-            </div>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Dataset</p>
-                <p className="text-sm font-bold text-gray-800 leading-relaxed">{selectedDataset.name}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Quality Score</p>
-                  <p className="text-3xl font-black text-emerald-700">{selectedDataset.quality_score}%</p>
-                </div>
-                <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex flex-col justify-center">
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Status</p>
-                  <p className="text-xs font-bold text-blue-700 leading-tight">{selectedDataset.validation_result}</p>
-                </div>
-              </div>
-            </div>
-            <button onClick={() => setSelectedDataset(null)} className="w-full mt-8 py-4 bg-[#0a2647] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-[#144272] transition-all active:scale-95">Tutup Detail</button>
-          </div>
-        </div>
-      )}
-
-      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
-        © 2026 Mimika DataHub - Sistem Pembersihan & Validasi Terintegrasi
-      </footer>
-    </div>
-  );
-}
-
-// --- Local Sub-components ---
-
-function PipelineStep({ icon, label, active = false, completed = false }: { icon: any, label: string, active?: boolean, completed?: boolean }) {
-  return (
-    <div className="flex flex-col items-center">
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm ${
-        completed ? 'bg-emerald-500 text-white' : active ? 'bg-[#ef4444] text-white' : 'bg-gray-50 text-gray-300 border border-gray-100'
-      }`}>
-        {completed ? <CheckCircle size={22} /> : icon}
-      </div>
-      <p className={`text-[10px] font-black uppercase mt-3 tracking-tighter ${active || completed ? 'text-gray-800' : 'text-gray-300'}`}>{label}</p>
-    </div>
-  );
-}
-
-function TabButton({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all active:scale-95 ${
-        active 
-          ? 'bg-[#ef4444] text-white shadow-xl shadow-red-100' 
-          : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50 hover:text-gray-600 shadow-sm'
-      }`}
-    >
-      <span className="uppercase tracking-tighter">{label}</span>
-    </button>
-  );
-}
-
-function TableHeader({ columns }: { columns: string[] }) {
-  return (
-    <thead className="bg-gray-50/50 text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-      <tr>{columns.map((c, i) => <th key={i} className="px-6 py-4 font-black">{c}</th>)}</tr>
-    </thead>
-  );
-}
-
-function EmptyState({ colSpan }: { colSpan: number }) {
-  return (
-    <tr>
-      <td colSpan={colSpan} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-xs italic">
-        <div className="flex flex-col items-center gap-2 opacity-50">
-           <Database size={40} />
-           Tidak ada data di tahapan ini
-        </div>
-      </td>
-    </tr>
-  );
-}
---- END FILE: mimika-datahub-fe/src/app/(user)/data-quality/page.tsx ---
-
 --- START FILE: mimika-datahub-fe/src/app/(user)/layout.tsx ---
 import UserSidebar from "@/components/layout/UserSidebar";
 
@@ -2413,22 +2642,364 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
 }
 --- END FILE: mimika-datahub-fe/src/app/(user)/layout.tsx ---
 
+--- START FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/AddItemModal.tsx ---
+"use client";
+import { Database, Tag, X } from "lucide-react";
+
+interface AddItemModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  title: string;
+  placeholder: string;
+  value: string;
+  onChange: (val: string) => void;
+  type: "source" | "category";
+}
+
+export default function AddItemModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  title, 
+  placeholder, 
+  value, 
+  onChange, 
+  type 
+}: AddItemModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
+          <h3 className="font-bold text-gray-800 flex items-center gap-2">
+            {type === "source" ? (
+              <Database size={18} className="text-green-500" />
+            ) : (
+              <Tag size={18} className="text-blue-500" />
+            )}
+            Tambah {title} Baru
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Nama Item
+            </label>
+            <input 
+              type="text" 
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black"
+            />
+          </div>
+          <button 
+            onClick={onSave}
+            disabled={!value}
+            className="w-full bg-[#10b981] text-white py-3 rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-emerald-600 transition-all active:scale-[0.98] disabled:bg-slate-300"
+          >
+            Simpan Item Baru
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/AddItemModal.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/DatasetForm.tsx ---
+"use client";
+import { Info, Plus, Send } from "lucide-react";
+import { Item } from "../page";
+import { SourceType } from "@/src/app/types/source-type";
+
+interface DatasetFormProps {
+  sources: Item[];
+  categories: Item[];
+  sourceTypes: SourceType[];
+  isProcessing: boolean;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onAddSource: () => void;
+  onAddCategory: () => void;
+  onAddSourceType: () => void;
+}
+
+export default function DatasetForm({ 
+  sources, categories, sourceTypes, isProcessing, 
+  onSubmit, onAddSource, onAddCategory, onAddSourceType 
+}: DatasetFormProps) {
+  return (
+    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+      <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
+        <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
+      </h3>
+      <form onSubmit={onSubmit} className="space-y-5">
+        {/* Nama Dataset */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Dataset <span className="text-red-500">*</span></label>
+          <input 
+            name="datasetName" type="text" placeholder="Contoh: Jumlah Penduduk Mimika 2025" required 
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition-all text-black placeholder:text-black"
+            disabled={isProcessing}
+          />
+        </div>
+
+        {/* Dataset Type (Baru) */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Jenis Dataset <span className="text-red-500">*</span></label>
+          <div className="flex gap-4 p-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="dataset_type" value="pemerintah" defaultChecked className="w-4 h-4 text-[#1e61d0]" />
+              <span className="text-sm text-gray-700 group-hover:text-black">Data Pemerintah</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="dataset_type" value="non-pemerintah" className="w-4 h-4 text-[#1e61d0]" />
+              <span className="text-sm text-gray-700 group-hover:text-black">Data Non Pemerintah</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Sumber Data */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data (OPD) <span className="text-red-500">*</span></label>
+            <select name="dataSource" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="" className="text-black">Pilih Sumber</option>
+              {sources.map(s => <option key={s.id} value={s.id} className="text-black">{s.name}</option>)}
+            </select>
+            <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+              <Plus size={12} /> Tambah Sumber Baru
+            </button>
+          </div>
+
+          {/* Source Type (Baru) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Jenis Sumber <span className="text-red-500">*</span></label>
+            <select name="source_type_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="" className="text-black">Pilih Tipe</option>
+              {sourceTypes.map(st => <option key={st.id} value={st.id} className="text-black">{st.name}</option>)}
+            </select>
+            <button type="button" onClick={onAddSourceType} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+              <Plus size={12} /> Tambah Tipe Baru
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Kategori */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori <span className="text-red-500">*</span></label>
+            <select name="category" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="" className="text-black">Pilih Kategori</option>
+              {categories.map(c => <option key={c.id} value={c.id} className="text-black">{c.name}</option>)}
+            </select>
+            <button type="button" onClick={onAddCategory} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+              <Plus size={12} /> Tambah Kategori Baru
+            </button>
+          </div>
+
+          {/* Tahun */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tahun <span className="text-red-500">*</span></label>
+            <input name="year" type="number" defaultValue="2025" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] text-black placeholder:text-black" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Periode */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Periode Data</label>
+            <select name="period" disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="Bulanan">Bulanan</option>
+              <option value="Triwulan">Triwulan</option>
+              <option value="Semester">Semester</option>
+              <option value="Tahunan">Tahunan</option>
+            </select>
+          </div>
+          <div className="flex items-end pb-1 italic text-[10px] text-gray-400">
+            * Pastikan format file sesuai standar template
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
+          <textarea name="description" rows={2} disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] resize-none text-black placeholder:text-black" placeholder="Jelaskan isi dataset ini..."></textarea>
+        </div>
+
+        <button 
+          type="submit" 
+          disabled={isProcessing}
+          className="w-full bg-[#0a2647] text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#144272] transition-all shadow-lg active:scale-[0.98] disabled:bg-slate-400 disabled:shadow-none"
+        >
+          {isProcessing ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={18} />}
+          {isProcessing ? "Sedang Memproses..." : "Upload & Proses Dataset"}
+        </button>
+      </form>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/DatasetForm.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/FileUploadArea.tsx ---
+"use client";
+import { useState } from "react";
+import { CloudUpload, FileText, FolderOpen, X } from "lucide-react";
+
+interface FileUploadAreaProps {
+  selectedFile: File | null;
+  isProcessing: boolean;
+  onFileChange: (file: File) => void;
+  onRemoveFile: () => void;
+}
+
+export default function FileUploadArea({ selectedFile, isProcessing, onFileChange, onRemoveFile }: FileUploadAreaProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = window.document ? null : null; // Dihandle via ref di parent atau internal
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) onFileChange(e.dataTransfer.files[0]);
+  };
+
+  return (
+    <div 
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      className={`bg-white rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
+        isProcessing ? "opacity-50 cursor-not-allowed" : ""
+      } ${isDragging ? "border-[#ef4444] bg-red-50" : "border-gray-200 hover:border-[#ef4444]"}`}
+      onClick={() => !isProcessing && document.getElementById('file-input')?.click()}
+    >
+      <input 
+        id="file-input"
+        type="file" 
+        onChange={(e) => e.target.files && onFileChange(e.target.files[0])}
+        className="hidden" 
+        accept=".xlsx,.csv,.json"
+        disabled={isProcessing}
+      />
+      <CloudUpload size={64} className="text-[#ef4444] mb-4" />
+      <h3 className="text-lg font-bold text-gray-800">Drag & Drop File</h3>
+      <p className="text-gray-500 text-sm mb-6 text-center">atau klik untuk memilih file dari komputer Anda</p>
+      <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-4">Support: .xlsx, .csv, .json (Max 10MB)</p>
+      
+      <button type="button" disabled={isProcessing} className="bg-[#ef4444] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-red-600 transition shadow-lg shadow-red-200">
+        <FolderOpen size={18} /> Pilih File
+      </button>
+
+      {selectedFile && (
+        <div className="mt-6 p-4 bg-gray-50 rounded-2xl flex items-center gap-3 w-full border border-gray-100 animate-in zoom-in-95">
+          <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+            <FileText size={20} />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-sm font-bold text-gray-800 truncate">{selectedFile.name}</p>
+            <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+          </div>
+          <button 
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onRemoveFile(); }}
+            className="text-gray-400 hover:text-red-500 p-1"
+            disabled={isProcessing}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/FileUploadArea.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/UploadLogTable.tsx ---
+"use client";
+import { History } from "lucide-react";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { UploadLog } from "../page";
+
+interface UploadLogTableProps {
+  logs: UploadLog[];
+}
+
+export default function UploadLogTable({ logs }: UploadLogTableProps) {
+  return (
+    <div className="mt-8 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+          <History size={18} className="text-gray-400" /> Log Pengiriman Data
+        </h3>
+        <span className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Real-time Staging</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+            <tr>
+              <th className="px-6 py-4">Tanggal</th>
+              <th className="px-6 py-4">Nama Dataset</th>
+              <th className="px-6 py-4">Sumber</th>
+              <th className="px-6 py-4 text-center">Status</th>
+              <th className="px-6 py-4 text-right">Kualitas</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {logs.length > 0 ? (
+              logs.map((log, idx) => (
+                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 text-xs text-gray-400 font-medium">{log.date}</td>
+                  <td className="px-6 py-4 font-bold text-gray-800">{log.name}</td>
+                  <td className="px-6 py-4 text-gray-500 font-medium">{log.source}</td>
+                  <td className="px-6 py-4 text-center">
+                    <StatusBadge status={log.status} />
+                  </td>
+                  <td className="px-6 py-4 font-black text-gray-300 text-right">{log.quality ? `${log.quality}%` : '-'}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-gray-400 italic">Belum ada aktivitas pengiriman data.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+--- END FILE: mimika-datahub-fe/src/app/(user)/upload-data/components/UploadLogTable.tsx ---
+
 --- START FILE: mimika-datahub-fe/src/app/(user)/upload-data/page.tsx ---
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { 
-  CloudUpload, FileText, Info, Plus, Send, 
-  History, Database, Tag, X, AlertCircle, FolderOpen 
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 
 // Import Komponen Global
 import PageHeader from "@/components/layout/PageHeader";
-import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
+import { StatusType } from "@/components/ui/StatusBadge";
+
+// Import Komponen Lokal
+import FileUploadArea from "./components/FileUploadArea";
+import DatasetForm from "./components/DatasetForm";
+import UploadLogTable from "./components/UploadLogTable";
+import AddItemModal from "./components/AddItemModal";
+
+// Integrasi Service & Store
+import { ingestService } from "./../../services/ingest.service";
+import { useIngestStore } from "./../../store/useIngestStore";
+import { useSourceStore } from "./../../store/useSourceStore";
+import { useCategoryStore } from "./../../store/useCategoryStore";
+import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 
 // --- Types ---
-interface UploadLog {
+export interface UploadLog {
   date: string;
   name: string;
   source: string;
@@ -2436,47 +3007,43 @@ interface UploadLog {
   quality: number | null;
 }
 
-interface Item {
+export interface Item {
   id: string | number;
   name: string;
 }
 
 export default function UploadDataPage() {
-  // --- States --- 
+  // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
-  
-  const [sources, setSources] = useState<Item[]>([
-    { id: "bps", name: "BPS Mimika" },
-    { id: "dinkes", name: "Dinas Kesehatan" },
-  ]);
-  
-  const [categories, setCategories] = useState<Item[]>([
-    { id: "ekonomi", name: "Ekonomi & PDRB" },
-    { id: "kesehatan", name: "Kesehatan" },
-  ]);
-  
-  const [logs, setLogs] = useState<UploadLog[]>([
-    { date: "15/03/2025 10:23", name: "PDRB Mimika Q1-2025", source: "BPS Mimika", status: "approved", quality: 92 },
-    { date: "14/03/2025 14:45", name: "Data Puskesmas 2025", source: "Dinas Kesehatan", status: "approved", quality: 78 },
-    { date: "12/03/2025 09:15", name: "Realisasi Anggaran PU", source: "Dinas PU", status: "cleaning", quality: null },
-  ]);
 
+  // Store Integration
+  const { isProcessing, setProcessing, setResult, setError } = useIngestStore();
+  const { sources, fetchSources, addSource } = useSourceStore();
+  const { categories, fetchCategories, addCategory } = useCategoryStore();
+  const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+
+  const [logs, setLogs] = useState<UploadLog[]>([]);
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showSourceTypeModal, setShowSourceTypeModal] = useState(false);
   const [newItemName, setNewItemName] = useState("");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // --- Initial Loading Simulation ---
+  // --- Initial Data Fetching ---
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      // Fetch semua data master dari database [cite: 49, 57, 82]
+      await Promise.all([
+        fetchSources(), 
+        fetchCategories(), 
+        fetchSourceTypes()
+      ]);
       setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    };
+    loadInitialData();
+  }, [fetchSources, fetchCategories, fetchSourceTypes]);
 
   // --- Handlers ---
   const showAlert = (message: string, type: "success" | "danger" | "info") => {
@@ -2487,7 +3054,6 @@ export default function UploadDataPage() {
   const handleFileChange = (file: File) => {
     const validTypes = [".xlsx", ".csv", ".json"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
-    
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
       showAlert("Format file tidak didukung. Gunakan .xlsx, .csv, atau .json", "danger");
       return;
@@ -2496,41 +3062,104 @@ export default function UploadDataPage() {
       showAlert("Ukuran file maksimal 10MB", "danger");
       return;
     }
-    
     setSelectedFile(file);
     showAlert(`File "${file.name}" berhasil dipilih`, "success");
   };
 
-  const handleUpload = (e: React.FormEvent) => {
+  const handleSaveNewItem = async () => {
+    if (!newItemName) return;
+    setIsLoading(true);
+    try {
+      if (showSourceModal) {
+        await addSource({ name: newItemName, type: "opd", icon: "fa-database" }); 
+        showAlert(`Sumber "${newItemName}" berhasil ditambahkan`, "success");
+      } else if (showCategoryModal) {
+        await addCategory({ name: newItemName }); 
+        showAlert(`Kategori "${newItemName}" berhasil ditambahkan`, "success");
+      } else if (showSourceTypeModal) {
+        await addSourceType({ name: newItemName });
+        showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
+      }
+      
+      // Reset Modal State
+      setShowSourceModal(false);
+      setShowCategoryModal(false);
+      setShowSourceTypeModal(false);
+      setNewItemName("");
+    } catch (err: any) {
+      showAlert(err.message || "Gagal menambahkan item baru", "danger");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedFile) {
       showAlert("Silakan pilih file terlebih dahulu", "danger");
       return;
     }
 
-    showAlert("Mengupload file...", "info");
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
 
-    setTimeout(() => {
-      const now = new Date();
-      const form = e.target as HTMLFormElement;
-      const formData = new FormData(form);
-      
+    const title = formData.get("datasetName") as string;
+    const datasetType = formData.get("dataset_type") as string;
+    const sourceId = formData.get("dataSource");
+    const categoryId = formData.get("category");
+    const sourceTypeId = formData.get("source_type_id");
+    const year = formData.get("year");
+    const period = formData.get("period") as string;
+    const description = formData.get("description") as string;
+
+    if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
+      showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
+      return;
+    }
+
+    setProcessing(true);
+    setError(null);
+    showAlert("Sedang memproses dan membersihkan data...", "info");
+
+    try {
+      const result = await ingestService.uploadProcess({ 
+        title,
+        dataset_type: datasetType,
+        source_id: Number(sourceId),
+        category_id: Number(categoryId),
+        source_type_id: Number(sourceTypeId),
+        year: Number(year),
+        period,
+        description,
+        file: selectedFile
+      });
+
+      setResult(result);
+
       const newLog: UploadLog = {
-        date: now.toLocaleString("id-ID").replace(/\//g, "-"),
-        name: formData.get("datasetName") as string,
-        source: sources.find(s => s.id === formData.get("dataSource"))?.name || "Kustom",
+        date: new Date().toLocaleString("id-ID").replace(/\//g, "-"),
+        name: title,
+        source: sources.find(s => s.id === Number(sourceId))?.name || "Kustom",
         status: "staging",
-        quality: null
+        quality: result.stats.quality_score 
       };
 
       setLogs([newLog, ...logs]);
-      showAlert("Dataset berhasil diupload! Data akan diproses di staging area.", "success");
+      showAlert(result.message, "success");
+      
       setSelectedFile(null);
-      form.reset();
-    }, 2000);
+      formElement.reset();
+
+    } catch (err: any) {
+      const msg = err.message || "Gagal mengupload dataset";
+      setError(msg);
+      showAlert(msg, "danger");
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  if (isLoading) {
+  if (isLoading && sources.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
         <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
@@ -2541,13 +3170,11 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500">
-      {/* 1. HEADER BANNER - Menggunakan Komponen Global [cite: 56, 318] */}
       <PageHeader 
         title="Upload Data" 
         subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
       />
 
-      {/* 2. ALERT MESSAGE [cite: 319, 321] */}
       {alert && (
         <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
           alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
@@ -2560,218 +3187,47 @@ export default function UploadDataPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 3. DRAG & DROP AREA [cite: 323, 325] */}
-        <div 
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            if (e.dataTransfer.files.length > 0) handleFileChange(e.dataTransfer.files[0]);
-          }}
-          onClick={() => fileInputRef.current?.click()}
-          className={`bg-white rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
-            isDragging ? "border-[#ef4444] bg-red-50" : "border-gray-200 hover:border-[#ef4444]"
-          }`}
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
-            className="hidden" 
-            accept=".xlsx,.csv,.json"
-          />
-          <CloudUpload size={64} className="text-[#ef4444] mb-4" />
-          <h3 className="text-lg font-bold text-gray-800">Drag & Drop File</h3>
-          <p className="text-gray-500 text-sm mb-6 text-center">atau klik untuk memilih file dari komputer Anda</p>
-          <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-4">Support: .xlsx, .csv, .json (Max 10MB)</p>
-          
-          <button className="bg-[#ef4444] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-red-600 transition shadow-lg shadow-red-200">
-            <FolderOpen size={18} /> Pilih File
-          </button>
-
-          {selectedFile && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-2xl flex items-center gap-3 w-full border border-gray-100 animate-in zoom-in-95">
-              <div className="p-2 bg-green-100 text-green-600 rounded-lg">
-                <FileText size={20} />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-bold text-gray-800 truncate">{selectedFile.name}</p>
-                <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
-                className="text-gray-400 hover:text-red-500 p-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 4. FORM SECTION [cite: 331, 343] */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
-            <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
-          </h3>
-          <form onSubmit={handleUpload} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Dataset <span className="text-red-500">*</span></label>
-              <input 
-                name="datasetName" 
-                type="text" 
-                placeholder="Contoh: Jumlah Penduduk Mimika 2025" 
-                required 
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition-all"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data <span className="text-red-500">*</span></label>
-                <select name="dataSource" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none">
-                  <option value="">Pilih Sumber</option>
-                  {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-                <button 
-                  type="button" 
-                  onClick={() => setShowSourceModal(true)}
-                  className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter"
-                >
-                  <Plus size={12} /> Tambah Sumber Baru
-                </button>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori <span className="text-red-500">*</span></label>
-                <select name="category" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none">
-                  <option value="">Pilih Kategori</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <button 
-                  type="button" 
-                  onClick={() => setShowCategoryModal(true)}
-                  className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter"
-                >
-                  <Plus size={12} /> Tambah Kategori Baru
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tahun <span className="text-red-500">*</span></label>
-                <input name="year" type="number" defaultValue="2025" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0]" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Periode Data</label>
-                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none">
-                  <option>Bulanan</option>
-                  <option>Triwulan</option>
-                  <option>Semester</option>
-                  <option>Tahunan</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
-              <textarea rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] resize-none" placeholder="Jelaskan isi dataset ini..."></textarea>
-            </div>
-
-            <button type="submit" className="w-full bg-[#0a2647] text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#144272] transition-all shadow-lg active:scale-[0.98]">
-              <Send size={18} /> Upload & Proses Dataset
-            </button>
-          </form>
-        </div>
+        <FileUploadArea 
+          selectedFile={selectedFile} 
+          isProcessing={isProcessing} 
+          onFileChange={handleFileChange} 
+          onRemoveFile={() => setSelectedFile(null)} 
+        />
+        
+        <DatasetForm 
+          sources={sources} 
+          categories={categories} 
+          sourceTypes={sourceTypes}
+          isProcessing={isProcessing} 
+          onSubmit={handleUpload} 
+          onAddSource={() => setShowSourceModal(true)} 
+          onAddCategory={() => setShowCategoryModal(true)} 
+          onAddSourceType={() => setShowSourceTypeModal(true)}
+        />
       </div>
 
-      {/* 5. LOG SECTION [cite: 344, 349] */}
-      <div className="mt-8 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-          <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-            <History size={18} className="text-gray-400" /> Log Pengiriman Data
-          </h3>
-          <span className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Real-time Staging</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4">Nama Dataset</th>
-                <th className="px-6 py-4">Sumber</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-right">Kualitas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {logs.map((log, idx) => (
-                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 text-xs text-gray-400 font-medium">{log.date}</td>
-                  <td className="px-6 py-4 font-bold text-gray-800">{log.name}</td>
-                  <td className="px-6 py-4 text-gray-500 font-medium">{log.source}</td>
-                  <td className="px-6 py-4 text-center">
-                    <StatusBadge status={log.status} />
-                  </td>
-                  <td className="px-6 py-4 font-black text-gray-300 text-right">{log.quality ? `${log.quality}%` : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <UploadLogTable logs={logs} />
 
       <footer className="mt-8 text-center text-gray-400 text-xs">
-        © 2025 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis [cite: 350]
+        © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
       </footer>
 
-      {/* 6. MODALS [cite: 351, 359] */}
-      {(showSourceModal || showCategoryModal) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                {showSourceModal ? <Database size={18} className="text-green-500" /> : <Tag size={18} className="text-blue-500" />}
-                Tambah {showSourceModal ? "Sumber" : "Kategori"} Baru
-              </h3>
-              <button 
-                onClick={() => { setShowSourceModal(false); setShowCategoryModal(false); setNewItemName(""); }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Item</label>
-                <input 
-                  type="text" 
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder={`Contoh: ${showSourceModal ? 'Dinas Perikanan' : 'Infrastruktur'}`}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button 
-                onClick={() => {
-                  if (!newItemName) return;
-                  const newItem = { id: Date.now(), name: newItemName };
-                  if (showSourceModal) setSources([...sources, newItem]);
-                  else setCategories([...categories, newItem]);
-                  showAlert(`Berhasil menambahkan "${newItemName}"`, "success");
-                  setShowSourceModal(false);
-                  setShowCategoryModal(false);
-                  setNewItemName("");
-                }}
-                className="w-full bg-[#10b981] text-white py-3 rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-emerald-600 transition-all active:scale-[0.98]"
-              >
-                Simpan Item Baru
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Universal */}
+      <AddItemModal 
+        isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
+        onClose={() => { 
+            setShowSourceModal(false); 
+            setShowCategoryModal(false); 
+            setShowSourceTypeModal(false);
+            setNewItemName(""); 
+        }}
+        onSave={handleSaveNewItem}
+        title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}
+        placeholder={showSourceModal ? "Contoh: Dinas Perikanan" : showCategoryModal ? "Contoh: Infrastruktur" : "Contoh: Statistik Sektoral"}
+        value={newItemName}
+        onChange={setNewItemName}
+        type={showSourceModal ? "source" : "category"}
+      />
     </div>
   );
 }
@@ -2843,6 +3299,12 @@ export default function RootLayout({
 }
 
 --- END FILE: mimika-datahub-fe/src/app/layout.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/lib/config.ts ---
+// src/lib/config.ts
+
+export const API_BASE_URL = "http://localhost:8000/api";
+--- END FILE: mimika-datahub-fe/src/app/lib/config.ts ---
 
 --- START FILE: mimika-datahub-fe/src/app/page.tsx ---
 "use client";
@@ -3158,6 +3620,693 @@ function FooterColumn({ title, links }: { title: string, links: string[] }) {
   );
 }
 --- END FILE: mimika-datahub-fe/src/app/page.tsx ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/auth.service.ts ---
+// src/services/auth.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { LoginResponse } from "../types/auth";
+
+export const authService = {
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    // Endpoint: http://localhost:8000/api/v1/auth/login
+    const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
+      method: "POST",
+      body: formData, // Menggunakan form-data sesuai kebutuhan FastAPI 
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Mengambil detail error dari HTTPException backend 
+      throw new Error(errorData.detail || "Gagal melakukan login");
+    }
+
+    return response.json();
+  },
+
+  logout() {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_role");
+  }
+};
+--- END FILE: mimika-datahub-fe/src/app/services/auth.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/category.service.ts ---
+// src/services/category.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { Category, CategoryCreate } from "../types/category";
+
+export const categoryService = {
+  /**
+   * Mengambil daftar semua kategori dari master data
+   * Endpoint: GET /api/v1/categories/
+   */
+  async getCategories(): Promise<Category[]> {
+    const response = await fetch(`${API_BASE_URL}/v1/categories/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Sisipkan token jika diperlukan
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data kategori");
+    }
+
+    return response.json(); // Mengembalikan List[schemas.CategoryOut] 
+  },
+  /**
+   * Menambahkan Kategori baru
+   * Endpoint: POST /api/v1/categories/
+   */
+  async createCategory(data: CategoryCreate): Promise<Category> {
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${API_BASE_URL}/v1/categories/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal membuat kategori baru");
+    }
+
+    return response.json(); // Mengembalikan schemas.CategoryOut 
+  }
+};
+--- END FILE: mimika-datahub-fe/src/app/services/category.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/dataset.service.ts ---
+// src/services/dataset.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { Dataset, ApproveResponse } from "../types/dataset";
+
+export const datasetService = {
+  /**
+   * Mengambil daftar dataset yang statusnya masih 'pending'
+   * Endpoint: GET /api/v1/datasets/pending-list
+   */
+  async getPendingDatasets(): Promise<Dataset[]> {
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(`${API_BASE_URL}/v1/datasets/pending-list`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`, 
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal mengambil daftar pending");
+    }
+    return response.json(); 
+  },
+
+  /**
+   * Menyetujui dataset agar status berubah menjadi 'approved'
+   * Endpoint: PATCH /api/v1/datasets/{dataset_id}/approve
+   */
+  async approveDataset(datasetId: number): Promise<ApproveResponse> {
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(`${API_BASE_URL}/v1/datasets/${datasetId}/approve`, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${token}`, 
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal menyetujui dataset");
+    }
+    return response.json(); 
+  }
+};
+--- END FILE: mimika-datahub-fe/src/app/services/dataset.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/ingest.service.ts ---
+// src/services/ingest.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { UploadRequest, UploadResponse } from "../types/ingest";
+
+export const ingestService = {
+  async uploadProcess(data: UploadRequest): Promise<UploadResponse> {
+    const formData = new FormData();
+    
+    formData.append("title", data.title);
+    formData.append("dataset_type", data.dataset_type); // Mapping baru
+    formData.append("source_id", data.source_id.toString());
+    formData.append("category_id", data.category_id.toString());
+    formData.append("source_type_id", data.source_type_id.toString()); // Mapping baru
+    formData.append("year", data.year.toString());
+    formData.append("period", data.period);
+    
+    if (data.description) {
+      formData.append("description", data.description);
+    }
+    
+    formData.append("file", data.file);
+
+    const token = localStorage.getItem("auth_token");
+
+    const response = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal memproses upload data");
+    }
+
+    return response.json();
+  }
+};
+--- END FILE: mimika-datahub-fe/src/app/services/ingest.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/source-type.service.ts ---
+// src/services/source-type.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { SourceType, SourceTypeCreate } from "../types/source-type";
+
+export const sourceTypeService = {
+  /**
+   * Mengambil semua daftar Tipe Sumber
+   * Endpoint: GET /api/v1/source-type/
+   */
+  async getSourceTypes(): Promise<SourceType[]> {
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(`${API_BASE_URL}/v1/source-type/`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data tipe sumber");
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Membuat Tipe Sumber baru
+   * Endpoint: POST /api/v1/source-type/
+   */
+  async createSourceType(data: SourceTypeCreate): Promise<SourceType> {
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(`${API_BASE_URL}/v1/source-type/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal membuat tipe sumber baru");
+    }
+
+    return response.json();
+  },
+};
+--- END FILE: mimika-datahub-fe/src/app/services/source-type.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/services/source.service.ts ---
+// src/services/source.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { Source, SourceCreate } from "../types/source";
+
+export const sourceService = {
+  /**
+   * Mengambil daftar seluruh Sumber Data (OPD/BPS)
+   * Endpoint: GET /api/v1/sources/
+   */
+  async getSources(): Promise<Source[]> {
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${API_BASE_URL}/v1/sources/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data sumber data (OPD)");
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Menambahkan Sumber Data (OPD) baru
+   * Endpoint: POST /api/v1/sources/
+   */
+  async createSource(data: SourceCreate): Promise<Source> {
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${API_BASE_URL}/v1/sources/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Menangkap detail error "Nama Sumber Data sudah terdaftar" dari backend [cite: 65]
+      throw new Error(errorData.detail || "Gagal membuat sumber data baru");
+    }
+
+    return response.json();
+  }
+};
+--- END FILE: mimika-datahub-fe/src/app/services/source.service.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useAuthStore.ts ---
+// src/store/useAuthStore.ts
+import { create } from 'zustand';
+import { UserAuth } from '../types/auth';
+
+interface AuthState {
+  user: UserAuth | null;
+  setAuth: (token: string, role: string, username: string) => void;
+  clearAuth: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  setAuth: (token, role, username) => {
+    localStorage.setItem("auth_token", token);
+    set({ user: { username, role, isAuthenticated: true } });
+  },
+  clearAuth: () => {
+    localStorage.removeItem("auth_token");
+    set({ user: null });
+  },
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useAuthStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useCategoryStore.ts ---
+// src/store/useCategoryStore.ts
+import { create } from 'zustand';
+import { Category, CategoryCreate } from '../types/category';
+import { categoryService } from '../services/category.service';
+
+interface CategoryState {
+  categories: Category[];
+  isLoading: boolean;
+  error: string | null;
+  
+  fetchCategories: () => Promise<void>;
+  setCategories: (categories: Category[]) => void;
+  // Action baru
+  addCategory: (data: CategoryCreate) => Promise<Category>;
+}
+
+export const useCategoryStore = create<CategoryState>((set) => ({
+  categories: [],
+  isLoading: false,
+  error: null,
+
+  setCategories: (categories) => set({ categories }),
+
+  fetchCategories: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await categoryService.getCategories();
+      set({ categories: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  /**
+   * Mengirim kategori ke server dan memperbarui state lokal
+   */
+  addCategory: async (data: CategoryCreate) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newCategory = await categoryService.createCategory(data);
+      // Update daftar kategori secara lokal agar sinkron ke dropdown UI
+      set((state) => ({ 
+        categories: [...state.categories, newCategory],
+        isLoading: false 
+      }));
+      return newCategory;
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useCategoryStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useDatasetStore.ts ---
+// src/store/useDatasetStore.ts
+import { create } from 'zustand';
+import { Dataset } from '../types/dataset';
+import { datasetService } from '../services/dataset.service';
+
+interface DatasetState {
+  pendingDatasets: Dataset[];
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  fetchPendingDatasets: () => Promise<void>;
+  approveDataset: (id: number) => Promise<void>;
+}
+
+export const useDatasetStore = create<DatasetState>((set, get) => ({
+  pendingDatasets: [],
+  isLoading: false,
+  error: null,
+
+  fetchPendingDatasets: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await datasetService.getPendingDatasets();
+      set({ pendingDatasets: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  approveDataset: async (id: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      await datasetService.approveDataset(id);
+      
+      // Hapus dataset yang sudah disetujui dari state lokal secara instan
+      const currentPending = get().pendingDatasets;
+      set({ 
+        pendingDatasets: currentPending.filter(ds => ds.id !== id),
+        isLoading: false 
+      });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useDatasetStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useIngestStore.ts ---
+// src/store/useIngestStore.ts
+import { create } from 'zustand';
+import { UploadResponse } from '../types/ingest';
+
+interface IngestState {
+  isProcessing: boolean;
+  lastUploadResult: UploadResponse | null;
+  error: string | null;
+  
+  // Actions
+  setProcessing: (status: boolean) => void;
+  setResult: (result: UploadResponse) => void;
+  setError: (msg: string | null) => void;
+  resetStore: () => void;
+}
+
+export const useIngestStore = create<IngestState>((set) => ({
+  isProcessing: false,
+  lastUploadResult: null,
+  error: null,
+
+  setProcessing: (status) => set({ isProcessing: status }),
+  
+  setResult: (result) => set({ 
+    lastUploadResult: result, 
+    error: null,
+    isProcessing: false 
+  }),
+
+  setError: (msg) => set({ 
+    error: msg, 
+    isProcessing: false 
+  }),
+
+  resetStore: () => set({ 
+    isProcessing: false, 
+    lastUploadResult: null, 
+    error: null 
+  })
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useIngestStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useSourceStore.ts ---
+// src/store/useSourceStore.ts
+import { create } from 'zustand';
+import { Source, SourceCreate } from '../types/source';
+import { sourceService } from '../services/source.service';
+
+interface SourceState {
+  sources: Source[];
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  fetchSources: () => Promise<void>;
+  addSource: (data: SourceCreate) => Promise<Source>;
+  setSources: (sources: Source[]) => void;
+}
+
+export const useSourceStore = create<SourceState>((set) => ({
+  sources: [],
+  isLoading: false,
+  error: null,
+
+  setSources: (sources) => set({ sources }),
+
+  fetchSources: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await sourceService.getSources();
+      set({ sources: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  /**
+   * Action untuk membuat source baru dan menambahkannya ke state global
+   */
+  addSource: async (data: SourceCreate) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newSource = await sourceService.createSource(data);
+      // Update state sources secara lokal agar tidak perlu fetch ulang
+      set((state) => ({ 
+        sources: [...state.sources, newSource],
+        isLoading: false 
+      }));
+      return newSource;
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useSourceStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/store/useSourceTypeStore.ts ---
+// src/store/useSourceTypeStore.ts
+import { create } from 'zustand';
+import { SourceType, SourceTypeCreate } from '../types/source-type';
+import { sourceTypeService } from '../services/source-type.service';
+
+interface SourceTypeState {
+  sourceTypes: SourceType[];
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  fetchSourceTypes: () => Promise<void>;
+  addSourceType: (data: SourceTypeCreate) => Promise<SourceType>;
+  setSourceTypes: (types: SourceType[]) => void;
+}
+
+export const useSourceTypeStore = create<SourceTypeState>((set, get) => ({
+  sourceTypes: [],
+  isLoading: false,
+  error: null,
+
+  setSourceTypes: (sourceTypes) => set({ sourceTypes }),
+
+  fetchSourceTypes: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await sourceTypeService.getSourceTypes();
+      set({ sourceTypes: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  addSourceType: async (data: SourceTypeCreate) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newType = await sourceTypeService.createSourceType(data);
+      
+      // Update state lokal agar UI langsung sinkron tanpa reload
+      const currentTypes = get().sourceTypes;
+      // Backend mengembalikan data lama jika nama sudah ada 
+      const isExist = currentTypes.some(t => t.id === newType.id);
+      
+      if (!isExist) {
+        set({ 
+          sourceTypes: [...currentTypes, newType], 
+          isLoading: false 
+        });
+      } else {
+        set({ isLoading: false });
+      }
+      
+      return newType;
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+}));
+--- END FILE: mimika-datahub-fe/src/app/store/useSourceTypeStore.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/auth.ts ---
+// src/types/auth.ts
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  role: string;
+}
+
+export interface UserAuth {
+  username: string;
+  role: string;
+  isAuthenticated: boolean;
+}
+--- END FILE: mimika-datahub-fe/src/app/types/auth.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/category.ts ---
+// src/types/category.ts
+
+export interface Category {
+  id: number; // 
+  name: string; // 
+}
+
+export interface CategoryCreate {
+  name: string; // 
+}
+--- END FILE: mimika-datahub-fe/src/app/types/category.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/dataset.ts ---
+// src/types/dataset.ts
+
+export interface Dataset {
+  id: number; 
+  title: string; 
+  source_id: number; 
+  category_id: number; 
+  source_type_id: number; 
+  year: number; 
+  period: string; 
+  dataset_type: string; 
+  description?: string; 
+  status: "pending" | "approved"; 
+  headers?: string[]; 
+  total_rows: number; 
+  quality_score: number; 
+  created_at: string; 
+}
+
+export interface ApproveResponse {
+  message: string;
+}
+--- END FILE: mimika-datahub-fe/src/app/types/dataset.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/ingest.ts ---
+// src/types/ingest.ts
+
+export interface IngestStats {
+  inserted: number;
+  duplicates: number;
+  empty: number;
+  total: number;
+  quality_score: number;
+}
+
+export interface UploadRequest {
+  title: string;
+  dataset_type: string; // Baru
+  source_id: number;
+  category_id: number;
+  source_type_id: number; // Baru
+  year: number;
+  period: string;
+  description?: string;
+  file: File;
+}
+
+export interface UploadResponse {
+  status: string;
+  dataset_id: number;
+  headers_found: string[];
+  message: string;
+  stats: IngestStats; // Struktur berubah menjadi nested object
+}
+--- END FILE: mimika-datahub-fe/src/app/types/ingest.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/source-type.ts ---
+// src/types/source-type.ts
+
+export interface SourceType {
+  id: number;
+  name: string;
+}
+
+export interface SourceTypeCreate {
+  name: string;
+}
+--- END FILE: mimika-datahub-fe/src/app/types/source-type.ts ---
+
+--- START FILE: mimika-datahub-fe/src/app/types/source.ts ---
+// src/types/source.ts
+
+export interface Source {
+  id: number;
+  name: string;
+  type: string; // bps, opd, kementerian, dll 
+  icon?: string;
+}
+
+export interface SourceCreate {
+  name: string;
+  type: string;
+  icon?: string;
+}
+--- END FILE: mimika-datahub-fe/src/app/types/source.ts ---
 
 --- START FILE: mimika-datahub-fe/tsconfig.json ---
 {

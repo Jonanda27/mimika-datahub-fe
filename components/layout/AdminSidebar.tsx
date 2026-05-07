@@ -15,6 +15,8 @@ export default function ManagerSidebar() {
 
   const menuItems = [
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
+     { name: "Data Pemerintah", href: "/data-pemerintah", icon: Building2 },
+    { name: "Data Non Pemerintah", href: "/data-non-pemerintah", icon: Globe },
     { name: "Manajemen Akun", href: "/akun-management", icon: BarChart2 },
     { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
      { name: "Data Quality", href: "/data-quality", icon: Globe },
