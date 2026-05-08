@@ -20,7 +20,7 @@ import { useIngestStore } from "./../../store/useIngestStore";
 import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
-import { useDatasetStore } from "./../../store/useDatasetStore"; // Tambahkan ini
+import { useDatasetStore } from "./../../store/useDatasetStore";
 
 // --- Types ---
 export interface UploadLog {
@@ -61,7 +61,7 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        // Fetch semua data master dan riwayat dataset user secara paralel [cite: 438, 439]
+        // Fetch semua data master dan riwayat dataset user secara paralel
         await Promise.all([
           fetchSources(), 
           fetchCategories(), 
@@ -192,74 +192,84 @@ export default function UploadDataPage() {
     }
   };
 
+  // --- RENDERING ---
+
   if (isLoading && sources.length === 0) {
     return (
-      <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans">
-        <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
-        <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+      <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
+        {/* Tambahan Wrapper Container */}
+        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+          <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
+          <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-6 font-sans animate-in fade-in duration-500 text-black">
-      <PageHeader 
-        title="Upload Data" 
-        subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
-      />
-
-      {alert && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
-          alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-          alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 
-          'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
-        }`}>
-          <AlertCircle size={20} />
-          <span className="text-sm font-medium">{alert.message}</span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FileUploadArea 
-          selectedFile={selectedFile} 
-          isProcessing={isProcessing} 
-          onFileChange={handleFileChange} 
-          onRemoveFile={() => setSelectedFile(null)} 
-        />
+    <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
+      {/* Tambahan Wrapper Container (max-w-[1400px] mx-auto) agar form tidak meregang memenuhi layar */}
+      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
         
-        <DatasetForm 
-          sources={sources} 
-          categories={categories} 
-          sourceTypes={sourceTypes}
-          isProcessing={isProcessing} 
-          onSubmit={handleUpload} 
-          onAddSource={() => setShowSourceModal(true)} 
-          onAddCategory={() => setShowCategoryModal(true)} 
-          onAddSourceType={() => setShowSourceTypeModal(true)}
+        <PageHeader 
+          title="Upload Data" 
+          subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
         />
+
+        {alert && (
+          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+            alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
+            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 
+            'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
+          }`}>
+            <AlertCircle size={20} />
+            <span className="text-sm font-medium">{alert.message}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+          <FileUploadArea 
+            selectedFile={selectedFile} 
+            isProcessing={isProcessing} 
+            onFileChange={handleFileChange} 
+            onRemoveFile={() => setSelectedFile(null)} 
+          />
+          
+          <DatasetForm 
+            sources={sources} 
+            categories={categories} 
+            sourceTypes={sourceTypes}
+            isProcessing={isProcessing} 
+            onSubmit={handleUpload} 
+            onAddSource={() => setShowSourceModal(true)} 
+            onAddCategory={() => setShowCategoryModal(true)} 
+            onAddSourceType={() => setShowSourceTypeModal(true)}
+          />
+        </div>
+
+        <UploadLogTable logs={logs} />
+
+        <footer className="mt-10 text-center text-gray-400 text-xs pb-4">
+          © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
+        </footer>
+
+        <AddItemModal 
+          isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
+          onClose={() => { 
+              setShowSourceModal(false); 
+              setShowCategoryModal(false); 
+              setShowSourceTypeModal(false);
+              setNewItemName(""); 
+          }}
+          onSave={handleSaveNewItem}
+          title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}
+          placeholder={showSourceModal ? "Contoh: Dinas Perikanan" : showCategoryModal ? "Contoh: Infrastruktur" : "Contoh: Statistik Sektoral"}
+          value={newItemName}
+          onChange={setNewItemName}
+          type={showSourceModal ? "source" : "category"}
+        />
+
       </div>
-
-      <UploadLogTable logs={logs} />
-
-      <footer className="mt-8 text-center text-gray-400 text-xs">
-        © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
-      </footer>
-
-      <AddItemModal 
-        isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
-        onClose={() => { 
-            setShowSourceModal(false); 
-            setShowCategoryModal(false); 
-            setShowSourceTypeModal(false);
-            setNewItemName(""); 
-        }}
-        onSave={handleSaveNewItem}
-        title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}
-        placeholder={showSourceModal ? "Contoh: Dinas Perikanan" : showCategoryModal ? "Contoh: Infrastruktur" : "Contoh: Statistik Sektoral"}
-        value={newItemName}
-        onChange={setNewItemName}
-        type={showSourceModal ? "source" : "category"}
-      />
     </div>
   );
 }

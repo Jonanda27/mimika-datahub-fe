@@ -6,21 +6,18 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
-  Building2, 
-  Globe, 
-  LineChart, 
   Upload, 
-  BarChart2, 
-  Eye, 
   Menu, 
   X,
-  LogOut // Import ikon logout
+  LogOut,
+  Search, // Tambahan untuk bar pencarian seperti di gambar
+  User as UserIcon // Tambahan untuk ikon login/logout di kanan
 } from "lucide-react";
 
 // Integrasi Store
 import { useAuthStore } from "@/src/app/store/useAuthStore";
 
-export default function ManagerSidebar() {
+export default function UserNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false); // State untuk mobile menu
@@ -29,8 +26,10 @@ export default function ManagerSidebar() {
   const { logout, isLoading } = useAuthStore();
 
   const menuItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Upload Data", href: "/upload-data", icon: Upload },
+    { name: "DASHBOARD", href: "/dashboard", icon: LayoutDashboard },
+    { name: "DATA PEMERINTAH", href: "/user-data-pemerintah", icon: Upload },
+    { name: "DATA NON-PEMERINTAH", href: "/user-data-non-pemerintah", icon: Upload },
+    { name: "DATA UPLOAD", href: "/upload-data", icon: Upload },
   ];
 
   // Handler untuk proses Logout
@@ -48,75 +47,127 @@ export default function ManagerSidebar() {
   };
 
   return (
-    <>
-      {/* Tombol Hamburger untuk Mobile */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[60] bg-[#144272] text-white p-2 rounded-lg shadow-md"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
-      {/* Overlay saat Sidebar terbuka di Mobile */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Utama */}
-      <aside className={`
-        fixed left-0 top-0 h-screen bg-gradient-to-b from-[#144272] to-[#0A2647] text-white z-[58] shadow-xl transition-transform duration-300 ease-in-out overflow-y-auto
-        w-[260px] flex flex-col
-        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}>
-        {/* Logo Section */}
-        <div className="p-6 flex flex-col items-center border-b border-white/10">
-          <div className="mb-4 relative w-24 h-20">
-            <Image src="/logo-mimika.png" alt="Logo Mimika" fill className="object-contain" priority />
-          </div>
-          <h1 className="text-xl font-bold tracking-wide">Mimika DataHub</h1>
-          <p className="text-[11px] text-blue-200 mt-1 uppercase text-center font-light">Pusat Data Terintegrasi</p>
+    <header className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
+      {/* --- BARIS ATAS (Putih) --- */}
+      <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200">
+        
+        {/* Kiri: Logo & Branding */}
+        <div className="flex items-center gap-4">
+          <Image src="/logo-mimika.png" alt="Logo Mimika" width={60} height={20} className="object-contain" priority />
+          <div className="h-8 w-px bg-gray-400 hidden sm:block"></div>
+          <h1 className="text-xl md:text-2xl font-bold text-[#004b87] tracking-wide hidden sm:block">
+            Mimika DataHub
+          </h1>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 p-4 space-y-1.5 text-sm font-medium mt-2">
+        {/* Kanan: Search Bar & Hamburger Mobile */}
+        <div className="flex items-center gap-4">
+          {/* Kolom Pencarian (Desktop) */}
+          <div className="hidden md:flex relative items-center border border-gray-300 rounded w-[300px] lg:w-[450px] focus-within:ring-1 focus-within:ring-[#0071bc]">
+            <input 
+              type="text" 
+              placeholder="Search" 
+              className="w-full px-3 py-1.5 focus:outline-none text-sm text-black bg-transparent"
+            />
+            <button className="px-3 hover:bg-gray-50 h-full flex items-center transition-colors">
+              <Search size={18} className="text-gray-800 font-bold" />
+            </button>
+          </div>
+
+          {/* Tombol Hamburger (Mobile) */}
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-[#004b87] p-2 rounded-lg hover:bg-gray-100"
+          >
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {/* --- BARIS BAWAH (Biru - Navigasi) --- */}
+      <div className="bg-[#0071bc] text-white hidden md:flex items-center justify-between px-4 md:px-8">
+        
+        {/* Kiri: Menu Navigasi */}
+        <nav className="flex items-center">
           {menuItems.map((item) => {
-            const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.href}
-                href={item.href} 
-                onClick={() => setIsOpen(false)} // Tutup menu setelah klik di mobile
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
-                  isActive ? "bg-[#ef4444] text-white shadow-lg" : "text-blue-100 hover:bg-white/10"
-                }`}
+                href={item.href}
+                className={`px-5 py-3 text-sm font-medium tracking-wide transition-colors flex items-center gap-2
+                  ${isActive ? "bg-[#005a96] border-b-2 border-white" : "hover:bg-[#005a96] border-b-2 border-transparent"}
+                `}
               >
-                <Icon size={18} />
                 {item.name}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom Section: Tombol Logout */}
-        <div className="p-4 border-t border-white/10">
-          <button 
-            onClick={handleLogout}
-            disabled={isLoading}
-            className="flex items-center gap-4 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-bold group"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-            ) : (
-              <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
-            )}
-            {isLoading ? "Sedang Keluar..." : "Keluar Sistem"}
-          </button>
+        {/* Kanan: Tombol Profil/Logout */}
+        <button 
+          onClick={handleLogout}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-[#005a96] transition-colors"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <UserIcon size={18} />
+          )}
+          <span>{isLoading ? "Keluar..." : "Logout"}</span>
+        </button>
+      </div>
+
+      {/* --- MENU DROPDOWN (Mobile) --- */}
+      {isOpen && (
+        <div className="md:hidden bg-[#0071bc] text-white flex flex-col absolute top-full left-0 w-full shadow-xl border-t border-[#005a96]">
+            {/* Search Bar Mobile */}
+            <div className="p-4 border-b border-[#005a96]">
+              <div className="flex relative items-center border border-white/50 rounded overflow-hidden w-full bg-white/10 focus-within:bg-white/20">
+                <input 
+                  type="text" 
+                  placeholder="Search" 
+                  className="w-full px-3 py-2 bg-transparent focus:outline-none text-sm text-white placeholder:text-white/70"
+                />
+                <button className="px-3">
+                  <Search size={18} className="text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Menu Links Mobile */}
+            <nav className="flex flex-col">
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link 
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`px-6 py-4 text-sm font-medium border-b border-[#005a96] flex items-center gap-3
+                      ${isActive ? "bg-[#005a96] font-bold" : "hover:bg-[#005a96]"}
+                    `}
+                  >
+                    <item.icon size={18} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+              
+              {/* Logout Mobile */}
+              <button 
+                onClick={handleLogout}
+                disabled={isLoading}
+                className="flex items-center gap-3 px-6 py-4 text-sm font-bold hover:bg-[#005a96] text-red-200 transition-colors w-full text-left"
+              >
+                <LogOut size={18} />
+                {isLoading ? "Sedang Keluar..." : "Logout Sistem"}
+              </button>
+            </nav>
         </div>
-      </aside>
-    </>
+      )}
+    </header>
   );
 }

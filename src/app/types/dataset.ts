@@ -37,3 +37,23 @@ export interface DatasetContentParams {
   dataset_id: number;
   limit?: number;
 }
+
+export interface FilterStatItem {
+  id: number;
+  name: string;
+  count: number;
+}
+
+export interface SidebarStats {
+  categories: FilterStatItem[];
+  sources: FilterStatItem[];
+  source_types: FilterStatItem[];
+  years: FilterStatItem[];
+}
+
+export interface DatasetFilterParams {
+  category_id?: number | null;
+  source_id?: number | null;
+  source_type_id?: number | null;
+  year?: number | null;
+}

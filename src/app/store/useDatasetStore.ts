@@ -1,6 +1,6 @@
 // src/store/useDatasetStore.ts
 import { create } from 'zustand';
-import { Dataset, DatasetContent } from '../types/dataset';
+import { Dataset, DatasetContent, SidebarStats, DatasetFilterParams } from '../types/dataset';
 import { datasetService } from '../services/dataset.service';
 
 interface DatasetState {
@@ -11,14 +11,20 @@ interface DatasetState {
   myDatasets: Dataset[];       // Dataset milik user yang login
   isLoading: boolean;
   error: string | null;
+  sidebarStats: SidebarStats | null;
+  isSidebarLoading: boolean;
 
   // Actions Fetching
   fetchPendingDatasets: () => Promise<void>;
   fetchApprovedDatasets: () => Promise<void>;
-  fetchPublicDatasets: (type: 'pemerintah' | 'non-pemerintah') => Promise<void>;
+  fetchPublicDatasets: (
+    type: 'pemerintah' | 'non-pemerintah', 
+    filters?: DatasetFilterParams
+  ) => Promise<void>;
   fetchMyDatasets: () => Promise<void>;
   fetchDatasetContent: (id: number, limit?: number) => Promise<void>;
   resetContent: () => void;
+  
 
   // Actions Moderasi
   approveDataset: (id: number) => Promise<void>;
@@ -27,6 +33,7 @@ interface DatasetState {
   downloadDataset: (id: number, filename: string) => Promise<void>;
   downloadDatasetList: (type: string, format: string) => Promise<void>;
   handleFileDownload: (blob: Blob, filename: string) => void;
+  fetchSidebarStats: (type: 'pemerintah' | 'non-pemerintah') => Promise<void>;
 }
 
 export const useDatasetStore = create<DatasetState>((set, get) => ({
@@ -35,8 +42,34 @@ export const useDatasetStore = create<DatasetState>((set, get) => ({
   publicDatasets: [],
   myDatasets: [],
   selectedDatasetContent: null,
+  sidebarStats: null,
+  isSidebarLoading: false,
   isLoading: false,
   error: null,
+
+  fetchPublicDatasets: async (type, filters) => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = type === 'pemerintah' 
+        ? await datasetService.getGovernmentDatasets(filters) 
+        : await datasetService.getNonGovernmentDatasets(filters);
+      set({ publicDatasets: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  // === Action Baru untuk Sidebar Stats ===
+  fetchSidebarStats: async (type) => {
+    set({ isSidebarLoading: true, error: null });
+    try {
+      const data = await datasetService.getSidebarStats(type);
+      set({ sidebarStats: data, isSidebarLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isSidebarLoading: false });
+    }
+  },
+  
 
   /**
    * Mengambil data isi tabel dan menyimpannya ke state
@@ -77,17 +110,6 @@ export const useDatasetStore = create<DatasetState>((set, get) => ({
     }
   },
 
-  fetchPublicDatasets: async (type) => {
-    set({ isLoading: true, error: null });
-    try {
-      const data = type === 'pemerintah' 
-        ? await datasetService.getGovernmentDatasets() 
-        : await datasetService.getNonGovernmentDatasets();
-      set({ publicDatasets: data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-    }
-  },
 
   fetchMyDatasets: async () => {
     set({ isLoading: true, error: null });

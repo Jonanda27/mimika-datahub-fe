@@ -1,6 +1,6 @@
 // src/services/dataset.service.ts
 import { API_BASE_URL } from "../lib/config";
-import { Dataset, ApproveResponse, DatasetContent } from "../types/dataset";
+import { Dataset, ApproveResponse, DatasetContent, SidebarStats, DatasetFilterParams } from "../types/dataset";
 
 export const datasetService = {
   /**
@@ -52,28 +52,6 @@ export const datasetService = {
       headers: { "Authorization": `Bearer ${token}` },
     });
     if (!response.ok) throw new Error("Gagal mengambil daftar dataset disetujui");
-    return response.json();
-  },
-
-  /**
-   * Mengambil dataset publik tipe Pemerintah
-   */
-  async getGovernmentDatasets(): Promise<Dataset[]> {
-    const response = await fetch(`${API_BASE_URL}/v1/datasets/pemerintah`, {
-      method: "GET",
-    });
-    if (!response.ok) throw new Error("Gagal mengambil data pemerintah");
-    return response.json();
-  },
-
-  /**
-   * Mengambil dataset publik tipe Non-Pemerintah
-   */
-  async getNonGovernmentDatasets(): Promise<Dataset[]> {
-    const response = await fetch(`${API_BASE_URL}/v1/datasets/non-pemerintah`, {
-      method: "GET",
-    });
-    if (!response.ok) throw new Error("Gagal mengambil data non-pemerintah");
     return response.json();
   },
 
@@ -135,5 +113,67 @@ export const datasetService = {
     }
 
     return response.json();
-  }
+  },
+
+  /**
+   * Mengambil statistik jumlah dataset untuk sidebar filter
+   * Endpoint: GET /api/v1/datasets/sidebar-stats?dataset_type={type}
+   */
+  async getSidebarStats(datasetType: 'pemerintah' | 'non-pemerintah' = 'pemerintah'): Promise<SidebarStats> {
+    const token = localStorage.getItem("auth_token");
+    // Sesuaikan prefix URL dengan route backend Anda (contoh: /v1/datasets/sidebar-stats)
+    const response = await fetch(`${API_BASE_URL}/v1/datasets/sidebar-stats?dataset_type=${datasetType}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data statistik filter");
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Helper untuk membuat query string dari objek filter
+   */
+  buildQueryString(filters?: DatasetFilterParams): string {
+    if (!filters) return "";
+    const params = new URLSearchParams();
+    
+    if (filters.category_id) params.append("category_id", filters.category_id.toString());
+    if (filters.source_id) params.append("source_id", filters.source_id.toString());
+    if (filters.source_type_id) params.append("source_type_id", filters.source_type_id.toString());
+    if (filters.year) params.append("year", filters.year.toString()); // Tambahkan logika tahun
+    
+    const queryString = params.toString();
+    return queryString ? `?${queryString}` : "";
+  },
+
+  /**
+   * Mengambil dataset publik tipe Pemerintah dengan filter
+   */
+  async getGovernmentDatasets(filters?: DatasetFilterParams): Promise<Dataset[]> {
+    const query = this.buildQueryString(filters);
+    const response = await fetch(`${API_BASE_URL}/v1/datasets/pemerintah${query}`, {
+      method: "GET",
+    });
+    if (!response.ok) throw new Error("Gagal mengambil data pemerintah");
+    return response.json();
+  },
+
+  /**
+   * Mengambil dataset publik tipe Non-Pemerintah dengan filter
+   */
+  async getNonGovernmentDatasets(filters?: DatasetFilterParams): Promise<Dataset[]> {
+    const query = this.buildQueryString(filters);
+    const response = await fetch(`${API_BASE_URL}/v1/datasets/non-pemerintah${query}`, {
+      method: "GET",
+    });
+    if (!response.ok) throw new Error("Gagal mengambil data non-pemerintah");
+    return response.json();
+  },
 };
