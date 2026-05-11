@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import PageHeader from "@/components/layout/PageHeader";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import LoadingState from "@/components/ui/LoadingState";
+import { Search, LineChart, Database, FileText, LayoutGrid } from "lucide-react";
 
 // Modular Components
 import NonPemerintahFilter from "./components/NonPemerintahFilter";
@@ -11,19 +11,19 @@ import NonPemerintahDetailModal from "./components/NonPemerintahDetailModal";
 
 // Integrasi Store
 import { useDatasetStore } from "./../../store/useDatasetStore";
-import { useSourceStore } from "./../../store/useSourceStore"; // Impor Store Sumber
-import { useSourceTypeStore } from "./../../store/useSourceTypeStore"; // Impor Store Tipe Sumber
-import { useCategoryStore } from "./../../store/useCategoryStore"; // Impor Store Kategori
-import { Dataset } from "../../types/dataset";
+import { useSourceStore } from "./../../store/useSourceStore"; 
+import { useSourceTypeStore } from "./../../store/useSourceTypeStore"; 
+import { useCategoryStore } from "./../../store/useCategoryStore"; 
+import { Dataset, DatasetFilterParams } from "../../types/dataset";
 
 export default function DataNonPemerintahPage() {
   const { 
     publicDatasets, fetchPublicDatasets, isLoading: isStoreLoading,
     downloadDataset, downloadDatasetList, fetchDatasetContent,
-    selectedDatasetContent, resetContent 
+    selectedDatasetContent, resetContent,
+    sidebarStats, fetchSidebarStats
   } = useDatasetStore();
 
-  // Integrasi Store untuk Master Data (Penyelesaian Error: Cannot find name)
   const { sources, fetchSources } = useSourceStore();
   const { sourceTypes, fetchSourceTypes } = useSourceTypeStore();
   const { categories, fetchCategories } = useCategoryStore();
@@ -32,27 +32,40 @@ export default function DataNonPemerintahPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsInitialLoading(true);
-      try {
-        // Fetch semua data yang dibutuhkan secara paralel
-        await Promise.all([
-          fetchPublicDatasets('non-pemerintah'),
-          fetchSources(),
-          fetchSourceTypes(),
-          fetchCategories()
-        ]);
-      } catch (error) {
-        console.error("Gagal memuat data:", error);
-      } finally {
-        setIsInitialLoading(false);
-      }
-    };
-    loadData();
-  }, [fetchPublicDatasets, fetchSources, fetchSourceTypes, fetchCategories]);
+  // State untuk menyimpan filter aktif
+  const [filters, setFilters] = useState<DatasetFilterParams>({
+    category_id: null,
+    source_id: null,
+    source_type_id: null,
+    year: null
+  });
 
-  // Handler untuk menutup modal (Penyelesaian Error: Cannot find name 'handleCloseDetail')
+  const loadData = useCallback(async () => {
+    setIsInitialLoading(true);
+    try {
+      await Promise.all([
+        fetchPublicDatasets('non-pemerintah', filters),
+        fetchSidebarStats('non-pemerintah'),
+        fetchSources(),
+        fetchSourceTypes(),
+        fetchCategories()
+      ]);
+    } catch (error) {
+      console.error("Gagal memuat data:", error);
+    } finally {
+      setIsInitialLoading(false);
+    }
+  }, [fetchPublicDatasets, fetchSidebarStats, fetchSources, fetchSourceTypes, fetchCategories, filters]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleFilterChange = (newFilters: DatasetFilterParams) => {
+    setFilters(newFilters);
+    fetchPublicDatasets('non-pemerintah', newFilters);
+  };
+
   const handleCloseDetail = () => {
     setSelectedDataset(null);
     resetContent();
@@ -66,51 +79,110 @@ export default function DataNonPemerintahPage() {
 
   if (isInitialLoading || isStoreLoading) {
     return (
-      <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans text-black">
-        <PageHeader title="Data Non-Pemerintah" subtitle="Menghubungkan ke sumber data eksternal..." />
-        <LoadingState message="Mengumpulkan data organisasi internasional & NGO..." />
+      <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8">
+        <div className="max-w-[1500px] w-full mx-auto p-4 md:p-6 lg:p-8">
+          <LoadingState message="Mengumpulkan data organisasi internasional & NGO..." />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans animate-in fade-in duration-500 text-black">
-      <PageHeader 
-        title="Data Non-Pemerintah" 
-        subtitle="Data dari organisasi internasional, NGO, dan sektor swasta" 
-        withSearch
-        onSearch={setSearchTerm}
-      />
+    <div className="bg-[#f0f4f8] min-h-screen font-sans animate-in fade-in duration-500 text-black pt-6 md:pt-10">
+      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 w-full">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight shrink-0">
+            Search Data
+          </h1>
+          
+          <div className="relative w-full md:max-w-2xl lg:max-w-4xl flex-1">
+            <input 
+              type="text" 
+              placeholder="Search data...." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border border-gray-300 rounded px-4 py-3 md:py-4 text-base focus:outline-none focus:border-[#0071bc] focus:ring-1 focus:ring-[#0071bc] transition-all bg-white shadow-sm"
+            />
+            <button className="absolute right-4 top-1/2 -translate-y-1/2">
+              <Search size={22} className="text-gray-900 font-bold" />
+            </button>
+          </div>
+        </div>
 
-      <NonPemerintahFilter 
-        onSearch={setSearchTerm}
-        onReset={() => setSearchTerm("")}
-        onExport={(fmt) => downloadDatasetList('non-pemerintah', fmt)} 
-      />
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
+          <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 sticky top-24">
+            <NonPemerintahFilter 
+              sources={sources}
+              sourceTypes={sourceTypes}
+              categories={categories}
+              sidebarStats={sidebarStats}
+              currentFilters={filters}
+              onFilterChange={handleFilterChange}
+              onSearch={setSearchTerm}
+              onReset={() => {
+                const resetObj = { category_id: null, source_id: null, source_type_id: null, year: null };
+                setSearchTerm("");
+                handleFilterChange(resetObj);
+              }}
+              onExport={(fmt) => downloadDatasetList('non-pemerintah', fmt)} 
+            />
+          </aside>
 
-      <NonPemerintahTable 
-        data={filteredData}
-        onOpenDetail={(d) => {
-          setSelectedDataset(d);
-          fetchDatasetContent(d.id, 100); 
-        }}
-      />
+          <main className="flex-1 min-w-0 w-full bg-white border border-gray-200 rounded-sm shadow-sm">
+            <div className="flex items-center gap-6 px-6 pt-2 border-b border-gray-200 overflow-x-auto w-full hide-scrollbar">
+              <button className="py-3 text-sm font-bold text-[#0071bc] border-b-[3px] border-[#0071bc] flex items-center gap-2 whitespace-nowrap shrink-0">
+                All
+              </button>
+            </div>
 
-      {selectedDataset && (
-        <NonPemerintahDetailModal 
-          dataset={selectedDataset}
-          content={selectedDatasetContent}
-          sources={sources}
-          sourceTypes={sourceTypes}
-          categories={categories}
-          onClose={handleCloseDetail}
-          onDownload={(d) => downloadDataset(d.id, `mimika_${d.title.replace(/\s+/g, '_')}`)}
-        />
-      )}
+            <div className="p-4 md:p-6 w-full">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 w-full">
+                <p className="text-sm text-gray-700">
+                  Showing <strong className="text-gray-900">{filteredData.length > 0 ? "1" : "0"}-{filteredData.length}</strong> of <strong className="text-gray-900">{publicDatasets.length}</strong> Datasets
+                </p>
+                
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Sort by:</label>
+                    <select className="border border-gray-300 bg-white text-gray-700 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#0071bc] cursor-pointer">
+                      <option>Last updated date</option>
+                      <option>A-Z (Alphabetical)</option>
+                      <option>Highest Quality</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
-        © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
-      </footer>
+              <div className="w-full">
+                <NonPemerintahTable 
+                  data={filteredData}
+                  onOpenDetail={(d) => {
+                    setSelectedDataset(d);
+                    fetchDatasetContent(d.id, 100); 
+                  }}
+                />
+              </div>
+            </div>
+          </main>
+        </div>
+
+        {selectedDataset && (
+          <NonPemerintahDetailModal 
+            dataset={selectedDataset}
+            content={selectedDatasetContent}
+            sources={sources}
+            sourceTypes={sourceTypes}
+            categories={categories}
+            onClose={handleCloseDetail}
+            onDownload={(d) => downloadDataset(d.id, `mimika_${d.title.replace(/\s+/g, '_')}`)}
+          />
+        )}
+
+        <footer className="mt-12 text-center text-gray-500 text-xs font-medium pb-8 w-full">
+          © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+        </footer>
+      </div>
     </div>
   );
 }

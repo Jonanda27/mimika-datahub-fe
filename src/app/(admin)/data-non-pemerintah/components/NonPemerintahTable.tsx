@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Database } from "lucide-react";
+import { Eye, SearchX } from "lucide-react";
 import { Dataset } from "@/src/app/types/dataset";
 
 interface NonPemerintahTableProps {
@@ -10,55 +10,84 @@ interface NonPemerintahTableProps {
 
 export default function NonPemerintahTable({ data, onOpenDetail }: NonPemerintahTableProps) {
   return (
-    <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-black">
-      <div className="overflow-x-auto">
+    <div className="w-full min-w-0 text-black">
+      <div className="w-full overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50/50 border-b border-gray-100">
+          {/* Header Tabel */}
+          <thead className="bg-gray-50/80 border-y border-gray-200">
             <tr>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-400 text-[10px] md:text-[11px] uppercase tracking-widest">Nama Dataset</th>
-              <th className="hidden lg:table-cell px-6 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest">Periode</th>
-              <th className="hidden md:table-cell px-6 py-4 font-bold text-gray-400 text-[10px] md:text-[11px] uppercase tracking-widest text-center">Tahun</th>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-400 text-[10px] md:text-[11px] uppercase tracking-widest text-right">Kualitas</th>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-400 text-[10px] md:text-[11px] uppercase tracking-widest text-center">Aksi</th>
+              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider">Nama Dataset</th>
+              <th className="hidden md:table-cell px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider">Periode</th>
+              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-center">Tahun</th>
+              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-right">Kualitas</th>
+              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-center">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {data.length > 0 ? data.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50/50 transition-colors group">
-                <td className="px-4 md:px-6 py-4">
-                  <div className="flex flex-col max-w-[200px] md:max-w-xs lg:max-w-md">
-                    <span className="font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors whitespace-normal">{row.title}</span>
-                    <span className="lg:hidden text-[10px] text-gray-400 uppercase font-medium mt-1">{row.period} • {row.year}</span>
-                  </div>
-                </td>
-                <td className="hidden lg:table-cell px-6 py-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-tighter">{row.period}</span>
-                </td>
-                <td className="hidden md:table-cell px-6 py-4 text-gray-500 font-medium text-center">{row.year}</td>
-                <td className="px-4 md:px-6 py-4 text-right">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black border ${row.quality_score >= 80 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                    {row.quality_score}%
-                  </span>
-                </td>
-                <td className="px-4 md:px-6 py-4 text-center">
-                  <button onClick={() => onOpenDetail(row)} className="inline-flex items-center gap-1.5 p-2 md:px-4 md:py-2 border border-gray-200 rounded-xl text-[11px] font-bold text-gray-600 hover:bg-white hover:text-[#1e61d0] hover:border-[#1e61d0] transition-all shadow-sm">
-                    <Eye size={14} /> <span className="hidden md:inline">DETAIL</span>
-                  </button>
-                </td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={5} className="px-6 py-16 md:py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-xs italic">
-                  <div className="flex flex-col items-center gap-2 opacity-50">
-                    <Database size={40} />
-                    <span>Tidak ada dataset tersedia</span>
-                  </div>
-                </td>
-              </tr>
+          
+          {/* Isi Tabel */}
+          <tbody className="divide-y divide-gray-100">
+            {data.length > 0 ? (
+              data.map((row) => (
+                <tr key={row.id} className="hover:bg-blue-50/30 transition-colors group">
+                  <td className="px-4 md:px-6 py-4">
+                    <div className="flex flex-col max-w-[200px] md:max-w-sm whitespace-normal break-words">
+                      <span className="font-bold text-[#0071bc] cursor-pointer hover:underline" onClick={() => onOpenDetail(row)}>
+                        {row.title}
+                      </span>
+                      <span className="md:hidden text-[10px] text-gray-400 uppercase font-medium mt-1">{row.period}</span>
+                    </div>
+                  </td>
+                  <td className="hidden md:table-cell px-6 py-4">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                      {row.period}
+                    </span>
+                  </td>
+                  <td className="px-4 md:px-6 py-4 text-gray-500 font-medium text-center">
+                    {row.year}
+                  </td>
+                  <td className="px-4 md:px-6 py-4 text-right">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold border ${row.quality_score >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                      {row.quality_score}%
+                    </span>
+                  </td>
+                  <td className="px-4 md:px-6 py-4 text-center">
+                    <button 
+                      onClick={() => onOpenDetail(row)} 
+                      className="inline-flex items-center gap-1.5 p-2 md:px-4 md:py-2 border border-gray-300 rounded text-[11px] font-bold text-gray-700 hover:bg-[#0071bc] hover:text-white hover:border-[#0071bc] transition-all shadow-sm"
+                    >
+                      <Eye size={14} /> <span className="hidden md:inline">DETAIL</span>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <EmptyState colSpan={5} />
             )}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+// Komponen Empty State Modern
+function EmptyState({ colSpan }: { colSpan: number }) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-4 py-24 bg-white">
+        {/* Whitespace normal & break-words dimasukkan di div agar teks bisa turun */}
+        <div className="flex flex-col items-center justify-center text-center space-y-4 whitespace-normal break-words w-full max-w-full">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-inner">
+            <SearchX size={36} className="text-gray-400" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-gray-900">Dataset Tidak Ditemukan</h3>
+            <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+              Kami tidak menemukan data eksternal yang sesuai dengan kata kunci atau filter pencarian Anda saat ini.
+            </p>
+          </div>
+        </div>
+      </td>
+    </tr>
   );
 }

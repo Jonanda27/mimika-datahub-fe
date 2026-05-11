@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
   Search, 
   ShieldCheck, 
-  LayoutGrid, 
-  ArrowRight,
   Menu, 
   X, 
   Database, 
@@ -15,209 +13,363 @@ import {
   Globe, 
   Zap,
   ChevronRight,
-  Layers,
   FileText,
-  UserCheck
+  TrendingUp,
+  Construction,
+  Users as UsersIcon,
+  Stethoscope,
+  GraduationCap,
+  Map as MapIcon,
+  Layers,
+  Maximize
 } from "lucide-react";
+
+// --- TYPE DEFINITIONS ---
+interface ThemeCardProps {
+  topic: string;
+  description: string;
+  metricValue: string;
+  metricLabel: string;
+  profileLink: string;
+  imagePath: string;
+}
+
+// --- KOMPONEN KARTU TEMATIK (LAYERED IMAGES) ---
+function ThemeCard({ 
+  topic, 
+  description, 
+  metricValue, 
+  metricLabel, 
+  profileLink, 
+  imagePath
+}: ThemeCardProps) {
+  return (
+    <div className="border border-gray-200 rounded-xl bg-white hover:shadow-2xl transition-all duration-300 h-full flex flex-col overflow-hidden">
+      <div className="h-64 w-full relative">
+        <div className="absolute inset-0 p-4">
+          <div className="relative w-full h-full">
+            <Image 
+              src="/mimika.jpg" 
+              alt="Background Mimika"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
+              className="object-cover z-0 rounded-lg"
+              priority
+            />
+          </div>
+        </div>
+        <Image 
+          src={imagePath} 
+          alt={`Ikon ${topic}`}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
+          className="object-contain z-10 p-4" 
+        />
+      </div>
+
+      <div className="p-6 flex flex-col flex-grow text-black">
+        <div className="mb-3">
+           <h3 className="text-[#002244] font-black text-2xl uppercase tracking-tighter">{topic}</h3>
+        </div>
+        <p className="text-gray-600 text-sm font-medium leading-relaxed mb-6 flex-grow">
+          {description}
+        </p>
+        <div className="text-right mb-6">
+          <p className="text-[#002244] text-5xl font-black leading-none tracking-tighter">{metricValue}</p>
+          <p className="text-gray-500 text-[10px] mt-2 font-bold uppercase tracking-wider">{metricLabel}</p>
+        </div>
+        <div className="border-t border-gray-100 pt-4">
+          <a href="#" className="text-[#0071bc] text-sm font-bold hover:text-[#002244] transition-colors flex items-center gap-1 group">
+            {profileLink} 
+            <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- DATA KARTU ---
+const themeCardsData: ThemeCardProps[] = [
+  {
+    topic: "EKONOMI",
+    description: "Pertumbuhan PDRB, laju inflasi, dan indikator makro ekonomi daerah untuk memantau stabilitas finansial Mimika.",
+    metricValue: "5.42%",
+    metricLabel: "Laju Pertumbuhan Ekonomi Mimika, 2023",
+    profileLink: "Profil Ekonomi",
+    imagePath: "/kategori_ekonomi.png"
+  },
+  {
+    topic: "INFRASTRUKTUR",
+    description: "Data pembangunan jalan, jembatan, dan fasilitas umum untuk mendukung konektivitas antar distrik.",
+    metricValue: "85.4%",
+    metricLabel: "Indeks Kondisi Jalan Mantap, 2023",
+    profileLink: "Profil Infrastruktur",
+    imagePath: "/kategori_infra.png"
+  },
+  {
+    topic: "KEPENDUDUKAN",
+    description: "Informasi demografi, sebaran penduduk, dan statistik vital masyarakat di wilayah Kabupaten Mimika.",
+    metricValue: "312rb",
+    metricLabel: "Estimasi Total Penduduk Kabupaten Mimika, 2024",
+    profileLink: "Profil Penduduk",
+    imagePath: "/kategori_kependudukan.png"
+  },
+  {
+    topic: "KESEHATAN",
+    description: "Cakupan layanan kesehatan, ketersediaan tenaga medis, dan statistik derajat kesehatan masyarakat.",
+    metricValue: "71.2th",
+    metricLabel: "Angka Harapan Hidup (AHH) Mimika, 2023",
+    profileLink: "Profil Kesehatan",
+    imagePath: "/kategori_kesehatan.png"
+  },
+  {
+    topic: "PENDIDIKAN",
+    description: "Statistik angka partisipasi sekolah dan kualitas sarana pendidikan dasar hingga menengah.",
+    metricValue: "0.84",
+    metricLabel: "Indeks Pendidikan Kabupaten Mimika, 2023",
+    profileLink: "Profil Pendidikan",
+    imagePath: "/kategori_pendidikan.png"
+  }
+];
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-blue-600 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-white font-sans text-gray-800 selection:bg-[#0071bc] selection:text-white overflow-x-hidden">
       
+      {/* --- TOP BAR --- */}
+      <div className="bg-[#002244] text-white py-1.5 px-4 text-[11px] font-semibold flex justify-end items-center md:px-10 gap-6 uppercase tracking-wider">
+        <a href="#" className="hover:text-blue-300 transition-colors">Pemerintah Kabupaten Mimika</a>
+        <a href="#" className="hover:text-blue-300 transition-colors">Bappeda</a>
+        <a href="#" className="hover:text-blue-300 transition-colors">ID / EN</a>
+      </div>
+
       {/* --- NAVIGATION --- */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
-        scrolled ? "bg-white/95 backdrop-blur-md border-b border-slate-200 py-2 shadow-lg" : "bg-transparent py-4 lg:py-6"
-      }`}>
-        <div className="w-full px-5 lg:px-10">
-          <div className="flex justify-between items-center">
-            
-            {/* Logo Section */}
-            <Link href="/" className="flex items-center gap-3 relative z-[120]">
-              <div className="relative w-10 h-10 lg:w-11 lg:h-11 overflow-hidden rounded-lg bg-white p-1 shadow-lg">
-                <Image 
-                  src="/logo-mimika.png" 
-                  alt="Logo Mimika" 
-                  width={38} 
-                  height={38} 
-                  className="object-contain w-full h-full" 
-                />
+      <nav className="w-full bg-white border-b border-gray-200 z-50 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <Link href="/" className="flex items-center gap-4">
+              <div className="relative w-12 h-12 overflow-hidden bg-white p-1">
+                <Image src="/logo-mimika.png" alt="Logo Mimika" fill sizes="48px" className="object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className={`text-xl lg:text-2xl font-[1000] tracking-tighter leading-none uppercase transition-colors duration-300 ${
-                  scrolled ? 'text-slate-900' : 'text-white'
-                }`}>
-                  Mimika
-                </span>
-                <span className={`text-[9px] lg:text-[11px] font-bold tracking-[0.3em] leading-none mt-1 uppercase ${
-                  scrolled ? 'text-blue-600' : 'text-blue-400'
-                }`}>
-                  DataHub
-                </span>
+                <span className="text-2xl font-bold text-[#002244] leading-none tracking-tight">Mimika DataHub</span>
+                <span className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-[0.2em]">Open Data Portal</span>
               </div>
             </Link>
 
-            {/* Desktop Menu */}
-            <div className={`hidden md:flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em] ${
-              scrolled ? 'text-slate-600' : 'text-white/90'
-            }`}>
-              <a href="#fitur" className="hover:text-blue-500 transition-all">Fitur</a>
-              <a href="#statistik" className="hover:text-blue-500 transition-all">Statistik</a>
-              <Link href="/login" className="bg-blue-600 text-white px-6 py-2.5 rounded-full hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 active:scale-95">
-                Portal Masuk <ArrowRight size={14} />
+            <div className="hidden md:flex items-center gap-8 text-[13px] font-bold text-gray-700 uppercase tracking-wide">
+              <a href="#tematik" className="hover:text-[#0071bc] transition-colors">Tema</a>
+              <a href="#gis" className="hover:text-[#0071bc] transition-colors">GIS Peta</a>
+              <a href="#fitur" className="hover:text-[#0071bc] transition-colors">Data & Resources</a>
+              <a href="#fitur" className="hover:text-[#0071bc] transition-colors">Sektor</a>
+              <a href="#statistik" className="hover:text-[#0071bc] transition-colors">Indikator</a>
+              <Link href="/login" className="bg-[#0071bc] text-white px-6 py-2.5 rounded-sm hover:bg-[#005a96] transition-shadow shadow-md">
+                MASUK SISTEM
               </Link>
             </div>
 
-            {/* Mobile Toggle */}
-            <button 
-              className={`md:hidden p-2 rounded-lg relative z-[120] transition-all ${
-                scrolled || isMenuOpen ? 'text-slate-900' : 'text-white'
-              }`} 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            <button className="md:hidden p-2 text-[#002244]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
 
-        {/* --- MOBILE SIDEBAR --- */}
-        <div 
-          className={`fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[110] transition-opacity duration-300 md:hidden ${
-            isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onClick={closeMenu}
-        />
-        
-        <div className={`fixed top-0 right-0 h-full w-[280px] bg-white z-[115] shadow-2xl transition-transform duration-500 ease-in-out md:hidden flex flex-col p-8 ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}>
-          <div className="mt-20 flex flex-col gap-6 text-left">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 text-left">Navigation</p>
-            <a href="#fitur" onClick={closeMenu} className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors flex items-center justify-between">
-              Fitur <ChevronRight size={16} />
-            </a>
-            <a href="#statistik" onClick={closeMenu} className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors flex items-center justify-between">
-              Statistik <ChevronRight size={16} />
-            </a>
-            <div className="mt-8">
-              <Link href="/login" onClick={closeMenu} className="block w-full bg-blue-600 text-white text-center py-4 rounded-xl font-bold shadow-lg shadow-blue-200">
-                MASUK SISTEM
-              </Link>
-            </div>
+        {isMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200 px-4 py-6 space-y-4 absolute w-full shadow-2xl z-50 font-bold text-[#002244]">
+            <a href="#tematik" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY THEME</a>
+            <a href="#gis" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">GEOSPATIAL</a>
+            <a href="#fitur" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY SECTOR</a>
+            <a href="#statistik" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY INDICATOR</a>
+            <Link href="/login" className="block w-full bg-[#0071bc] text-white text-center py-3 rounded-sm">PORTAL MASUK</Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* --- HERO SECTION --- */}
-      {/* Optimasi: Mengurangi pt-20 menjadi pt-12 pada mobile untuk menaikkan teks */}
-      <header className="relative min-h-screen flex items-center pt-12 md:pt-20 lg:pt-0 overflow-hidden bg-slate-950">
-        <div className="absolute inset-0 z-0">
-          <Image 
-            src="/mimika.jpg" 
-            alt="Mimika Background"
-            fill
-            priority
-            className="object-cover object-center scale-105 animate-subtle-zoom"
-          />
-          <div className="absolute inset-0 bg-slate-950/50 z-10"></div> 
-          <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-white via-white/20 to-transparent z-20"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full relative z-30">
-          <div className="text-center space-y-6 md:space-y-8 lg:space-y-12 max-w-5xl mx-auto">
-            
-            {/* Optimasi Font: Mobile text-5xl, iPad text-7xl, Desktop text-[100px] */}
-            <h1 className="text-5xl sm:text-7xl lg:text-[100px] font-[1000] text-white leading-[1] lg:leading-[0.85] tracking-[-0.05em] drop-shadow-2xl animate-fade-in-up">
-              Satu Pintu Untuk <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-500">Data Mimika.</span>
-            </h1>
-
-            <p className="text-base sm:text-lg lg:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium drop-shadow-md animate-fade-in-up px-2" style={{ animationDelay: '200ms' }}>
-              Integrasi data sektoral real-time untuk perencanaan pembangunan Kabupaten Mimika yang lebih cerdas dan transparan.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-              <Link href="/dashboard" className="px-8 py-3.5 bg-blue-600 text-white rounded-full font-bold text-sm shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95">
-                Buka Dashboard <Layers size={18} />
-              </Link>
-              <a href="#fitur" className="px-8 py-3.5 bg-white/10 backdrop-blur-md text-white border border-white/30 rounded-full font-bold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-3">
-                Pelajari Sistem <ChevronRight size={18} />
-              </a>
+      <header className="bg-[#002244] py-16 md:py-28 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-black">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 text-center">Data Pembangunan Mimika</h1>
+          <p className="text-blue-100 text-lg md:text-xl mb-10 max-w-3xl mx-auto text-center font-light leading-relaxed">
+            Akses terbuka ke indikator statistik sektoral, demografi, dan profil ekonomi Kabupaten Mimika secara real-time dan transparan.
+          </p>
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row shadow-2xl">
+            <div className="relative flex-grow flex items-center bg-white">
+              <Search className="absolute left-5 text-gray-400" size={24} />
+              <input 
+                type="text" 
+                placeholder="Cari indikator (contoh: PDRB, Kemiskinan, Pendidikan)..." 
+                className="w-full py-5 pl-14 pr-6 text-gray-800 text-lg focus:outline-none placeholder:text-gray-400"
+              />
             </div>
+            <button className="bg-[#0071bc] hover:bg-[#005a96] text-white py-5 px-12 text-lg font-bold transition-colors uppercase tracking-widest border-l border-blue-400/20">
+              Cari Data
+            </button>
           </div>
         </div>
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-500/5 -skew-x-12 transform translate-x-20"></div>
       </header>
 
-      {/* --- STATS SECTION --- */}
-      <section id="statistik" className="py-16 lg:py-24 bg-white relative z-30 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            <StatCard icon={<Database size={24} />} val="2,450+" label="Dataset Sektoral" />
-            <StatCard icon={<Globe size={24} />} val="54" label="Instansi (OPD)" />
-            <StatCard icon={<UserCheck size={24} />} val="100%" label="Verifikasi Data" />
-            <StatCard icon={<Zap size={24} />} val="Realtime" label="Update Sistem" />
+      {/* --- QUICK LINKS --- */}
+      <section className="border-b border-gray-200 bg-[#f4f7f9] py-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 text-center gap-12 md:gap-4 md:divide-x divide-gray-300">
+            <div className="px-6 text-center text-black">
+              <Database className="mx-auto text-[#0071bc] mb-4" size={40} />
+              <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">Data Sektoral</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">Eksplorasi data mentah berdasarkan Organisasi Perangkat Daerah (OPD).</p>
+              <a href="#fitur" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Lihat Sektor <ChevronRight size={14} /></a>
+            </div>
+            <div className="px-6 text-center text-black">
+              <BarChart3 className="mx-auto text-[#0071bc] mb-4" size={40} />
+              <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">Indikator Utama</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">Runtun waktu indikator makro pembangunan daerah Mimika.</p>
+              <a href="#statistik" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Lihat Indikator <ChevronRight size={14} /></a>
+            </div>
+            <div className="px-6 text-center text-black">
+              <Globe className="mx-auto text-[#0071bc] mb-4" size={40} />
+              <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">GIS Mimika</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">Pemetaan visual kondisi pembangunan antar distrik secara geospasial.</p>
+              <a href="#gis" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Buka Peta <ChevronRight size={14} /></a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* --- FEATURES SECTION --- */}
-      <section id="fitur" className="py-20 lg:py-32 bg-slate-50/50 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 lg:mb-16 gap-8 text-left">
-            <div className="space-y-3">
-              <h2 className="text-blue-600 font-black text-sm uppercase tracking-[0.5em]">Platform</h2>
-              <p className="text-4xl lg:text-6xl font-[1000] text-slate-900 tracking-tight leading-none">Terstruktur.</p>
-            </div>
-            <p className="text-slate-500 font-medium max-w-sm leading-relaxed text-base">
-              Standarisasi tata kelola data untuk efisiensi birokrasi di Kabupaten Mimika.
+      {/* --- TEMATIK DATAHUB SECTION --- */}
+      <section id="tematik" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="border-b-[4px] border-[#0071bc] pb-6 text-center md:text-left text-black">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Fokus Tematik</h2>
+            <p className="mt-4 text-gray-700 text-lg max-w-4xl font-light">
+              Koleksi data terkurasi untuk mendukung perencanaan pembangunan Kabupaten Mimika melalui fokus tematik Satu Data Indonesia.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 lg:gap-8">
-            <div className="md:col-span-4 bg-white rounded-[2rem] lg:rounded-[3rem] p-8 lg:p-14 border border-slate-200 shadow-sm hover:shadow-2xl transition-all group overflow-hidden relative min-h-[350px] lg:min-h-[500px] flex flex-col justify-between">
-              <div className="relative z-10 max-w-md text-left">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-8 shadow-xl shadow-blue-600/20 group-hover:rotate-6 transition-transform">
-                  <BarChart3 size={32} />
-                </div>
-                <h3 className="text-3xl lg:text-4xl font-black text-slate-900 mb-6 leading-tight">Visualisasi Data Dinamis</h3>
-                <p className="text-slate-500 font-medium text-lg leading-relaxed">
-                  Dashboard interaktif yang memudahkan pimpinan daerah memantau indikator makro ekonomi secara cepat.
-                </p>
-              </div>
-              <div className="absolute -bottom-10 -right-10 w-2/3 h-2/3 opacity-20 group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
-                 <Image src="/chart.jpg" alt="Chart" fill className="object-contain grayscale" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            {themeCardsData.map((data, index) => (
+              <ThemeCard key={index} {...data} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- GIS PETA SECTION --- */}
+      <section id="gis" className="py-20 bg-[#f4f7f9]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="border-b-[4px] border-[#0071bc] pb-6 text-black">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
+            <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
+              Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
+            </p>
+          </div>
+
+          <div className="relative w-full h-[600px] bg-slate-200 border border-gray-200 rounded-2xl overflow-hidden shadow-inner group">
+            <Image 
+              src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2000&auto=format&fit=crop" 
+              alt="Geospatial Map View" 
+              fill 
+              sizes="100vw"
+              className="object-cover opacity-80" 
+            />
+            
+            <div className="absolute inset-0 bg-blue-900/10 pointer-events-none"></div>
+
+            <div className="absolute top-6 right-6 flex flex-col gap-3">
+              <button className="p-3 bg-white shadow-xl rounded-lg text-[#002244] hover:bg-gray-50 transition-all active:scale-95 border border-gray-100">
+                <Maximize size={20} />
+              </button>
+              <div className="flex flex-col bg-white shadow-xl rounded-lg overflow-hidden border border-gray-100">
+                <button className="p-4 text-xl font-bold text-[#002244] border-b border-gray-100 hover:bg-gray-50 transition-colors">+</button>
+                <button className="p-4 text-xl font-bold text-[#002244] hover:bg-gray-50 transition-colors">-</button>
               </div>
             </div>
 
-            <div className="md:col-span-2 space-y-6 flex flex-col">
-              <div className="flex-1 bg-indigo-600 rounded-[2rem] lg:rounded-[3rem] p-8 text-white group overflow-hidden relative min-h-[220px] flex flex-col justify-center text-left">
-                 <div className="relative z-10 space-y-4">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
-                       <FileText size={26} />
-                    </div>
-                    <h3 className="text-2xl font-black">Standar SDI</h3>
-                    <p className="text-indigo-100 text-sm font-medium">Sesuai teknis Satu Data Indonesia untuk integrasi data.</p>
-                 </div>
-                 <Layers className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10" />
+            <div className="absolute bottom-6 left-6 bg-[#002244]/90 backdrop-blur-md px-5 py-3 rounded-lg shadow-2xl border border-white/10 text-[10px] font-mono font-bold text-white flex flex-col gap-1.5 uppercase tracking-widest">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                <span>Sistem Koordinat: GCS WGS 1984</span>
               </div>
-              <div className="flex-1 bg-white border border-slate-200 rounded-[2rem] lg:rounded-[3rem] p-8 flex flex-col justify-center group hover:border-blue-400 transition-all min-h-[220px] text-left">
-                <div className="space-y-4">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm">
-                    <ShieldCheck size={26} />
+              <div className="h-px bg-white/20 w-full"></div>
+              <span>Lokasi Fokus: Distrik Mimika Baru, Papua Tengah</span>
+            </div>
+
+            {/* FIXED MARKER: Perbaikan Hydration Error (Ganti P ke DIV) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+               <div className="bg-white px-4 py-2.5 rounded-xl shadow-2xl border border-blue-100 mb-2 relative group-hover:scale-110 transition-transform text-black">
+                  <div className="text-[10px] font-black text-[#002244] uppercase leading-none">Distrik Tembagapura</div>
+                  <div className="text-[9px] text-blue-600 mt-1.5 font-bold uppercase flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div> Sektor Pertambangan
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900">Keamanan</h3>
-                  <p className="text-slate-500 text-sm font-medium">Enkripsi end-to-end menjamin keamanan data daerah.</p>
+               </div>
+               <div className="w-5 h-5 bg-[#0071bc] rounded-full border-[5px] border-white shadow-2xl ring-8 ring-blue-500/10"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- DATA SEKTORAL SECTION --- */}
+      <section id="fitur" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="border-b-[4px] border-[#0071bc] pb-6 text-black">
+            <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Transparansi Data Sektoral</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-12 text-black">
+            <div className="md:col-span-4 bg-[#f8fafc] border border-gray-200 p-10 flex flex-col justify-between shadow-sm rounded-sm">
+              <div>
+                <h3 className="text-2xl font-bold text-[#002244] mb-6">Analisis Indikator Makro Ekonomi</h3>
+                <p className="text-gray-600 mb-8 leading-relaxed text-base">
+                  Mimika DataHub menyediakan dasbor interaktif yang dirancang untuk membantu pengambil kebijakan dan publik memantau pertumbuhan ekonomi serta tata kelola data secara efisien sesuai standar nasional.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 text-black">
+                  <div className="flex items-start gap-3">
+                    <FileText size={24} className="text-[#0071bc] shrink-0" />
+                    <span className="text-sm font-semibold text-gray-700">Kepatuhan Standar Satu Data Indonesia</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck size={24} className="text-[#0071bc] shrink-0" />
+                    <span className="text-sm font-semibold text-gray-700">Integritas & Keamanan Data Terjamin</span>
+                  </div>
+                  <div className="flex items-start gap-3 text-black">
+                    <Zap size={24} className="text-[#0071bc] shrink-0" />
+                    <span className="text-sm font-semibold text-gray-700">Update Berkala dari 54 Instansi</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <BarChart3 size={24} className="text-[#0071bc] shrink-0" />
+                    <span className="text-sm font-semibold text-gray-700">Visualisasi Grafik Dinamis</span>
+                  </div>
                 </div>
+              </div>
+              <a href="#" className="inline-block bg-[#0071bc] text-white px-8 py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-[#005a96] transition-colors w-max shadow-lg rounded-sm">
+                Buka Dashboard Sektoral
+              </a>
+            </div>
+
+            <div className="md:col-span-2 space-y-8" id="statistik">
+              <div className="bg-[#002244] text-white p-8 shadow-xl rounded-sm">
+                <h4 className="text-xs font-bold text-blue-300 uppercase tracking-[0.2em] mb-6">Status Portal</h4>
+                <div className="space-y-6">
+                  <StatItem label="Total Dataset" val="2,450" />
+                  <StatItem label="Instansi OPD" val="54" />
+                  <StatItem label="Verifikasi" val="100%" />
+                  <div className="flex justify-between items-end border-b border-white/10 pb-2">
+                    <span className="text-blue-100 text-xs font-bold uppercase">Sinkronisasi</span>
+                    <span className="text-green-400 font-bold text-lg uppercase">Aktif</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 p-8 shadow-sm rounded-sm text-black">
+                <h4 className="text-[#002244] font-bold mb-4 uppercase text-xs tracking-wider">Akses Data API</h4>
+                <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                  Kami menyediakan akses sistem bagi pengembang dan pengelola data OPD melalui portal terenkripsi.
+                </p>
+                <Link href="/login" className="block text-center border-2 border-[#0071bc] text-[#0071bc] py-3 text-xs font-bold uppercase tracking-widest hover:bg-[#0071bc] hover:text-white transition-colors">
+                  Portal Login
+                </Link>
               </div>
             </div>
           </div>
@@ -225,85 +377,70 @@ export default function LandingPage() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-slate-950 text-white pt-20 pb-12 overflow-hidden relative">
-        <div className="w-full px-6 lg:px-10 relative z-10">
-          <div className="flex flex-col lg:flex-row justify-between gap-16 lg:gap-32 mb-16">
-            <div className="space-y-8 max-w-md text-left">
-              <div className="flex items-center gap-5">
-                <Image src="/logo-mimika.png" alt="Logo" width={50} height={50} className="brightness-0 invert" />
-                <div className="text-left">
-                  <p className="text-3xl font-black tracking-tighter uppercase leading-none">Mimika</p>
-                  <p className="text-[11px] font-bold tracking-[0.4em] text-blue-500 uppercase mt-2">DataHub</p>
+      <footer className="bg-[#333333] text-white pt-16 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-black">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-gray-600 pb-12 mb-10 text-white">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="relative w-10 h-10 bg-white p-1 rounded-sm">
+                  <Image src="/logo-mimika.png" alt="Logo" fill sizes="40px" className="object-contain" />
                 </div>
+                <span className="text-xl font-bold tracking-tight">Mimika DataHub</span>
               </div>
-              <p className="text-slate-400 font-medium leading-relaxed italic text-base">
-                "Transparansi informasi untuk pembangunan Mimika yang berkelanjutan."
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Pusat data terintegrasi Kabupaten Mimika, Papua Tengah. Mewujudkan transparansi informasi pembangunan daerah.
               </p>
             </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12 text-left">
-              <FooterColumn title="Sistem" links={["Katalog", "API", "Peta"]} />
-              <FooterColumn title="Lembaga" links={["Bappeda", "Diskominfo", "BPS"]} />
-              <FooterColumn title="Dukungan" links={["Panduan", "Kontak", "FAQ"]} />
-            </div>
+            <FooterColumn title="LEMBAGA" links={["Informasi Umum", "Struktur Organisasi", "Dasar Hukum", "Kontak Kami"]} />
+            <FooterColumn title="NAVIGASI" links={["Katalog Data", "Metadata", "Microdata", "Publikasi Statistik"]} />
+            <FooterColumn title="BANTUAN" links={["Panduan Pengguna", "Dokumentasi API", "FAQ", "Lapor Bug"]} />
           </div>
 
-          <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-slate-500 text-[10px] lg:text-[11px] font-bold tracking-[0.3em] uppercase text-center md:text-left">
-              © 2026 PEMERINTAH KABUPATEN MIMIKA
-            </p>
-            <div className="flex gap-10 text-[11px] font-bold uppercase tracking-widest text-slate-600">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
+          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-400 gap-6 uppercase tracking-[0.1em]">
+            <p>© 2026 PEMERINTAH KABUPATEN MIMIKA. ALL RIGHTS RESERVED.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-white transition-colors">Kebijakan Privasi</a>
+              <a href="#" className="hover:text-white transition-colors">Ketentuan Layanan</a>
+              <a href="#" className="hover:text-white transition-colors">Sitemap</a>
             </div>
           </div>
         </div>
       </footer>
-
-      {/* Styles */}
-      <style jsx global>{`
-        @keyframes subtle-zoom {
-          0% { transform: scale(1.03); }
-          100% { transform: scale(1.08); }
-        }
-        .animate-subtle-zoom {
-          animation: subtle-zoom 20s infinite alternate ease-in-out;
-        }
-        @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.8s forwards cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        html { scroll-behavior: smooth; }
-      `}</style>
     </div>
   );
 }
 
-function StatCard({ icon, val, label }: { icon: any, val: string, label: string }) {
+// --- SUB-COMPONENTS ---
+
+function LayerToggle({ label, color, active = false }: { label: string, color: string, active?: boolean }) {
   return (
-    <div className="p-8 lg:p-10 rounded-[2rem] bg-[#f8fafc] border border-slate-100 flex flex-col items-center text-center group hover:bg-white hover:shadow-xl transition-all duration-500">
-      <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-        {icon}
+    <div className="flex items-center gap-3 group cursor-pointer transition-all hover:translate-x-1">
+      <div className={`w-4 h-4 rounded border-2 border-white shadow-sm shrink-0 ${color}`}></div>
+      <span className={`text-[11px] font-bold uppercase tracking-tight ${active ? 'text-[#002244]' : 'text-gray-400'}`}>{label}</span>
+      <div className={`ml-auto w-8 h-4 rounded-full relative transition-colors shadow-inner ${active ? 'bg-blue-600' : 'bg-gray-200'}`}>
+        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${active ? 'right-0.5' : 'left-0.5'}`}></div>
       </div>
-      <p className="text-3xl lg:text-4xl font-[1000] text-slate-900 tracking-tighter leading-none">{val}</p>
-      <p className="text-[10px] lg:text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-3">{label}</p>
+    </div>
+  );
+}
+
+function StatItem({ label, val }: { label: string, val: string }) {
+  return (
+    <div className="flex justify-between items-end border-b border-white/10 pb-2">
+      <span className="text-blue-100 text-xs font-bold uppercase">{label}</span>
+      <span className="text-white text-2xl font-bold leading-none tracking-tighter">{val}</span>
     </div>
   );
 }
 
 function FooterColumn({ title, links }: { title: string, links: string[] }) {
   return (
-    <div className="space-y-6 text-left">
-      <p className="text-blue-500 font-black text-[10px] uppercase tracking-[0.4em]">{title}</p>
-      <ul className="space-y-4">
-        {links.map((link, i) => (
+    <div>
+      <h4 className="text-blue-400 font-bold text-xs uppercase tracking-widest mb-6">{title}</h4>
+      <ul className="space-y-3">
+        {links.map((l, i) => (
           <li key={i}>
-            <a href="#" className="text-slate-400 hover:text-white text-xs font-bold transition-all">
-              {link}
-            </a>
+            <a href="#" className="text-gray-400 hover:text-white text-[13px] transition-colors font-medium">{l}</a>
           </li>
         ))}
       </ul>
