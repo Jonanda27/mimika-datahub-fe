@@ -1,4 +1,4 @@
-// src/types/ingest.ts
+// src/app/types/ingest.ts
 
 export interface IngestStats {
   inserted: number;
@@ -18,6 +18,8 @@ export interface UploadRequest {
   period: string;
   description?: string;
   file: File;
+  // Injeksi Spasial (GIS)
+  district_id?: number | null;
 }
 
 export interface UploadResponse {

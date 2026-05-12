@@ -1,19 +1,25 @@
-// src/types/dataset.ts
+// src/app/types/dataset.ts
 
 export interface Dataset {
-  id: number; 
+  id: number;
   title: string;
-  source_id: number; 
-  category_id: number; 
-  source_type_id: number; 
-  year: number; 
-  period: string; 
-  dataset_type: 'pemerintah' | 'non-pemerintah'; 
-  description?: string; 
-  status: "pending" | "approved"; 
-  total_rows: number; 
-  quality_score: number; 
-  created_at: string; 
+  source_id: number;
+  category_id: number;
+  source_type_id: number;
+  year: number;
+  period: string;
+  dataset_type: 'pemerintah' | 'non-pemerintah';
+  description?: string;
+  status: "pending" | "approved";
+  total_rows: number;
+  quality_score: number;
+  created_at: string;
+  // Injeksi Spasial (GIS)
+  district_id?: number | null;
+  district?: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 // Tambahan untuk response general
@@ -29,8 +35,8 @@ export interface ExportParams {
 export interface DatasetContent {
   title: string;
   type: string;
-  headers: string[]; // Contoh: ["nama_distrik", "jumlah_penduduk"] [cite: 621]
-  rows: Record<string, any>[]; // Array object dinamis sesuai isi konten [cite: 621]
+  headers: string[]; // Contoh: ["nama_distrik", "jumlah_penduduk"]
+  rows: Record<string, any>[]; // Array object dinamis sesuai isi konten
 }
 
 export interface DatasetContentParams {

@@ -53,7 +53,7 @@ export default function UserNavbar() {
   };
 
   return (
-    <header className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
+    <header className="w-full flex flex-col z-60 sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200">
         
@@ -69,7 +69,7 @@ export default function UserNavbar() {
         {/* Kanan: Search Bar & Hamburger Mobile */}
         <div className="flex items-center gap-4">
           {/* Kolom Pencarian (Desktop) */}
-          <div className="hidden md:flex relative items-center border border-gray-300 rounded w-[300px] lg:w-[450px] focus-within:ring-1 focus-within:ring-[#0071bc]">
+          <div className="hidden md:flex relative items-center border border-gray-300 rounded w-75 lg:w-112.5 focus-within:ring-1 focus-within:ring-[#0071bc]">
             <input 
               type="text" 
               placeholder="Search" 

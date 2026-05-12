@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { 
-  Database, CloudUpload, Building, Star, Clock, 
-  Flame, TrendingUp, Activity, AlertTriangle, Building2, Users 
+import {
+  Database, CloudUpload, Building, Star, Clock,
+  Flame, TrendingUp, Activity, AlertTriangle, Building2, Users,
+  Map // Tambahan Icon untuk Header Peta
 } from "lucide-react";
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
 } from "recharts";
 
 // Import Komponen Global
@@ -16,6 +17,9 @@ import StatCard from "@/components/ui/StatCard";
 import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
 
+// Import Komponen GIS Spasial
+import MapWrapper from "@/src/components/gis/MapWrapper";
+
 // Integrasi Store
 import { useStatsStore } from "@/src/app/store/useStatsStore";
 
@@ -23,7 +27,7 @@ import { useStatsStore } from "@/src/app/store/useStatsStore";
 const AlertCard = ({ title, desc }: { title: string, desc: string }) => (
   <div className="bg-[#fff5f6] border-l-[3px] border-[#ef4444] rounded-xl p-4 mb-4 last:mb-0 shadow-sm transition-all hover:shadow-md">
     <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-1">
-      <AlertTriangle size={16} className="text-[#f59e0b] fill-[#fef3c7]" /> 
+      <AlertTriangle size={16} className="text-[#f59e0b] fill-[#fef3c7]" />
       {title}
     </h4>
     <p className="text-xs text-gray-600">{desc}</p>
@@ -66,41 +70,55 @@ export default function ManagerDashboardPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans animate-in fade-in duration-500 text-black">
-      
+
       {/* 1. HEADER BANNER */}
-      <PageHeader 
-        title="Dashboard Utama" 
-        subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika" 
-        withSearch 
+      <PageHeader
+        title="Dashboard Utama"
+        subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika"
+        withSearch
       />
 
       {/* 2. SUMMARY CARDS - Responsive Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <StatCard 
-          label="Total Dataset" 
-          value={dashboardData.cards.total_dataset} 
-          icon={<Database size={22} />} 
-          iconBg="bg-[#7e57c2]" 
+        <StatCard
+          label="Total Dataset"
+          value={dashboardData.cards.total_dataset}
+          icon={<Database size={22} />}
+          iconBg="bg-[#7e57c2]"
         />
-        <StatCard 
-          label="OPD Aktif" 
-          value={dashboardData.cards.total_sumber} 
-          icon={<Building size={22} />} 
-          iconBg="bg-[#29b6f6]" 
+        <StatCard
+          label="OPD Aktif"
+          value={dashboardData.cards.total_sumber}
+          icon={<Building size={22} />}
+          iconBg="bg-[#29b6f6]"
         />
-        <StatCard 
-          label="User Aktif" 
-          value={dashboardData.cards.user_aktif} 
-          icon={<Users size={22} />} 
-          iconBg="bg-[#ec407a]" 
+        <StatCard
+          label="User Aktif"
+          value={dashboardData.cards.user_aktif}
+          icon={<Users size={22} />}
+          iconBg="bg-[#ec407a]"
         />
-        <StatCard 
-          label="Rata-rata Kualitas" 
-          value={dashboardData.cards.rata_rata_kualitas} 
-          icon={<Star size={22} fill="currentColor" />} 
-          iconBg="bg-[#66bb6a]" 
-          valueColor="text-[#66bb6a]" 
+        <StatCard
+          label="Rata-rata Kualitas"
+          value={dashboardData.cards.rata_rata_kualitas}
+          icon={<Star size={22} fill="currentColor" />}
+          iconBg="bg-[#66bb6a]"
+          valueColor="text-[#66bb6a]"
         />
+      </div>
+
+      {/* ========================================== */}
+      {/* INTERVENSI GIS: PETA SPASIAL (CHOROPLETH)  */}
+      {/* ========================================== */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-8 relative z-10">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Map size={18} className="text-[#1e61d0]" /> Sebaran Dataset Geospasial
+          </h3>
+          <span className="text-xs text-gray-400 font-medium italic">Data Agregasi O(1)</span>
+        </div>
+        {/* MapWrapper diletakkan di dalam container yang sudah memiliki tinggi statis di dalam komponennya */}
+        <MapWrapper />
       </div>
 
       {/* 3. DATA LISTS - Responsive Grid */}
@@ -157,27 +175,27 @@ export default function ManagerDashboardPage() {
               <Activity size={18} className="text-gray-700" /> Tren Kualitas Data per Bulan
             </h3>
             <div className="flex items-center gap-2">
-               <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
-               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
+              <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
             </div>
           </div>
-          <div className="h-[280px] w-full">
+          <div className="h-70 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
-                  formatter={(v) => [`${v}%`, "Skor"]} 
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(v) => [`${v}%`, "Skor"]}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="#ef4444" 
-                  strokeWidth={4} 
-                  dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} 
-                  activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }} 
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#ef4444"
+                  strokeWidth={4}
+                  dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
+                  activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -194,11 +212,11 @@ export default function ManagerDashboardPage() {
           </div>
           <div className="space-y-4">
             {dashboardData.popular.filter(d => d.quality_score < 80).length > 0 ? (
-                dashboardData.popular.filter(d => d.quality_score < 80).map(d => (
-                    <AlertCard key={d.id} title={d.title} desc={`Skor Kualitas terdeteksi rendah: ${d.quality_score}%`} />
-                ))
+              dashboardData.popular.filter(d => d.quality_score < 80).map(d => (
+                <AlertCard key={d.id} title={d.title} desc={`Skor Kualitas terdeteksi rendah: ${d.quality_score}%`} />
+              ))
             ) : (
-                <p className="text-xs text-gray-400 italic text-center py-10">Tidak ada peringatan kualitas saat ini.</p>
+              <p className="text-xs text-gray-400 italic text-center py-10">Tidak ada peringatan kualitas saat ini.</p>
             )}
           </div>
         </div>
@@ -215,12 +233,12 @@ export default function ManagerDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
           <div className="space-y-1">
             {dashboardData.opd_monthly_monitoring.slice(0, Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
-               <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+              <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
             ))}
           </div>
           <div className="space-y-1">
             {dashboardData.opd_monthly_monitoring.slice(Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
-               <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+              <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
             ))}
           </div>
         </div>
