@@ -18,6 +18,7 @@ export interface UploadRequest {
   period: string;
   description?: string;
   file: File;
+  image: File;
 }
 
 export interface UploadResponse {

@@ -31,7 +31,8 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
 
     reader.onload = (e) => {
       try {
-        if (fileExt === 'xlsx') {
+        // MENDUKUNG .xlsx DAN .xls
+        if (fileExt === 'xlsx' || fileExt === 'xls') {
           // PROSES KHUSUS EXCEL (BINARY)
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -43,13 +44,11 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
           const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
           if (jsonData.length > 0) {
-            // PERBAIKAN: Menambahkan tipe : any pada parameter h
             const headers = jsonData[0].map((h: any) => String(h || "").trim());
             
             // Ambil maksimal 5 baris data
             const rows = jsonData.slice(1, 6).map((row: any[]) => {
               const rowObj: any = {};
-              // PERBAIKAN: Menambahkan tipe : string pada h dan : number pada i
               headers.forEach((h: string, i: number) => {
                 rowObj[h] = row[i];
               });
@@ -93,7 +92,8 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
       }
     };
 
-    if (fileExt === 'xlsx') {
+    // Baca sebagai ArrayBuffer untuk Excel (.xls/.xlsx), readAsText untuk sisanya
+    if (fileExt === 'xlsx' || fileExt === 'xls') {
       reader.readAsArrayBuffer(selectedFile);
     } else {
       reader.readAsText(selectedFile);
@@ -122,7 +122,8 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
           type="file" 
           onChange={(e) => e.target.files && onFileChange(e.target.files[0])}
           className="hidden" 
-          accept=".xlsx,.csv,.json"
+          // UPDATE: Menambahkan .xls ke atribut accept
+          accept=".xlsx,.xls,.csv,.json"
           disabled={isProcessing}
         />
         
@@ -131,7 +132,7 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
             <CloudUpload size={64} className="text-[#ef4444] mb-4" />
             <h3 className="text-lg font-bold text-gray-800">Drag & Drop File</h3>
             <p className="text-gray-500 text-sm mb-6 text-center">atau klik untuk memilih file dari komputer Anda</p>
-            <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-4">Support: .xlsx, .csv, .json (Max 10MB)</p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-4">Support: .xlsx, .xls, .csv, .json (Max 10MB)</p>
             
             <button type="button" disabled={isProcessing} className="bg-[#ef4444] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-red-600 transition shadow-lg shadow-red-200">
               <FolderOpen size={18} /> Pilih File

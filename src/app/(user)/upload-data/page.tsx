@@ -39,6 +39,7 @@ export interface Item {
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null); // [NEW] State Gambar
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
@@ -47,8 +48,6 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
-  
-  // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
 
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -61,12 +60,11 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        // Fetch semua data master dan riwayat dataset user secara paralel
         await Promise.all([
           fetchSources(), 
           fetchCategories(), 
           fetchSourceTypes(),
-          fetchMyDatasets() // Panggil service getMyDatasets melalui store
+          fetchMyDatasets()
         ]);
       } catch (error) {
         console.error("Gagal memuat data awal:", error);
@@ -77,7 +75,6 @@ export default function UploadDataPage() {
     loadInitialData();
   }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
 
-  // Transformasi data API ke format UploadLog untuk tabel
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
     name: ds.title,
@@ -93,16 +90,20 @@ export default function UploadDataPage() {
   };
 
   const handleFileChange = (file: File) => {
-    const validTypes = [".xlsx", ".csv", ".json"];
+    // [UPDATE] Menambahkan .xls ke dalam daftar format yang didukung
+    const validTypes = [".xlsx", ".xls", ".csv", ".json"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
+    
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan .xlsx, .csv, atau .json", "danger");
+      showAlert("Format file tidak didukung. Gunakan .xlsx, .xls, .csv, atau .json", "danger");
       return;
     }
+    
     if (file.size > 10 * 1024 * 1024) {
       showAlert("Ukuran file maksimal 10MB", "danger");
       return;
     }
+    
     setSelectedFile(file);
     showAlert(`File "${file.name}" berhasil dipilih`, "success");
   };
@@ -121,7 +122,6 @@ export default function UploadDataPage() {
         await addSourceType({ name: newItemName });
         showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
       }
-      
       setShowSourceModal(false);
       setShowCategoryModal(false);
       setShowSourceTypeModal(false);
@@ -136,7 +136,11 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedFile) {
-      showAlert("Silakan pilih file terlebih dahulu", "danger");
+      showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
+      return;
+    }
+    if (!selectedImage) {
+      showAlert("Silakan pilih gambar cover untuk dataset ini", "danger");
       return;
     }
 
@@ -159,7 +163,7 @@ export default function UploadDataPage() {
 
     setProcessing(true);
     setError(null);
-    showAlert("Sedang memproses dan membersihkan data...", "info");
+    showAlert("Sedang memproses, membersihkan data, dan upload gambar...", "info");
 
     try {
       const result = await ingestService.uploadProcess({ 
@@ -171,16 +175,16 @@ export default function UploadDataPage() {
         year: Number(year),
         period,
         description,
-        file: selectedFile
+        file: selectedFile,
+        image: selectedImage // [NEW] Sertakan image ke service
       });
 
       setResult(result);
       showAlert(result.message, "success");
-      
-      // Refresh data riwayat setelah upload berhasil
       await fetchMyDatasets();
       
       setSelectedFile(null);
+      setSelectedImage(null);
       formElement.reset();
 
     } catch (err: any) {
@@ -192,12 +196,9 @@ export default function UploadDataPage() {
     }
   };
 
-  // --- RENDERING ---
-
   if (isLoading && sources.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        {/* Tambahan Wrapper Container */}
         <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
@@ -208,18 +209,13 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      {/* Tambahan Wrapper Container (max-w-[1400px] mx-auto) agar form tidak meregang memenuhi layar */}
       <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-        
-        <PageHeader 
-          title="Upload Data" 
-          subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" 
-        />
+        <PageHeader title="Upload Data" subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" />
 
         {alert && (
           <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
             alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 
+            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-green-500' : 
             'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
           }`}>
             <AlertCircle size={20} />
@@ -240,6 +236,8 @@ export default function UploadDataPage() {
             categories={categories} 
             sourceTypes={sourceTypes}
             isProcessing={isProcessing} 
+            selectedImage={selectedImage}
+            onImageChange={setSelectedImage} 
             onSubmit={handleUpload} 
             onAddSource={() => setShowSourceModal(true)} 
             onAddCategory={() => setShowCategoryModal(true)} 
@@ -250,7 +248,7 @@ export default function UploadDataPage() {
         <UploadLogTable logs={logs} />
 
         <footer className="mt-10 text-center text-gray-400 text-xs pb-4">
-          © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika | Data melewati proses validasi otomatis
+          © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika
         </footer>
 
         <AddItemModal 
@@ -268,7 +266,6 @@ export default function UploadDataPage() {
           onChange={setNewItemName}
           type={showSourceModal ? "source" : "category"}
         />
-
       </div>
     </div>
   );

@@ -39,13 +39,12 @@ export default function PemerintahFilter({
   onExport 
 }: PemerintahFilterProps) {
   
-  // State akordion: Default terbuka semua di Desktop, bisa disesuaikan untuk Mobile
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     search: true,
-    source: false, // Default tutup di mobile/awal agar tidak terlalu panjang
-    sourceType: false,
+    source: true,
+    sourceType: true,
     category: true,
-    year: true
+    year: true // Diubah menjadi true agar tahun langsung terlihat [cite: 304]
   });
 
   const toggleSection = (section: string) => {
@@ -64,76 +63,41 @@ export default function PemerintahFilter({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl w-full font-sans text-black shadow-sm flex flex-col h-full overflow-hidden transition-all duration-300">
-      
-      {/* HEADER: Sticky di bagian atas filter */}
-      <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20 shrink-0">
-        <div>
-          <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Filters</h2>
-          <p className="text-[10px] text-gray-400 font-bold uppercase md:hidden">Saring Data Mimika</p>
-        </div>
+    <div className="bg-white border border-gray-200 rounded-sm w-full font-sans text-black shadow-sm">
+      <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0 z-10">
+        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Filters</h2>
         <button 
           onClick={onReset} 
-          className="text-[11px] font-black text-[#0071bc] flex items-center gap-1.5 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all active:scale-95"
+          className="text-xs font-bold text-[#0071bc] flex items-center gap-1.5 hover:text-[#005a96] transition-colors"
         >
-          <RotateCcw size={14} /> CLEAR
+          <RotateCcw size={14} /> CLEAR ALL
         </button>
       </div>
 
-      {/* BODY: Scrollable area dengan tinggi dinamis */}
-      <div className="overflow-y-auto flex-1 max-h-[60vh] md:max-h-[70vh] lg:max-h-[calc(100vh-280px)] custom-scrollbar">
+      <div className="overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
         
-        {/* SECTION: PENCARIAN */}
         <FilterSection 
           title="Pencarian" 
           isOpen={openSections.search} 
           onToggle={() => toggleSection('search')}
         >
-          <div className="relative mt-1">
+          <div className="relative mt-2">
             <input 
               type="text" 
               placeholder="Cari kata kunci..." 
               onChange={(e) => onSearch(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0071bc] focus:ring-2 focus:ring-blue-50 transition-all bg-gray-50/50 text-black"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0071bc] focus:ring-1 focus:ring-[#0071bc] transition-all bg-white text-black"
             />
-            <Search size={16} className="absolute right-3 top-3 text-gray-400" />
+            <Search size={16} className="absolute right-3 top-2.5 text-gray-400" />
           </div>
         </FilterSection>
 
-        {/* SECTION: TAHUN (Responsive Grid) */}
-        <FilterSection 
-          title="Tahun Data" 
-          isOpen={openSections.year} 
-          onToggle={() => toggleSection('year')}
-        >
-          <div className="space-y-1 mt-1">
-            <FilterItem 
-              label="Semua Tahun" 
-              isActive={currentFilters.year === null} 
-              onClick={() => handleSelectFilter('year', null)} 
-            />
-            {/* Grid 2 kolom di HP & iPad, 1 kolom di Sidebar Desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
-              {sidebarStats?.years.map(y => (
-                <FilterItem 
-                  key={y.id}
-                  label={y.name}
-                  count={y.count}
-                  isActive={currentFilters.year === y.id}
-                  onClick={() => handleSelectFilter('year', y.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </FilterSection>
-
-        {/* SECTION: SUMBER DATA (Scrollable inside) */}
         <FilterSection 
           title="Sumber Data (OPD)" 
           isOpen={openSections.source} 
           onToggle={() => toggleSection('source')}
         >
-          <div className="space-y-1 mt-1 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="space-y-1 mt-2">
             <FilterItem 
               label="Semua Sumber" 
               isActive={currentFilters.source_id === null} 
@@ -151,13 +115,12 @@ export default function PemerintahFilter({
           </div>
         </FilterSection>
 
-        {/* SECTION: JENIS SUMBER */}
         <FilterSection 
           title="Jenis Sumber" 
           isOpen={openSections.sourceType} 
           onToggle={() => toggleSection('sourceType')}
         >
-          <div className="space-y-1 mt-1">
+          <div className="space-y-1 mt-2">
             <FilterItem 
               label="Semua Jenis" 
               isActive={currentFilters.source_type_id === null} 
@@ -175,13 +138,12 @@ export default function PemerintahFilter({
           </div>
         </FilterSection>
 
-        {/* SECTION: KATEGORI */}
         <FilterSection 
           title="Kategori Dataset" 
           isOpen={openSections.category} 
           onToggle={() => toggleSection('category')}
         >
-          <div className="space-y-1 mt-1">
+          <div className="space-y-1 mt-2">
             <FilterItem 
               label="Semua Kategori" 
               isActive={currentFilters.category_id === null} 
@@ -199,32 +161,55 @@ export default function PemerintahFilter({
           </div>
         </FilterSection>
 
+        {/* SECTION TAHUN: Menggunakan data dinamis dari sidebarStats.years [cite: 31] */}
+        <FilterSection 
+          title="Tahun Data" 
+          isOpen={openSections.year} 
+          onToggle={() => toggleSection('year')}
+        >
+          <div className="space-y-1 mt-2">
+            <FilterItem 
+              label="Semua Tahun" 
+              isActive={currentFilters.year === null} 
+              onClick={() => handleSelectFilter('year', null)} 
+            />
+            {sidebarStats?.years.map(y => (
+              <FilterItem 
+                key={y.id}
+                label={y.name}
+                count={y.count}
+                isActive={currentFilters.year === y.id}
+                onClick={() => handleSelectFilter('year', y.id)}
+              />
+            ))}
+          </div>
+        </FilterSection>
+
       </div>
 
-      {/* FOOTER: Tombol Export (Responsive Grid) */}
-      <div className="p-4 border-t border-gray-100 space-y-3 bg-white shrink-0">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Export Dataset</p>
+      <div className="p-4 border-t border-gray-200 space-y-3 bg-gray-50">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Export Dataset</p>
         <div className="grid grid-cols-2 gap-2">
           <button 
             onClick={() => onExport('csv')} 
-            className="flex items-center justify-center gap-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 py-3 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
+            className="flex items-center justify-center gap-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-2 rounded text-xs font-bold transition-all active:scale-95 shadow-sm"
           >
-            <DownloadCloud size={16} className="text-gray-400" /> CSV
+            <DownloadCloud size={14} /> CSV
           </button>
           <button 
             onClick={() => onExport('excel')} 
-            className="flex items-center justify-center gap-2 bg-[#0071bc] hover:bg-[#005a96] text-white py-3 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
+            className="flex items-center justify-center gap-2 bg-[#0071bc] hover:bg-[#005a96] text-white py-2 rounded text-xs font-bold transition-all shadow-sm active:scale-95"
           >
-            <FileSpreadsheet size={16} /> EXCEL
+            <FileSpreadsheet size={14} /> EXCEL
           </button>
         </div>
       </div>
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
       `}</style>
     </div>
   );
@@ -232,20 +217,18 @@ export default function PemerintahFilter({
 
 function FilterSection({ title, children, isOpen, onToggle }: { title: string, children: React.ReactNode, isOpen: boolean, onToggle: () => void }) {
   return (
-    <div className="border-b border-gray-50 last:border-0 transition-all">
+    <div className="border-b border-gray-100 last:border-0">
       <button 
         onClick={onToggle}
         className="w-full flex justify-between items-center p-4 hover:bg-gray-50 transition-colors group"
       >
-        <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${isOpen ? 'text-[#0071bc]' : 'text-gray-500 group-hover:text-gray-800'}`}>
+        <span className={`text-xs font-bold uppercase tracking-wider ${isOpen ? 'text-[#0071bc]' : 'text-gray-600 group-hover:text-gray-900'}`}>
           {title}
         </span>
-        <div className={`transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-180'}`}>
-          <ChevronUp size={16} className={isOpen ? 'text-[#0071bc]' : 'text-gray-400'} />
-        </div>
+        {isOpen ? <ChevronUp size={16} className="text-[#0071bc]" /> : <ChevronDown size={16} className="text-gray-400" />}
       </button>
       {isOpen && (
-        <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-1 duration-300">
+        <div className="px-4 pb-4 animate-in slide-in-from-top-1 duration-200">
           {children}
         </div>
       )}
@@ -257,30 +240,20 @@ function FilterItem({ label, count, isActive, onClick }: { label: string, count?
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center justify-between py-2.5 px-3 rounded-xl transition-all text-left group ${
+      className={`w-full flex items-center justify-between py-1.5 px-2 rounded-md transition-all text-left ${
         isActive 
-        ? 'bg-blue-50 text-[#0071bc] ring-1 ring-blue-100 shadow-sm' 
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        ? 'bg-blue-50 text-[#0071bc] font-bold border-l-2 border-[#0071bc]' 
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-2 border-transparent'
       }`}
     >
-      <div className="flex items-center gap-3 overflow-hidden">
-        <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
-          isActive 
-          ? 'bg-[#0071bc] border-[#0071bc] scale-100' 
-          : 'border-gray-200 bg-white group-hover:border-gray-300 scale-95'
-        }`}>
-          {isActive && <Check size={12} className="text-white stroke-[4px]" />}
+      <div className="flex items-center gap-2 overflow-hidden">
+        <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-[#0071bc] border-[#0071bc]' : 'border-gray-300 bg-white'}`}>
+          {isActive && <Check size={10} className="text-white" />}
         </div>
-        <span className={`text-xs truncate ${isActive ? 'font-black' : 'font-medium'}`}>
-          {label}
-        </span>
+        <span className="text-sm truncate">{label}</span>
       </div>
       {count !== undefined && (
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black transition-colors ${
-          isActive 
-          ? 'bg-blue-100 text-[#0071bc]' 
-          : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'
-        }`}>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isActive ? 'bg-blue-100 text-[#0071bc]' : 'bg-gray-100 text-gray-500'}`}>
           {count}
         </span>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, SearchX } from "lucide-react";
+import { Eye, SearchX, ArrowRight } from "lucide-react";
 import { Dataset } from "@/src/app/types/dataset";
 
 interface NonPemerintahTableProps {
@@ -10,52 +10,64 @@ interface NonPemerintahTableProps {
 
 export default function NonPemerintahTable({ data, onOpenDetail }: NonPemerintahTableProps) {
   return (
-    <div className="w-full min-w-0 text-black">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          {/* Header Tabel */}
-          <thead className="bg-gray-50/80 border-y border-gray-200">
+    <div className="w-full text-black">
+      {/* Scroll indicator for mobile */}
+      <div className="md:hidden flex items-center justify-end text-[10px] text-gray-400 mb-2 gap-1 animate-pulse">
+        Scroll horizontal <ArrowRight size={10} />
+      </div>
+
+      <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+        <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
+          <thead className="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-widest">
             <tr>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider">Nama Dataset</th>
-              <th className="hidden md:table-cell px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider">Periode</th>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-center">Tahun</th>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-right">Kualitas</th>
-              <th className="px-4 md:px-6 py-4 font-bold text-gray-600 text-[11px] uppercase tracking-wider text-center">Aksi</th>
+              <th className="px-6 py-4">Dataset Name</th>
+              <th className="hidden md:table-cell px-6 py-4">Period</th>
+              <th className="px-6 py-4 text-center">Year</th>
+              <th className="px-6 py-4 text-right">Quality</th>
+              <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
           
-          {/* Isi Tabel */}
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-50 bg-white">
             {data.length > 0 ? (
               data.map((row) => (
-                <tr key={row.id} className="hover:bg-blue-50/30 transition-colors group">
-                  <td className="px-4 md:px-6 py-4">
-                    <div className="flex flex-col max-w-[200px] md:max-w-sm whitespace-normal break-words">
-                      <span className="font-bold text-[#0071bc] cursor-pointer hover:underline" onClick={() => onOpenDetail(row)}>
+                <tr key={row.id} className="hover:bg-blue-50/40 transition-all group">
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col whitespace-normal max-w-[250px] md:max-w-sm">
+                      <span 
+                        className="font-bold text-gray-900 group-hover:text-[#0071bc] cursor-pointer transition-colors"
+                        onClick={() => onOpenDetail(row)}
+                      >
                         {row.title}
                       </span>
-                      <span className="md:hidden text-[10px] text-gray-400 uppercase font-medium mt-1">{row.period}</span>
+                      <span className="md:hidden text-[10px] text-gray-400 font-bold uppercase mt-1">
+                        {row.period}
+                      </span>
                     </div>
                   </td>
-                  <td className="hidden md:table-cell px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                  <td className="hidden md:table-cell px-6 py-5">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-[11px] font-bold">
                       {row.period}
                     </span>
                   </td>
-                  <td className="px-4 md:px-6 py-4 text-gray-500 font-medium text-center">
+                  <td className="px-6 py-5 text-gray-600 font-medium text-center">
                     {row.year}
                   </td>
-                  <td className="px-4 md:px-6 py-4 text-right">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold border ${row.quality_score >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  <td className="px-6 py-5 text-right">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${
+                      row.quality_score >= 80 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                        : 'bg-amber-50 text-amber-600 border-amber-100'
+                    }`}>
                       {row.quality_score}%
                     </span>
                   </td>
-                  <td className="px-4 md:px-6 py-4 text-center">
+                  <td className="px-6 py-5 text-center">
                     <button 
                       onClick={() => onOpenDetail(row)} 
-                      className="inline-flex items-center gap-1.5 p-2 md:px-4 md:py-2 border border-gray-300 rounded text-[11px] font-bold text-gray-700 hover:bg-[#0071bc] hover:text-white hover:border-[#0071bc] transition-all shadow-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-[10px] font-black text-gray-600 hover:bg-[#0071bc] hover:text-white hover:border-[#0071bc] transition-all shadow-sm active:scale-95"
                     >
-                      <Eye size={14} /> <span className="hidden md:inline">DETAIL</span>
+                      <Eye size={14} /> <span className="hidden sm:inline">DETAIL</span>
                     </button>
                   </td>
                 </tr>
@@ -70,20 +82,18 @@ export default function NonPemerintahTable({ data, onOpenDetail }: NonPemerintah
   );
 }
 
-// Komponen Empty State Modern
 function EmptyState({ colSpan }: { colSpan: number }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-4 py-24 bg-white">
-        {/* Whitespace normal & break-words dimasukkan di div agar teks bisa turun */}
-        <div className="flex flex-col items-center justify-center text-center space-y-4 whitespace-normal break-words w-full max-w-full">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-inner">
-            <SearchX size={36} className="text-gray-400" />
+      <td colSpan={colSpan} className="px-4 py-20">
+        <div className="flex flex-col items-center justify-center text-center space-y-4">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+            <SearchX size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-gray-900">Dataset Tidak Ditemukan</h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-              Kami tidak menemukan data eksternal yang sesuai dengan kata kunci atau filter pencarian Anda saat ini.
+            <h3 className="font-bold text-gray-900">No Data Found</h3>
+            <p className="text-xs text-gray-500 max-w-xs mx-auto">
+              Please adjust your filters or search keywords.
             </p>
           </div>
         </div>
