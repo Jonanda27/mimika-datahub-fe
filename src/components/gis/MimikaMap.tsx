@@ -64,8 +64,7 @@ export default function MimikaMap() {
 
     // Explicit type 'PathOptions' dari leaflet menormalkan error tipe GeoJSON
     const districtStyle = (feature: any): PathOptions => {
-        const districtName = feature.properties?.NAMOBJ || "";
-        // NORMALISASI: Samakan kunci dengan yang ada di statsMap
+        const districtName = feature.properties?.district_name || "";
         const key = districtName.toLowerCase().replace(/\s/g, '');
         const total = statsMap.get(key) || 0;
 
@@ -81,7 +80,7 @@ export default function MimikaMap() {
 
     // Explicit type 'Layer' untuk parameter kedua
     const onEachFeature = (feature: any, layer: Layer) => {
-        const districtName = feature.properties?.NAMOBJ || "Unknown";
+        const districtName = feature.properties?.district_name || "Unknown";
         // NORMALISASI: Samakan kunci untuk pencarian data di Tooltip
         const key = districtName.toLowerCase().replace(/\s/g, '');
         const total = statsMap.get(key) || 0;
