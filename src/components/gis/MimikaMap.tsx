@@ -47,7 +47,9 @@ export default function MimikaMap() {
     const statsMap = useMemo(() => {
         const map = new Map<string, number>();
         stats.forEach(item => {
-            map.set(item.district_name.toLowerCase(), item.total_dataset);
+            // NORMALISASI: Kecilkan huruf dan HAPUS semua spasi
+            const key = item.district_name.toLowerCase().replace(/\s/g, '');
+            map.set(key, item.total_dataset);
         });
         return map;
     }, [stats]);
@@ -63,7 +65,9 @@ export default function MimikaMap() {
     // Explicit type 'PathOptions' dari leaflet menormalkan error tipe GeoJSON
     const districtStyle = (feature: any): PathOptions => {
         const districtName = feature.properties?.NAMOBJ || "";
-        const total = statsMap.get(districtName.toLowerCase()) || 0;
+        // NORMALISASI: Samakan kunci dengan yang ada di statsMap
+        const key = districtName.toLowerCase().replace(/\s/g, '');
+        const total = statsMap.get(key) || 0;
 
         return {
             fillColor: getColor(total),
@@ -78,13 +82,15 @@ export default function MimikaMap() {
     // Explicit type 'Layer' untuk parameter kedua
     const onEachFeature = (feature: any, layer: Layer) => {
         const districtName = feature.properties?.NAMOBJ || "Unknown";
-        const total = statsMap.get(districtName.toLowerCase()) || 0;
+        // NORMALISASI: Samakan kunci untuk pencarian data di Tooltip
+        const key = districtName.toLowerCase().replace(/\s/g, '');
+        const total = statsMap.get(key) || 0;
 
         layer.bindTooltip(
             `<div class="p-1 font-sans text-xs">
-        <p class="font-bold border-b border-gray-100 pb-1 mb-1">${districtName}</p>
-        <p class="text-gray-600">Total: <span class="text-emerald-600 font-bold">${total} Dataset</span></p>
-      </div>`,
+                <p class="font-bold border-b border-gray-100 pb-1 mb-1">${districtName}</p>
+                <p class="text-gray-600">Total: <span class="text-emerald-600 font-bold">${total} Dataset</span></p>
+            </div>`,
             { sticky: true, direction: 'top', className: 'rounded-lg shadow-xl border-none' }
         );
 
@@ -111,7 +117,7 @@ export default function MimikaMap() {
 
     if (loading) {
         return (
-            <div className="h-[450px] w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
+            <div className="h-112.5 w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
                 <div className="text-center">
                     <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Sinkronisasi Geospasial...</p>
@@ -131,7 +137,7 @@ export default function MimikaMap() {
     const SafeGeoJSON = GeoJSON as any;
 
     return (
-        <div className="h-[450px] w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10">
+        <div className="h-112.5 w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10">
             <SafeMapContainer
                 center={mapCenter}
                 zoom={8}
