@@ -1,280 +1,115 @@
 // src/app/(public)/atlas/page.tsx
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import {
-  ArrowDown,
-  Info,
-  Users,
-  Activity,
-  TrendingUp,
-  FileText,
-  Share2,
-  ArrowRight,
-  Zap
-} from "lucide-react";
-
+import React, { useEffect } from "react";
+import { Share2, Download, Info, LayoutDashboard } from "lucide-react";
 import MapWrapper from "@/src/components/gis/MapWrapper";
 import AtlasBarChart from "@/src/components/atlas/AtlasBarChart";
-import AtlasStatCard from "@/src/components/atlas/AtlasStatCard";
-
+import AtlasHeroStat from "@/src/components/atlas/AtlasHeroStat";
+import AtlasLineChart from "@/src/components/atlas/AtlasLineChart";
+import AtlasControls from "@/src/components/atlas/AtlasControls";
 import { useAtlasStore } from "@/src/app/store/useAtlasStore";
-import { AtlasVisualMode } from "@/src/app/types/atlas";
-
-/**
- * Komponen Internal: AtlasSection
- * Berfungsi sebagai "Trigger" narasi menggunakan IntersectionObserver
- * dan menampung tombol navigasi Call-to-Action.
- */
-interface AtlasSectionProps {
-  id: string;
-  indicatorKey?: string;
-  visualType: AtlasVisualMode;
-  title: string;
-  children: React.ReactNode;
-  icon: React.ReactNode;
-  exploreCategory?: string; // Query parameter untuk menjembatani ke katalog data
-}
-
-const AtlasSection = ({ id, indicatorKey, visualType, title, children, icon, exploreCategory }: AtlasSectionProps) => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { setActiveTheme, fetchAtlasData } = useAtlasStore();
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // Trigger perubahan state global (mode visual dan data)
-          setActiveTheme(id, visualType);
-          if (indicatorKey) {
-            fetchAtlasData(indicatorKey);
-          }
-        }
-      },
-      {
-        rootMargin: "-45% 0px -45% 0px", // Memicu tepat saat paragraf di tengah layar
-        threshold: 0.1,
-      }
-    );
-
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, [id, indicatorKey, visualType, setActiveTheme, fetchAtlasData]);
-
-  return (
-    <div
-      ref={sectionRef}
-      className="min-h-screen flex flex-col justify-center py-24 px-8 md:px-16 transition-opacity duration-700"
-    >
-      <div className="max-w-xl">
-        <div className="inline-flex p-3 bg-blue-100 text-[#0071bc] rounded-2xl mb-6 shadow-sm">
-          {icon}
-        </div>
-        <h2 className="text-4xl font-black text-[#002244] tracking-tighter mb-6 leading-tight uppercase">
-          {title}
-        </h2>
-        <div className="text-lg text-gray-600 leading-relaxed space-y-6 font-medium text-justify">
-          {children}
-        </div>
-
-        {/* Jembatan menuju Gudang Data / Katalog */}
-        {exploreCategory && (
-          <div className="mt-10 pt-8 border-t border-gray-100">
-            <button
-              onClick={() => router.push(`/public-data-pemerintah?kategori=${exploreCategory}`)}
-              className="group flex items-center gap-3 px-6 py-3.5 bg-slate-50 border border-gray-200 hover:border-[#0071bc] hover:bg-blue-50 text-[#002244] rounded-xl font-bold text-sm transition-all shadow-sm"
-            >
-              Eksplorasi Dataset {exploreCategory}
-              <ArrowRight size={18} className="text-[#0071bc] group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export default function AtlasPage() {
-  const { activeTheme, visualType, metadata, isLoading } = useAtlasStore();
+  const { activeIndicator, currentData, fetchAtlasData } = useAtlasStore();
+
+  // Inisialisasi data saat pertama kali buka
+  useEffect(() => {
+    fetchAtlasData(activeIndicator);
+  }, []);
 
   return (
-    <div className="bg-white min-h-screen flex flex-col md:flex-row relative">
-
-      {/* --- KOLOM KIRI: NARASI (SCROLLABLE) --- */}
-      <div className="w-full md:w-[40%] relative z-10 bg-white/80 backdrop-blur-xs shadow-[10px_0_30px_rgba(0,0,0,0.02)]">
-
-        {/* Intro Hero Section */}
-        <div className="min-h-screen flex flex-col justify-center px-8 md:px-16 border-b border-gray-100 bg-slate-50">
-          <h1 className="text-[12px] font-black text-[#0071bc] uppercase tracking-[0.3em] mb-4">
-            Kabupaten Mimika
-          </h1>
-          <h2 className="text-6xl font-black text-[#002244] tracking-tighter mb-8 leading-[0.9]">
-            ATLAS <br /> <span className="text-[#0071bc]">PEMBANGUNAN</span> <br /> 2026.
-          </h2>
-          <p className="text-xl text-gray-500 font-medium max-w-sm leading-relaxed mb-10">
-            Menelusuri jejak data spasial untuk masa depan pembangunan yang lebih inklusif dan berkelanjutan.
-          </p>
-          <div className="flex items-center gap-4 animate-bounce text-gray-400 font-bold uppercase text-[10px] tracking-widest">
-            <ArrowDown size={18} /> Gulir untuk Memulai
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
+      {/* --- HEADER BLOCK --- */}
+      <header className="bg-white border-b border-gray-200 pt-32 pb-12 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 text-[#0071bc] rounded-lg">
+                <LayoutDashboard size={20} />
+              </div>
+              <span className="text-xs font-black uppercase tracking-[0.3em] text-[#0071bc]">
+                Interactive Atlas
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-[#002244] tracking-tighter mb-4 uppercase">
+              Mimika <span className="text-[#0071bc]">Data360</span> Explore
+            </h1>
+            <p className="text-gray-500 font-medium text-lg leading-relaxed">
+              Platform eksplorasi indikator pembangunan Kabupaten Mimika secara spasial dan analitikal.
+              Gunakan kontrol di bawah untuk mengganti dimensi data.
+            </p>
           </div>
-        </div>
-
-        {/* Bab 1: Mode Peta (Distribusi Kependudukan) */}
-        <AtlasSection
-          id="demografi"
-          indicatorKey="jumlah_penduduk"
-          visualType="map"
-          title="Distribusi Manusia"
-          icon={<Users size={28} />}
-          exploreCategory="Kependudukan"
-        >
-          <p>
-            Mimika bukan sekadar angka, melainkan sebaran kehidupan di 18 distrik yang unik. Melalui peta di samping, kita dapat melihat konsentrasi penduduk yang masih terfokus pada pusat ekonomi urban.
-          </p>
-          <p>
-            Kepadatan di <strong>Distrik Mimika Baru</strong> dan <strong>Kuala Kencana</strong> menjadi tantangan tersendiri dalam pemerataan layanan publik dibandingkan wilayah pegunungan dan pesisir.
-          </p>
-        </AtlasSection>
-
-        {/* Bab 2: Mode Peta (Stunting / Kesehatan) */}
-        <AtlasSection
-          id="kesehatan"
-          indicatorKey="stunting"
-          visualType="map"
-          title="Kualitas Generasi"
-          icon={<Activity size={28} />}
-          exploreCategory="Kesehatan"
-        >
-          <p>
-            Stunting adalah musuh senyap masa depan. Warna merah pada peta menunjukkan distrik dengan tingkat prevalensi yang membutuhkan intervensi mendesak dari otoritas terkait.
-          </p>
-          <p>
-            Data spasial ini menjadi navigasi utama bagi tenaga medis lapangan untuk memastikan program pemenuhan gizi tepat sasaran hingga ke pelosok kampung.
-          </p>
-        </AtlasSection>
-
-        {/* Bab 3: Mode Grafik (Perbandingan PDRB) */}
-        <AtlasSection
-          id="ekonomi-chart"
-          indicatorKey="pdrb"
-          visualType="chart"
-          title="Ketimpangan Ekonomi"
-          icon={<TrendingUp size={28} />}
-          exploreCategory="Ekonomi"
-        >
-          <p>
-            Memetakan angka ke dalam poligon tidak selalu cukup. Mari kita lihat perbandingan langsung produktivitas antar distrik melalui grafik di samping.
-          </p>
-          <p>
-            Terdapat jurang (*gap*) yang cukup tajam antara wilayah lingkar tambang dan wilayah pesisir. Ini mendesak lahirnya kebijakan ekonomi sirkular yang bisa menjembatani disparitas tersebut.
-          </p>
-        </AtlasSection>
-
-        {/* Bab 4: Mode Angka Raksasa (Punchline Kesejahteraan) */}
-        <AtlasSection
-          id="ekonomi-stat"
-          indicatorKey="pdrb" // Menggunakan data PDRB lagi, tapi visualnya diekstrak menjadi rata-rata
-          visualType="stat"
-          title="Menuju Mimika Emas"
-          icon={<Zap size={28} />}
-        >
-          <p>
-            Angka di sebelah kanan adalah rata-rata agregat dari kekuatan ekonomi kita saat ini. Sebuah pencapaian sekaligus pengingat bahwa perjalanan pembangunan tidak boleh berhenti.
-          </p>
-          <p>
-            Inovasi, transparansi data, dan kolaborasi multi-sektor adalah kunci untuk menaikkan indikator ini di tahun-tahun mendatang.
-          </p>
-        </AtlasSection>
-
-        {/* Penutup */}
-        <AtlasSection
-          id="kesimpulan"
-          visualType="map" // Kembali ke peta pasif
-          title="Data untuk Aksi"
-          icon={<FileText size={28} />}
-        >
-          <p>
-            Atlas ini adalah etalase dan alat bantu audit kebijakan. Setiap warna, grafik, dan angka yang baru saja Anda telusuri adalah representasi nyata yang menuntut tindakan konkret (*Evidence-Based Policy*).
-          </p>
-          <div className="pt-8 flex gap-4">
-            <button className="px-6 py-3 bg-[#002244] text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-[#0071bc] transition-all shadow-lg">
-              <Share2 size={16} /> Bagikan Laporan Ini
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-600 hover:bg-slate-50 transition-all">
+              <Share2 size={16} /> Share
+            </button>
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-[#002244] text-white rounded-xl font-bold text-sm hover:bg-[#0071bc] transition-all shadow-lg shadow-blue-900/20">
+              <Download size={16} /> Export PDF
             </button>
           </div>
-        </AtlasSection>
+        </div>
+      </header>
 
-        <footer className="py-20 px-16 text-gray-400 text-[10px] font-bold uppercase tracking-widest border-t border-gray-100 bg-slate-50">
-          © 2026 Bappeda Kabupaten Mimika • Mimika DataHub
-        </footer>
-      </div>
+      {/* --- MAIN DASHBOARD CONTENT --- */}
+      <main className="max-w-7xl mx-auto px-6 md:px-12 mt-10">
 
-      {/* --- KOLOM KANAN: THE MULTI-VISUAL ORCHESTRATOR --- */}
-      <div className="hidden md:block w-[60%] h-screen sticky top-0 bg-slate-50 overflow-hidden relative border-l border-gray-200">
+        {/* 1. KONTROL UTAMA */}
+        <section className="mb-10 max-w-md">
+          <AtlasControls />
+        </section>
 
-        {/* 1. LAYER MODE PETA */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${visualType === 'map' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-
-          {/* Panel Info Mengambang (Eksklusif untuk Peta) */}
-          <div className="absolute top-8 left-8 right-8 z-20 flex justify-between items-start pointer-events-none">
-            <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/50 pointer-events-auto max-w-xs transition-all duration-500">
-              {isLoading ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-[#0071bc] border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Memproses Lapisan...</span>
-                </div>
-              ) : metadata ? (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <h3 className="text-[10px] font-black text-[#0071bc] uppercase tracking-[0.2em] mb-1">Indikator Pemetaan</h3>
-                  <h4 className="text-xl font-black text-[#002244] leading-tight mb-2">{metadata.title}</h4>
-                  <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{metadata.description}</p>
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase mr-2">Satuan:</span>
-                    <span className="text-xs font-black text-[#002244]">{metadata.unit}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Info size={16} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Pilih Indikator</span>
-                </div>
-              )}
-            </div>
+        {/* 2. BLOCK ATAS: PETA & AGREGAT */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+          <div className="lg:col-span-8 h-[500px] md:h-[600px]">
+            <MapWrapper isAtlasMode={true} />
           </div>
+          <div className="lg:col-span-4">
+            <AtlasHeroStat />
+          </div>
+        </section>
 
-          <MapWrapper isAtlasMode={true} />
-
-          {/* Legenda Intensitas (Eksklusif untuk Peta) */}
-          <div className="absolute bottom-8 right-8 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/50">
-            <div className="flex flex-col gap-2">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right">Konsentrasi Data</span>
-              <div className="h-2 w-48 bg-gradient-to-r from-slate-200 to-[#002244] rounded-full"></div>
-              <div className="flex justify-between text-[9px] font-black text-[#002244] uppercase px-1">
-                <span>Rendah</span>
-                <span>Tinggi</span>
-              </div>
-            </div>
+        {/* 3. INFO BAR */}
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-8 flex items-start gap-4">
+          <Info className="text-[#0071bc] mt-1 shrink-0" />
+          <div>
+            <h4 className="text-[#002244] font-black text-sm uppercase tracking-widest mb-1">Konteks Indikator</h4>
+            <p className="text-blue-900/70 text-sm font-medium leading-relaxed">
+              {currentData?.metadata.description}
+            </p>
           </div>
         </div>
 
-        {/* 2. LAYER MODE GRAFIK RAKSASA */}
-        <div className={`absolute inset-0 bg-white transition-opacity duration-1000 ${visualType === 'chart' ? 'opacity-100 z-20' : 'opacity-0 z-0 pointer-events-none'}`}>
-          {visualType === 'chart' && <AtlasBarChart />}
-        </div>
+        {/* 4. BLOCK BAWAH: RANKING & TREN */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="min-h-[500px]">
+            <AtlasBarChart />
+          </div>
+          <div className="min-h-[500px]">
+            <AtlasLineChart />
+          </div>
+        </section>
 
-        {/* 3. LAYER MODE ANGKA STAT */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${visualType === 'stat' ? 'opacity-100 z-30' : 'opacity-0 z-0 pointer-events-none'}`}>
-          {visualType === 'stat' && <AtlasStatCard />}
-        </div>
+        {/* 5. FOOTER BRIDGE */}
+        <section className="mt-16 p-10 bg-[#002244] rounded-[2.5rem] text-center relative overflow-hidden">
+          <div className="relative z-10">
+            <h2 className="text-3xl font-black text-white mb-4">Ingin Menelusuri Data Mentah?</h2>
+            <p className="text-blue-200 font-medium mb-8 max-w-xl mx-auto opacity-80">
+              Akses tabel dataset lengkap, metadata teknis, dan unduh file sumber melalui portal data pemerintah kami.
+            </p>
+            <a
+              href="/public-data-pemerintah"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-[#002244] rounded-2xl font-black hover:bg-blue-50 transition-all"
+            >
+              Buka Katalog Data Mimika
+            </a>
+          </div>
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400 rounded-full blur-[100px]"></div>
+          </div>
+        </section>
 
-      </div>
-
-      <style jsx global>{`
-        body {
-          scroll-behavior: smooth;
-        }
-      `}</style>
+      </main>
     </div>
   );
 }

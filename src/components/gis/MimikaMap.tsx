@@ -268,7 +268,7 @@ export default function MimikaMap({ isAtlasMode = false }: MimikaMapProps) {
                         positions={maskingPositions}
                         pathOptions={{
                             fillColor: '#1e293b',
-                            fillOpacity: zoomLevel >= 14 ? 0 : 0.5,
+                            fillOpacity: zoomLevel >= 14 ? 0 : 0.1,
                             stroke: false
                         }}
                     />

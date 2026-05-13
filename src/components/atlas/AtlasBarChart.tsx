@@ -13,6 +13,7 @@ import {
     Cell
 } from 'recharts';
 import { useAtlasStore } from '@/src/app/store/useAtlasStore';
+import { BarChart2 } from 'lucide-react';
 
 // Static Hash Map untuk mengubah slug kembali menjadi nama distrik yang rapi
 const DISTRICT_NAMES: Record<string, string> = {
@@ -25,91 +26,102 @@ const DISTRICT_NAMES: Record<string, string> = {
 };
 
 export default function AtlasBarChart() {
-    // Berkomunikasi dengan Controller Store tanpa perlu menerima props dari atas
-    const { spatialData, metadata } = useAtlasStore();
+    // Berkomunikasi dengan Controller Store menggunakan skema state terbaru
+    const { currentData, isLoading } = useAtlasStore();
 
     // Transformasi dan pengurutan data untuk konsumsi Recharts
     const chartData = useMemo(() => {
-        if (!spatialData) return [];
+        if (!currentData || !currentData.spatialData) return [];
 
-        // Mengubah { "mimikabaru": 15, "wania": 10 } menjadi array of objects
-        const formattedData = Object.entries(spatialData).map(([key, value]) => ({
+        const formattedData = Object.entries(currentData.spatialData).map(([key, value]) => ({
             name: DISTRICT_NAMES[key] || key,
             value: value
         }));
 
-        // Mengurutkan data dari nilai tertinggi ke terendah agar grafik batang terlihat rapi (Descending)
-        return formattedData.sort((a, b) => b.value - a.value);
-    }, [spatialData]);
+        // Untuk BarChart bertipe "vertical" (horizontal bar), Recharts menggambar dari bawah ke atas.
+        // Agar ranking 1 berada di paling atas, kita urutkan secara Ascending (Kecil ke Besar).
+        return formattedData.sort((a, b) => a.value - b.value);
+    }, [currentData]);
 
-    // Penentuan warna dinamis berdasarkan skema warna metadata dari Backend
+    // Penentuan warna dinamis berdasarkan skema warna metadata
     const getChartColor = () => {
-        const scheme = metadata?.color_scheme || "Default";
-        if (scheme === "Reds") return "#ef4444"; // text-red-500
-        if (scheme === "Greens") return "#10b981"; // text-emerald-500
-        return "#0071bc"; // Warna brand utama Mimika DataHub
+        const scheme = currentData?.metadata.color_scheme || "Default";
+        switch (scheme) {
+            case "Reds": return "#ef4444";
+            case "Greens": return "#10b981";
+            case "Purples": return "#a855f7";
+            case "Oranges": return "#f97316";
+            default: return "#0071bc"; // Blues / Default Mimika
+        }
     };
 
     const mainColor = getChartColor();
+    const meta = currentData?.metadata;
 
-    if (!spatialData || chartData.length === 0) {
+    if (isLoading || !currentData || chartData.length === 0) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-400 rounded-full animate-spin mb-4"></div>
-                <p className="text-sm font-bold uppercase tracking-widest">Merakit Grafik Data...</p>
+            <div className="w-full h-96 flex flex-col items-center justify-center bg-white rounded-3xl border border-gray-100 shadow-sm animate-pulse">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-400 rounded-full animate-spin mb-4"></div>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Merakit Kalkulasi Ranking...</p>
             </div>
         );
     }
 
     return (
-        <div className="w-full h-full flex flex-col pt-8 pb-12">
+        <div className="w-full h-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col">
             {/* Header Grafik */}
-            <div className="mb-10 px-12">
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                    Distribusi Perbandingan
-                </h3>
-                <h2 className="text-4xl font-black text-[#002244] leading-none mb-3">
-                    {metadata?.title || 'Analisis Sektoral'}
-                </h2>
-                <div className="w-16 h-1 bg-gray-200 rounded-full">
-                    <div className="h-full rounded-full" style={{ width: '50%', backgroundColor: mainColor }}></div>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <BarChart2 size={16} className="text-gray-400" />
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                            Peringkat Distrik
+                        </h3>
+                    </div>
+                    <h2 className="text-xl font-black text-[#002244]">
+                        Distribusi {meta?.title}
+                    </h2>
                 </div>
             </div>
 
-            {/* Container Grafik Recharts */}
-            <div className="grow w-full px-8">
+            {/* Container Grafik Recharts (Horizontal Bar) */}
+            <div className="grow w-full min-h-[500px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
-                        margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                        layout="vertical" // Mengubah orientasi menjadi menyamping
+                        margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
                     >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+
                         <XAxis
-                            dataKey="name"
+                            type="number"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }}
-                            angle={-45}
-                            textAnchor="end"
-                            interval={0} // Memaksa semua nama distrik muncul
+                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                            domain={[0, 'dataMax']}
                         />
+
                         <YAxis
+                            dataKey="name"
+                            type="category"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
-                            tickFormatter={(val) => `${val}`}
+                            tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
+                            width={110} // Ruang untuk nama distrik agar tidak terpotong
                         />
+
                         <Tooltip
                             cursor={{ fill: '#f8fafc' }}
                             content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="bg-[#002244] text-white p-4 rounded-xl shadow-2xl border border-white/10">
+                                        <div className="bg-[#002244] text-white p-4 rounded-xl shadow-xl border border-white/10">
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
                                                 Distrik {payload[0].payload.name}
                                             </p>
-                                            <p className="text-2xl font-black text-white">
-                                                {payload[0].value} <span className="text-xs font-normal text-gray-300">{metadata?.unit}</span>
+                                            <p className="text-xl font-black text-white">
+                                                {payload[0].value} <span className="text-xs font-normal text-gray-300">{meta?.unit}</span>
                                             </p>
                                         </div>
                                     );
@@ -117,18 +129,24 @@ export default function AtlasBarChart() {
                                 return null;
                             }}
                         />
+
                         <Bar
                             dataKey="value"
-                            radius={[6, 6, 0, 0]}
-                            animationDuration={1500} // Animasi transisi yang elegan
+                            radius={[0, 4, 4, 0]} // Sudut melengkung di bagian ujung kanan
+                            animationDuration={1500}
+                            barSize={16} // Ketebalan batang
                         >
-                            {chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={mainColor}
-                                    fillOpacity={index < 3 ? 1 : 0.6} // 3 teratas diberi warna solid, sisanya agak transparan untuk kontras
-                                />
-                            ))}
+                            {chartData.map((entry, index) => {
+                                // 3 distrik teratas (ingat, array diurutkan asc, jadi 3 teratas ada di akhir array)
+                                const isTop3 = index >= chartData.length - 3;
+                                return (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={mainColor}
+                                        fillOpacity={isTop3 ? 1 : 0.4} // Top 3 warna solid, sisanya pudar
+                                    />
+                                );
+                            })}
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>
