@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 
 // Import Komponen Global
 import PageHeader from "@/components/layout/PageHeader";
@@ -15,12 +15,12 @@ import UploadLogTable from "./components/UploadLogTable";
 import AddItemModal from "./components/AddItemModal";
 
 // Integrasi Service & Store
-import { ingestService } from "./../../services/ingest.service";
 import { useIngestStore } from "./../../store/useIngestStore";
 import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useDistrictStore } from "./../../store/useDistrictStore"; // [NEW] Untuk dropdown distrik
 
 // --- Types ---
 export interface UploadLog {
@@ -31,24 +31,21 @@ export interface UploadLog {
   quality: number | null;
 }
 
-export interface Item {
-  id: string | number;
-  name: string;
-}
-
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null); // [NEW] State Gambar
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null); // [NEW] State Distrik
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
   // Store Integration
-  const { isProcessing, setProcessing, setResult, setError } = useIngestStore();
+  const { isProcessing, executeUpload, setError } = useIngestStore();
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
+  const { districts, fetchDistricts } = useDistrictStore(); // [NEW] Ambil daftar distrik
 
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -64,7 +61,8 @@ export default function UploadDataPage() {
           fetchSources(), 
           fetchCategories(), 
           fetchSourceTypes(),
-          fetchMyDatasets()
+          fetchMyDatasets(),
+          fetchDistricts() // [NEW]
         ]);
       } catch (error) {
         console.error("Gagal memuat data awal:", error);
@@ -73,7 +71,7 @@ export default function UploadDataPage() {
       }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets, fetchDistricts]);
 
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
@@ -86,21 +84,23 @@ export default function UploadDataPage() {
   // --- Handlers ---
   const showAlert = (message: string, type: "success" | "danger" | "info") => {
     setAlert({ message, type });
-    setTimeout(() => setAlert(null), 4000);
+    if (type !== "info") {
+      setTimeout(() => setAlert(null), 6000);
+    }
   };
 
   const handleFileChange = (file: File) => {
-    // [UPDATE] Menambahkan .xls ke dalam daftar format yang didukung
-    const validTypes = [".xlsx", ".xls", ".csv", ".json"];
+    // [UPDATE] Mendukung Tabular & Dokumen sesuai Backend
+    const validTypes = [".xlsx", ".xls", ".csv", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
     
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan .xlsx, .xls, .csv, atau .json", "danger");
+      showAlert("Format file tidak didukung. Gunakan Excel, CSV, PDF, atau Word.", "danger");
       return;
     }
     
-    if (file.size > 10 * 1024 * 1024) {
-      showAlert("Ukuran file maksimal 10MB", "danger");
+    if (file.size > 20 * 1024 * 1024) { // Up to 20MB
+      showAlert("Ukuran file maksimal 20MB", "danger");
       return;
     }
     
@@ -136,63 +136,57 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedFile) {
-      showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
+      showAlert("Silakan pilih file dataset/dokumen terlebih dahulu", "danger");
       return;
     }
     if (!selectedImage) {
-      showAlert("Silakan pilih gambar cover untuk dataset ini", "danger");
+      showAlert("Silakan pilih gambar cover dataset", "danger");
       return;
     }
 
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
 
-    const title = formData.get("datasetName") as string;
-    const datasetType = formData.get("dataset_type") as string;
-    const sourceId = formData.get("dataSource");
-    const categoryId = formData.get("category");
-    const sourceTypeId = formData.get("source_type_id");
-    const year = formData.get("year");
-    const period = formData.get("period") as string;
-    const description = formData.get("description") as string;
+    const requestData = {
+      title: formData.get("datasetName") as string,
+      dataset_type: formData.get("dataset_type") as string,
+      source_id: Number(formData.get("dataSource")),
+      category_id: Number(formData.get("category")),
+      source_type_id: Number(formData.get("source_type_id")),
+      year: Number(formData.get("year")),
+      period: formData.get("period") as string,
+      description: formData.get("description") as string,
+      district_id: selectedDistrictId, // [NEW] Mengirim District ID manual
+      file: selectedFile,
+      image: selectedImage
+    };
 
-    if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
-      showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
+    // Validasi Dasar
+    if (!requestData.title || !requestData.source_id || !requestData.category_id) {
+      showAlert("Mohon lengkapi semua field wajib (*)", "danger");
       return;
     }
 
-    setProcessing(true);
-    setError(null);
-    showAlert("Sedang memproses, membersihkan data, dan upload gambar...", "info");
+    showAlert("Sedang memproses algoritma pembersihan data dan upload GIS...", "info");
 
     try {
-      const result = await ingestService.uploadProcess({ 
-        title,
-        dataset_type: datasetType,
-        source_id: Number(sourceId),
-        category_id: Number(categoryId),
-        source_type_id: Number(sourceTypeId),
-        year: Number(year),
-        period,
-        description,
-        file: selectedFile,
-        image: selectedImage // [NEW] Sertakan image ke service
-      });
-
-      setResult(result);
-      showAlert(result.message, "success");
+      // Menggunakan action executeUpload dari Store
+      await executeUpload(requestData);
+      
+      showAlert("Data berhasil diolah dan dipetakan ke wilayah Mimika!", "success");
+      
+      // Refresh list
       await fetchMyDatasets();
       
+      // Reset Form
       setSelectedFile(null);
       setSelectedImage(null);
+      setSelectedDistrictId(null);
       formElement.reset();
+      setAlert(null); // Tutup alert info
 
     } catch (err: any) {
-      const msg = err.message || "Gagal mengupload dataset";
-      setError(msg);
-      showAlert(msg, "danger");
-    } finally {
-      setProcessing(false);
+      showAlert(err.message || "Gagal mengupload data", "danger");
     }
   };
 
@@ -200,8 +194,8 @@ export default function UploadDataPage() {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
         <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-          <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
-          <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+          <PageHeader title="Upload Data" subtitle="Menyiapkan modul Ingest v2.0..." />
+          <LoadingState message="Menghubungkan ke Cleaning Engine Mimika DataHub..." />
         </div>
       </div>
     );
@@ -210,16 +204,22 @@ export default function UploadDataPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-        <PageHeader title="Upload Data" subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" />
+        <PageHeader 
+          title="Upload Data" 
+          subtitle="Gunakan modul ini untuk mengunggah Dataset (Excel/CSV) atau Dokumen (PDF) ke sistem." 
+        />
 
         {alert && (
-          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
-            alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-green-500' : 
-            'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
+          <div className={`mb-6 p-4 rounded-xl flex items-center justify-between border-l-4 shadow-sm animate-in slide-in-from-top-4 duration-300 ${
+            alert.type === 'success' ? 'bg-green-50 text-green-800 border-green-500' : 
+            alert.type === 'danger' ? 'bg-red-50 text-red-800 border-red-500' : 
+            'bg-blue-50 text-blue-800 border-blue-500'
           }`}>
-            <AlertCircle size={20} />
-            <span className="text-sm font-medium">{alert.message}</span>
+            <div className="flex items-center gap-3">
+              {alert.type === 'success' ? <CheckCircle2 size={20} /> : alert.type === 'info' ? <Info size={20} /> : <AlertCircle size={20} />}
+              <span className="text-sm font-semibold">{alert.message}</span>
+            </div>
+            {isProcessing && <Loader2 size={18} className="animate-spin text-blue-600" />}
           </div>
         )}
 
@@ -235,9 +235,12 @@ export default function UploadDataPage() {
             sources={sources} 
             categories={categories} 
             sourceTypes={sourceTypes}
+            districts={districts} // [NEW] Pass daftar distrik ke form
             isProcessing={isProcessing} 
             selectedImage={selectedImage}
+            selectedDistrictId={selectedDistrictId} // [NEW]
             onImageChange={setSelectedImage} 
+            onDistrictChange={setSelectedDistrictId} // [NEW]
             onSubmit={handleUpload} 
             onAddSource={() => setShowSourceModal(true)} 
             onAddCategory={() => setShowCategoryModal(true)} 
@@ -245,10 +248,16 @@ export default function UploadDataPage() {
           />
         </div>
 
-        <UploadLogTable logs={logs} />
+        <div className="mt-12">
+            <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-6 bg-[#0f3460] rounded-full"></div>
+                <h3 className="font-bold text-gray-800 uppercase tracking-wider text-sm">Riwayat Pengiriman Terbaru</h3>
+            </div>
+            <UploadLogTable logs={logs} />
+        </div>
 
-        <footer className="mt-10 text-center text-gray-400 text-xs pb-4">
-          © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika
+        <footer className="mt-12 text-center text-gray-400 text-[10px] uppercase tracking-[0.3em] pb-10">
+          Infrastruktur Data Statistik Sektoral - BRIDA Mimika 2026
         </footer>
 
         <AddItemModal 
@@ -260,8 +269,8 @@ export default function UploadDataPage() {
               setNewItemName(""); 
           }}
           onSave={handleSaveNewItem}
-          title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}
-          placeholder={showSourceModal ? "Contoh: Dinas Perikanan" : showCategoryModal ? "Contoh: Infrastruktur" : "Contoh: Statistik Sektoral"}
+          title={showSourceModal ? "Tambah Sumber Baru" : showCategoryModal ? "Tambah Kategori Baru" : "Tambah Tipe Sumber"}
+          placeholder={showSourceModal ? "Misal: Dinas Kesehatan" : showCategoryModal ? "Misal: Kesehatan & Kesejahteraan" : "Misal: Publikasi Dokumen"}
           value={newItemName}
           onChange={setNewItemName}
           type={showSourceModal ? "source" : "category"}
@@ -269,4 +278,16 @@ export default function UploadDataPage() {
       </div>
     </div>
   );
+}
+
+// Komponen Loader internal sederhana
+function Loader2({ size, className }: { size: number, className?: string }) {
+    return (
+        <svg 
+            width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" 
+            className={`animate-spin ${className}`}
+        >
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+    )
 }

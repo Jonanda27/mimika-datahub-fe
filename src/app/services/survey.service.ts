@@ -6,7 +6,9 @@ import {
   SurveyCreate, 
   SurveyResponseCreate, 
   SurveySubmitResponse,
-  SurveyDetailResponse 
+  SurveyDetailResponse,
+  SurveyStats,
+  ExportFormat 
 } from "../types/survey";
 
 export const surveyService = {
@@ -88,5 +90,57 @@ export const surveyService = {
       throw new Error(errorData?.detail || "Gagal mengambil detail survey");
     }
     return response.json();
+  },
+
+  // ==========================================
+  // TAMBAHAN: API MENGAMBIL STATISTIK SURVEY
+  // ==========================================
+  async getSurveyStats(): Promise<SurveyStats> {
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${API_BASE_URL}/v1/brida/stats`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`, // Pastikan API ini terlindungi oleh token jika untuk halaman admin/brida
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.detail || "Gagal mengambil statistik survey");
+    }
+    
+    return response.json();
+  },
+
+  async exportSurveyResults(surveyId: number, format: ExportFormat = 'xlsx'): Promise<void> {
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(
+      `${API_BASE_URL}/v1/brida/export/${surveyId}?format=${format}`, 
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.detail || "Gagal mengunduh file export");
+    }
+
+    // Proses download file di browser
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Hasil_Survey_${surveyId}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   }
 };

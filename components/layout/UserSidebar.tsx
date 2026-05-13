@@ -45,7 +45,7 @@ export default function UserNavbar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Data Pemerintah", href: "/user-data-pemerintah", icon: Upload },
     { name: "Data Non-Pemerintah", href: "/user-data-non-pemerintah", icon: Upload },
-    { name: "Data Upload", href: "/upload-data", icon: Upload },
+    { name: "Unggah Data", href: "/upload-data", icon: Upload },
   ];
 
   const getInitials = (name: string) => {

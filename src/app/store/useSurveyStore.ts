@@ -6,30 +6,62 @@ import {
   Survey, 
   SurveyCreate, 
   SurveyResponseCreate,
-  SurveyDetailResponse 
+  SurveyDetailResponse,
+  SurveyStats,
+  ExportFormat
 } from "../types/survey";
 
 interface SurveyState {
   // States
   surveys: Survey[];
   currentSurvey: SurveyDetailResponse | null;
+  surveyStats: SurveyStats | null;
   isLoading: boolean;
   error: string | null;
+  isExporting: boolean;
 
   // Actions
   fetchSurveys: () => Promise<void>;
   fetchSurveyDetail: (id: number) => Promise<void>;
+  fetchSurveyStats: () => Promise<void>;
   createSurvey: (data: SurveyCreate) => Promise<Survey>;
   submitResponse: (data: SurveyResponseCreate) => Promise<any>;
   clearError: () => void;
   clearCurrentSurvey: () => void;
+  exportResults: (surveyId: number, format: ExportFormat) => Promise<void>;
 }
 
 export const useSurveyStore = create<SurveyState>((set, get) => ({
   surveys: [],
   currentSurvey: null,
+  surveyStats: null,
   isLoading: false,
   error: null,
+  isExporting: false,
+
+  exportResults: async (surveyId, format) => {
+    set({ isExporting: true });
+    try {
+      await surveyService.exportSurveyResults(surveyId, format);
+    } catch (error: any) {
+      console.error("Export Error:", error.message);
+      alert(error.message);
+    } finally {
+      set({ isExporting: false });
+    }
+  },
+
+  fetchSurveyStats: async () => {
+    // Kita biarkan isLoading berjalan independen atau menyesuaikan kebutuhan UI
+    // Disini tidak mereset error agar fetch list dan fetch stat bisa berjalan paralel tanpa saling tiban error
+    try {
+      const data = await surveyService.getSurveyStats();
+      set({ surveyStats: data });
+    } catch (error: any) {
+      console.error("Gagal load stats:", error.message);
+      // Opsional: set({ error: error.message })
+    }
+  },
 
   // 1. Ambil List Semua Survey
   fetchSurveys: async () => {
