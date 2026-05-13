@@ -104,5 +104,67 @@ export const gisService = {
             console.error(`Error fetching drilldown for district ${districtId}:`, error);
             throw error;
         }
+    },
+
+    // ==========================================
+    // FASE 1: MANAJEMEN PROFIL WILAYAH (ADMIN)
+    // ==========================================
+
+    /**
+     * Mengambil daftar seluruh distrik dari Master Bappeda
+     */
+    fetchDistricts: async (): Promise<any[]> => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/districts`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data master distrik: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error("Error fetching districts:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Menyimpan atau mengupdate profil kewilayahan
+     * @param districtId - ID dari Distrik yang akan diupdate
+     * @param payload - Object berisi luas_wilayah, jumlah_penduduk, deskripsi
+     */
+    updateDistrictProfile: async (districtId: number, payload: any): Promise<any> => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/district/${districtId}/profile`;
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Gagal memperbarui profil distrik: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error(`Error updating profile for district ${districtId}:`, error);
+            throw error;
+        }
     }
 };

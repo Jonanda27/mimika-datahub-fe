@@ -1,13 +1,14 @@
+// src/components/layout/AdminSidebar.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Upload, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Upload,
+  Menu,
   X,
   LogOut,
   Search, // Tambahan untuk bar pencarian seperti di gambar
@@ -15,17 +16,18 @@ import {
   Building2,
   Globe,
   Eye,
-  BarChart2
+  BarChart2,
+  MapPin // Ikon untuk Manajemen Wilayah
 } from "lucide-react";
 
 // Integrasi Store
 import { useAuthStore } from "@/src/app/store/useAuthStore";
 
-export default function UserNavbar() {
+export default function AdminNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false); // State untuk mobile menu
-  
+
   // Mengambil action logout dari Auth Store
   const { logout, isLoading } = useAuthStore();
 
@@ -36,6 +38,8 @@ export default function UserNavbar() {
     { name: "Manajemen Akun", href: "/akun-management", icon: BarChart2 },
     { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
     { name: "Data Quality", href: "/data-quality", icon: Globe },
+    // Menu Baru: Manajemen Wilayah
+    { name: "Manajemen Wilayah", href: "/manajemen-wilayah", icon: MapPin },
   ];
 
   // Handler untuk proses Logout
@@ -56,7 +60,7 @@ export default function UserNavbar() {
     <header className="w-full flex flex-col z-60 sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200">
-        
+
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
           <Image src="/logo-mimika.png" alt="Logo Mimika" width={60} height={20} className="object-contain" priority />
@@ -70,9 +74,9 @@ export default function UserNavbar() {
         <div className="flex items-center gap-4">
           {/* Kolom Pencarian (Desktop) */}
           <div className="hidden md:flex relative items-center border border-gray-300 rounded w-75 lg:w-112.5 focus-within:ring-1 focus-within:ring-[#0071bc]">
-            <input 
-              type="text" 
-              placeholder="Search" 
+            <input
+              type="text"
+              placeholder="Search"
               className="w-full px-3 py-1.5 focus:outline-none text-sm text-black bg-transparent"
             />
             <button className="px-3 hover:bg-gray-50 h-full flex items-center transition-colors">
@@ -81,7 +85,7 @@ export default function UserNavbar() {
           </div>
 
           {/* Tombol Hamburger (Mobile) */}
-          <button 
+          <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden text-[#004b87] p-2 rounded-lg hover:bg-gray-100"
           >
@@ -92,16 +96,16 @@ export default function UserNavbar() {
 
       {/* --- BARIS BAWAH (Biru - Navigasi) --- */}
       <div className="bg-[#0071bc] text-white hidden md:flex items-center justify-between px-4 md:px-8">
-        
+
         {/* Kiri: Menu Navigasi */}
-        <nav className="flex items-center">
+        <nav className="flex flex-wrap items-center">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link 
+              <Link
                 key={item.href}
                 href={item.href}
-                className={`px-5 py-3 text-sm font-medium tracking-wide transition-colors flex items-center gap-2
+                className={`px-4 lg:px-5 py-3 text-[13px] lg:text-sm font-medium tracking-wide transition-colors flex items-center gap-2
                   ${isActive ? "bg-[#005a96] border-b-2 border-white" : "hover:bg-[#005a96] border-b-2 border-transparent"}
                 `}
               >
@@ -112,7 +116,7 @@ export default function UserNavbar() {
         </nav>
 
         {/* Kanan: Tombol Profil/Logout */}
-        <button 
+        <button
           onClick={handleLogout}
           disabled={isLoading}
           className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-[#005a96] transition-colors"
@@ -129,49 +133,49 @@ export default function UserNavbar() {
       {/* --- MENU DROPDOWN (Mobile) --- */}
       {isOpen && (
         <div className="md:hidden bg-[#0071bc] text-white flex flex-col absolute top-full left-0 w-full shadow-xl border-t border-[#005a96]">
-            {/* Search Bar Mobile */}
-            <div className="p-4 border-b border-[#005a96]">
-              <div className="flex relative items-center border border-white/50 rounded overflow-hidden w-full bg-white/10 focus-within:bg-white/20">
-                <input 
-                  type="text" 
-                  placeholder="Search" 
-                  className="w-full px-3 py-2 bg-transparent focus:outline-none text-sm text-white placeholder:text-white/70"
-                />
-                <button className="px-3">
-                  <Search size={18} className="text-white" />
-                </button>
-              </div>
+          {/* Search Bar Mobile */}
+          <div className="p-4 border-b border-[#005a96]">
+            <div className="flex relative items-center border border-white/50 rounded overflow-hidden w-full bg-white/10 focus-within:bg-white/20">
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-full px-3 py-2 bg-transparent focus:outline-none text-sm text-white placeholder:text-white/70"
+              />
+              <button className="px-3">
+                <Search size={18} className="text-white" />
+              </button>
             </div>
+          </div>
 
-            {/* Menu Links Mobile */}
-            <nav className="flex flex-col">
-              {menuItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link 
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`px-6 py-4 text-sm font-medium border-b border-[#005a96] flex items-center gap-3
+          {/* Menu Links Mobile */}
+          <nav className="flex flex-col max-h-[60vh] overflow-y-auto">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`px-6 py-4 text-sm font-medium border-b border-[#005a96] flex items-center gap-3
                       ${isActive ? "bg-[#005a96] font-bold" : "hover:bg-[#005a96]"}
                     `}
-                  >
-                    <item.icon size={18} />
-                    {item.name}
-                  </Link>
-                );
-              })}
-              
-              {/* Logout Mobile */}
-              <button 
-                onClick={handleLogout}
-                disabled={isLoading}
-                className="flex items-center gap-3 px-6 py-4 text-sm font-bold hover:bg-[#005a96] text-red-200 transition-colors w-full text-left"
-              >
-                <LogOut size={18} />
-                {isLoading ? "Sedang Keluar..." : "Logout Sistem"}
-              </button>
-            </nav>
+                >
+                  <item.icon size={18} />
+                  {item.name}
+                </Link>
+              );
+            })}
+
+            {/* Logout Mobile */}
+            <button
+              onClick={handleLogout}
+              disabled={isLoading}
+              className="flex items-center gap-3 px-6 py-4 text-sm font-bold hover:bg-[#005a96] text-red-200 transition-colors w-full text-left"
+            >
+              <LogOut size={18} />
+              {isLoading ? "Sedang Keluar..." : "Logout Sistem"}
+            </button>
+          </nav>
         </div>
       )}
     </header>

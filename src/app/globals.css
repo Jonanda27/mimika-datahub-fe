@@ -24,3 +24,20 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================
+   CUSTOM OVERRIDES: LEAFLET MAP
+   ========================================= */
+
+/* Menghilangkan kotak hitam (browser default focus outline) saat elemen SVG peta diklik */
+.leaflet-container *:focus,
+path.leaflet-interactive:focus,
+svg.leaflet-zoom-animated:focus {
+  outline: none !important;
+}
+
+/* Kustomisasi tambahan: Menyembunyikan garis pinggir (stroke) pada poligon masking raksasa */
+.leaflet-overlay-pane path {
+  pointer-events: auto;
+  /* Memastikan poligon tetap bisa diklik */
+}

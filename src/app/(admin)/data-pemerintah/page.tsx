@@ -88,7 +88,7 @@ function DataPemerintahContent() {
   if (isInitialLoading || isStoreLoading) {
     return (
       <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8">
-        <div className="max-w-[1500px] w-full mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-375 w-full mx-auto p-4 md:p-6 lg:p-8">
           <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
         </div>
       </div>
@@ -97,7 +97,7 @@ function DataPemerintahContent() {
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen font-sans animate-in fade-in duration-500 text-black pt-6 md:pt-10">
-      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-375 w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 w-full">
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight shrink-0">
@@ -119,7 +119,7 @@ function DataPemerintahContent() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
-          <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 sticky top-24">
+          <aside className="w-full lg:w-75 xl:w-[320px] shrink-0 sticky top-24">
             <PemerintahFilter
               sources={sources}
               sourceTypes={sourceTypes}
@@ -205,7 +205,7 @@ export default function DataPemerintahPage() {
   return (
     <Suspense fallback={
       <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8">
-        <div className="max-w-[1500px] w-full mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-375 w-full mx-auto p-4 md:p-6 lg:p-8">
           <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
         </div>
       </div>
