@@ -133,7 +133,7 @@ export default function PemerintahFilter({
           isOpen={openSections.source} 
           onToggle={() => toggleSection('source')}
         >
-          <div className="space-y-1 mt-1 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="space-y-1 mt-1 max-h-62.5 overflow-y-auto pr-1 custom-scrollbar">
             <FilterItem 
               label="Semua Sumber" 
               isActive={currentFilters.source_id === null} 

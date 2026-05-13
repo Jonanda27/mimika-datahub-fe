@@ -33,7 +33,7 @@ export default function NonPemerintahTable({ data, onOpenDetail }: NonPemerintah
               data.map((row) => (
                 <tr key={row.id} className="hover:bg-blue-50/40 transition-all group">
                   <td className="px-6 py-5">
-                    <div className="flex flex-col whitespace-normal max-w-[250px] md:max-w-sm">
+                    <div className="flex flex-col whitespace-normal max-w-62.5 md:max-w-sm">
                       <span 
                         className="font-bold text-gray-900 group-hover:text-[#0071bc] cursor-pointer transition-colors"
                         onClick={() => onOpenDetail(row)}

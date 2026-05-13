@@ -122,7 +122,7 @@ export default function AkunManagementPage() {
   if (isLoading && users.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Manajemen Akun" subtitle="Memuat daftar pengguna..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
         </div>
@@ -133,7 +133,7 @@ export default function AkunManagementPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       {/* Wrapper Utama sesuai standar UploadDataPage */}
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
         
         {/* 1. HEADER */}
         <PageHeader 
@@ -178,7 +178,7 @@ export default function AkunManagementPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0 ${getAvatarColor(user.role)}`}>
                           {user.full_name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="truncate max-w-[200px]">
+                        <div className="truncate max-w-50">
                           <p className="font-bold text-gray-800">{user.full_name}</p>
                           <p className="text-xs text-gray-400 truncate">@{user.username}</p>
                         </div>
@@ -231,7 +231,7 @@ export default function AkunManagementPage() {
 
         {/* 4. MODAL */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/20 overflow-hidden">
               <form onSubmit={handleSubmit}>
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">

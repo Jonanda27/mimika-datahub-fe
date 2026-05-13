@@ -199,7 +199,7 @@ export default function UploadDataPage() {
   if (isLoading && sources.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
         </div>
@@ -209,7 +209,7 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
         <PageHeader title="Upload Data" subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" />
 
         {alert && (

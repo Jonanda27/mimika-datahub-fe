@@ -36,11 +36,11 @@ export default function PublicTopBar() {
   }, []);
 
   if (!isMounted) {
-    return <div className="w-full h-[110px] bg-white"></div>;
+    return <div className="w-full h-27.5 bg-white"></div>;
   }
 
   return (
-    <header className="w-full flex flex-col z-[100] sticky top-0 shadow-md font-sans">
+    <header className="w-full flex flex-col z-100 sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200 text-black">
         
@@ -183,7 +183,7 @@ export default function PublicTopBar() {
                 ${pathname === "/public-data-pemerintah" ? "bg-[#005a96] font-bold" : "hover:bg-[#005a96] text-blue-100"}
               `}
             >
-              <div className="w-[18px]"></div> {/* Spacer pengganti icon */}
+              <div className="w-4.5"></div> {/* Spacer pengganti icon */}
               DATA PEMERINTAH
             </Link>
             
@@ -194,7 +194,7 @@ export default function PublicTopBar() {
                 ${pathname === "/public-data-non-pemerintah" ? "bg-[#005a96] font-bold" : "hover:bg-[#005a96] text-blue-100"}
               `}
             >
-              <div className="w-[18px]"></div> {/* Spacer pengganti icon */}
+              <div className="w-4.5"></div> {/* Spacer pengganti icon */}
               DATA NON-PEMERINTAH
             </Link>
 

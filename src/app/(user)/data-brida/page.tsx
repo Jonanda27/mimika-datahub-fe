@@ -204,7 +204,7 @@ export default function DataBridaPage() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="lg:col-span-2">
-                <div className="h-[300px] w-full mb-6">
+                <div className="h-75 w-full mb-6">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={surveyResultData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -240,7 +240,7 @@ export default function DataBridaPage() {
               <Database size={18} className="text-[#ef4444]" /> Database Sensus BRIDA
             </h3>
             <div className="flex flex-wrap gap-3 mb-6">
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative flex-1 min-w-50">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input type="text" placeholder="Cari nama dataset..." className="w-full border border-gray-200 rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all" />
               </div>

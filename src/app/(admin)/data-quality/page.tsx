@@ -78,7 +78,7 @@ export default function DataQualityPage() {
   if (isInitialLoading || isStoreLoading && !isApproving) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Data Quality" subtitle="Menyiapkan data audit..." />
           <LoadingState message="Menghubungkan ke pusat validasi data Mimika..." />
         </div>
@@ -88,7 +88,7 @@ export default function DataQualityPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
         
         {/* 1. HEADER BANNER */}
         <PageHeader 
@@ -171,7 +171,7 @@ export default function DataQualityPage() {
         {/* 4. TABLE SECTION */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-sm whitespace-nowrap min-w-[700px]">
+            <table className="w-full text-left text-sm whitespace-nowrap min-w-175">
               <thead className="bg-gray-50/50 text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
                 <tr>
                   <th className="px-4 sm:px-6 py-4 sm:py-5">ID</th>
@@ -185,7 +185,7 @@ export default function DataQualityPage() {
                 {displayData.length > 0 ? displayData.map(d => (
                   <tr key={d.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 sm:px-6 py-3 sm:py-4 font-mono text-[10px] sm:text-xs text-gray-400">#{d.id}</td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-normal min-w-[200px]">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-normal min-w-50">
                       <div className="flex flex-col">
                           <span className="font-bold text-xs sm:text-sm text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">{d.title}</span>
                           <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-black mt-0.5">{d.dataset_type} • Tahun {d.year}</span>
@@ -254,7 +254,7 @@ export default function DataQualityPage() {
         {/* 5. MODAL DETAIL */}
         {selectedDataset && (
           // flex items-center justify-center diterapkan di sini agar selalu di tengah pada semua device
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6 sm:mb-8">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 text-base sm:text-lg">
@@ -302,7 +302,7 @@ export default function DataQualityPage() {
 
         {/* 6. MODAL APPROVE */}
         {datasetToApprove && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-[30px] sm:rounded-[40px] w-full max-w-[90%] sm:max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 border border-white/20">
               <div className="bg-emerald-500 p-8 sm:p-10 text-center relative">
                  <div className="bg-white/20 w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">

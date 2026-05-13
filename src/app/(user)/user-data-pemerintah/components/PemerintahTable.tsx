@@ -18,7 +18,7 @@ export default function PemerintahTable({ data, onOpenDetail }: PemerintahTableP
         </div>
         
         <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full text-left text-sm whitespace-nowrap min-w-[600px]">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-150">
             <thead className="bg-gray-50 text-gray-400">
               <tr>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Nama Dataset</th>
@@ -32,7 +32,7 @@ export default function PemerintahTable({ data, onOpenDetail }: PemerintahTableP
                 data.map((row) => (
                   <tr key={row.id} className="hover:bg-blue-50/30 transition-all group">
                     <td className="px-6 py-5">
-                      <div className="flex flex-col whitespace-normal max-w-[300px]">
+                      <div className="flex flex-col whitespace-normal max-w-75">
                         <span 
                           className="font-bold text-gray-900 cursor-pointer group-hover:text-[#0071bc] transition-colors" 
                           onClick={() => onOpenDetail(row)}

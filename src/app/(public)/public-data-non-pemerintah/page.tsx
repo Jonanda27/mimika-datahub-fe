@@ -102,7 +102,7 @@ function DataNonPemerintahContent() {
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-6 md:pt-10 pb-10">
-      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8">
+      <div className="max-w-375 w-full mx-auto px-4 md:px-6 lg:px-8">
         
         {/* Header Section */}
         <div className="flex flex-col space-y-6 mb-8">
@@ -136,7 +136,7 @@ function DataNonPemerintahContent() {
           
           {/* Sidebar (Filter) - Desktop: Sticky, Mobile: Drawer */}
           <aside className={`
-            fixed inset-y-0 left-0 z-[60] w-[300px] bg-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
+            fixed inset-y-0 left-0 z-60 w-75 bg-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
             ${isMobileFilterOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
           `}>
             {/* Mobile Header Sidebar */}

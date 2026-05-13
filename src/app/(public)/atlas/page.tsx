@@ -131,7 +131,7 @@ export default function AtlasPage() {
           </div>
 
           {/* Categories List */}
-          <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grow overflow-y-auto pr-2 custom-scrollbar">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 block">Pilih Indikator</label>
             <div className="space-y-1.5">
               {filteredIndicators.length > 0 ? filteredIndicators.map((ind) => (
@@ -169,7 +169,7 @@ export default function AtlasPage() {
       </aside>
 
       {/* --- AREA PETA UTAMA --- */}
-      <main className="flex-grow relative flex flex-col overflow-hidden">
+      <main className="grow relative flex flex-col overflow-hidden">
         
         {/* Top Floating Info */}
         <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-start pointer-events-none">
@@ -238,7 +238,7 @@ export default function AtlasPage() {
 
       {/* --- SIDEBAR KANAN: PANEL INSIGHT DETAIL --- */}
       <aside className="w-96 bg-white border-l border-gray-200 shrink-0 z-20 flex flex-col overflow-hidden shadow-[-4px_0_15px_rgba(0,0,0,0.03)]">
-        <div className="p-8 space-y-10 overflow-y-auto flex-grow custom-scrollbar">
+        <div className="p-8 space-y-10 overflow-y-auto grow custom-scrollbar">
           
           {/* District Profile */}
           <section className="animate-in fade-in slide-in-from-right-4 duration-300" key={activeDistrict.id}>
@@ -280,7 +280,7 @@ export default function AtlasPage() {
               {currentData.history.map((val, i) => {
                 const heightPercentage = Math.max(10, (val / maxHistoryValue) * 100);
                 return (
-                  <div key={i} className="flex-grow flex flex-col items-center justify-end h-full relative group">
+                  <div key={i} className="grow flex flex-col items-center justify-end h-full relative group">
                     {/* Tooltip Hover */}
                     <div className="absolute -top-10 bg-[#002244] text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 shadow-lg pointer-events-none whitespace-nowrap">
                       {val} {selectedIndicator.unit}
@@ -306,7 +306,7 @@ export default function AtlasPage() {
           </section>
 
           {/* Insight Card Otomatis */}
-          <section className="p-6 bg-gradient-to-br from-[#002244] to-[#004b87] rounded-3xl text-white relative overflow-hidden group shadow-xl">
+          <section className="p-6 bg-linear-to-br from-[#002244] to-[#004b87] rounded-3xl text-white relative overflow-hidden group shadow-xl">
             <Info className="absolute -right-4 -top-4 w-28 h-28 text-white/5 rotate-12 transition-transform duration-700 group-hover:scale-110" />
             <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
               <div className="p-1.5 bg-blue-400/20 rounded-md"><Zap size={14} className="text-blue-300" /></div> 

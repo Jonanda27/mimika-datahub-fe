@@ -83,7 +83,7 @@ export default function MonitoringOpdPage() {
   if (!isMounted || (isLoading && !summaryData)) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
             <PageHeader title="Monitoring OPD" subtitle="Menghubungkan ke profil kepatuhan..." />
             <LoadingState message="Menyiapkan sistem monitoring..." />
         </div>
@@ -107,7 +107,7 @@ export default function MonitoringOpdPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       {/* WRAPPER UTAMA */}
-      <div className="w-full max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
+      <div className="w-full max-w-350 mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
         
         <PageHeader 
             title="Monitoring OPD" 
@@ -131,7 +131,7 @@ export default function MonitoringOpdPage() {
                 <h3 className="text-sm md:text-base font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <Activity size={18} className="text-blue-500 shrink-0" /> Status Pengiriman Data (Bulan Ini)
                 </h3>
-                <div className="h-[250px] md:h-[280px]">
+                <div className="h-62.5 md:h-70">
                     <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie data={pieData} innerRadius={60} outerRadius={85} paddingAngle={5} dataKey="value">
@@ -149,7 +149,7 @@ export default function MonitoringOpdPage() {
                 <h3 className="text-sm md:text-base font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <Activity size={18} className="text-red-500 shrink-0" /> Tren Kepatuhan OPD (% Lengkap)
                 </h3>
-                <div className="h-[250px] md:h-[280px] -ml-4 sm:ml-0">
+                <div className="h-62.5 md:h-70 -ml-4 sm:ml-0">
                     <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={summaryData?.line_chart || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -201,7 +201,7 @@ export default function MonitoringOpdPage() {
 
             {/* TABLE */}
             <div className="overflow-x-auto w-full">
-                <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
+                <table className="w-full text-left text-sm whitespace-nowrap min-w-200">
                     <thead className="bg-gray-50/50 text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest">
                         <tr>
                             <th className="px-4 sm:px-6 py-4 sm:py-5">Nama OPD / Instansi</th>
@@ -214,7 +214,7 @@ export default function MonitoringOpdPage() {
                     <tbody className="divide-y divide-gray-100">
                         {filteredData.length > 0 ? filteredData.map((o) => (
                         <tr key={o.user_id} className="hover:bg-gray-50/50 transition-colors group">
-                            <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors whitespace-normal min-w-[200px]">
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors whitespace-normal min-w-50">
                                 {o.opd_name}
                             </td>
                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-400 font-medium text-xs sm:text-sm">
@@ -241,14 +241,14 @@ export default function MonitoringOpdPage() {
                                         className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg sm:rounded-xl transition-all"
                                         title="Kirim Reminder"
                                     >
-                                        <Bell size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                        <Bell size={16} className="sm:w-4.5 sm:h-4.5" />
                                     </button>
                                     <button 
                                         onClick={() => setSelectedOpd(o)} 
                                         className="p-1.5 sm:p-2 text-blue-500 hover:bg-blue-50 rounded-lg sm:rounded-xl transition-all"
                                         title="Detail Profil"
                                     >
-                                        <Info size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                        <Info size={16} className="sm:w-4.5 sm:h-4.5" />
                                     </button>
                                 </div>
                             </td>
@@ -274,7 +274,7 @@ export default function MonitoringOpdPage() {
 
       {/* MODAL DETAIL */}
       {selectedOpd && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200 overflow-hidden max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
@@ -332,7 +332,7 @@ function DetailRow({ label, value }: { label: string, value: string }) {
   return (
     <div className="flex justify-between items-center border-b border-gray-200/50 pb-2.5 last:border-0 last:pb-0">
       <span className="text-gray-400 font-bold uppercase text-[9px] sm:text-[10px] tracking-tighter w-1/3">{label}:</span>
-      <span className="text-gray-800 font-black text-[11px] sm:text-xs truncate max-w-[150px] sm:max-w-[200px] text-right">{value}</span>
+      <span className="text-gray-800 font-black text-[11px] sm:text-xs truncate max-w-37.5 sm:max-w-50 text-right">{value}</span>
     </div>
   );
 }

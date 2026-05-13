@@ -146,7 +146,7 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
                     <FileText size={24} />
                   </div>
                   <div className="overflow-hidden text-left">
-                    <p className="text-sm font-bold text-gray-800 truncate max-w-[200px]">{selectedFile.name}</p>
+                    <p className="text-sm font-bold text-gray-800 truncate max-w-50">{selectedFile.name}</p>
                     <p className="text-[10px] text-gray-500 uppercase font-black">{(selectedFile.size / 1024).toFixed(1)} KB • Siap Diproses</p>
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export default function FileUploadArea({ selectedFile, isProcessing, onFileChang
                   <span className="text-[11px] font-black uppercase tracking-tighter">Pratinjau Data (Top 5 Baris)</span>
                 </div>
                 
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner min-h-[100px]">
+                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner min-h-25">
                   <div className="overflow-x-auto">
                     <table className="w-full text-[10px] text-left border-collapse">
                       <thead className="bg-gray-50 border-b border-gray-100">

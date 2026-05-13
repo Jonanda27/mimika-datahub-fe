@@ -21,7 +21,7 @@ export default function LoadingState({ message = "Memuat data..." }: LoadingStat
       
       {/* Efek skeleton atau bar kecil di bawah teks (Opsional) */}
       <div className="mt-4 w-48 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-red-400 to-red-600 w-1/2 animate-[loading_1.5s_infinite_ease-in-out]"></div>
+        <div className="h-full bg-linear-to-r from-red-400 to-red-600 w-1/2 animate-[loading_1.5s_infinite_ease-in-out]"></div>
       </div>
 
       <style jsx>{`

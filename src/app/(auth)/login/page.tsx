@@ -68,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="h-screen h-[100dvh] w-full bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white overflow-hidden">
+    <div className="h-screen w-full bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white overflow-hidden">
       
       {/* --- KIRI: VISUAL BRANDING (Desktop & iPad Landscape) --- */}
       <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] h-full relative bg-slate-900 overflow-hidden">
@@ -80,7 +80,7 @@ export default function LoginPage() {
           priority
         />
         {/* Gradient diperhalus: Menggunakan Slate-950/20 ke Slate-950/80 agar gambar di tengah tetap terlihat */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/40"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/20 to-slate-950/40"></div>
         
         <div className="relative z-10 w-full h-full p-12 xl:p-16 flex flex-col justify-between">
           <Link href="/" className="flex items-center gap-3 group w-fit">
@@ -122,7 +122,7 @@ export default function LoginPage() {
                   <span className="font-black tracking-tighter text-slate-900">MIMIKA DATAHUB</span>
                </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight text-black">Selamat Datang</h1>
+            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight">Selamat Datang</h1>
             <p className="text-slate-500 font-medium text-sm sm:text-base">Silakan masukkan akun resmi Anda untuk melanjutkan ke sistem.</p>
           </div>
 
@@ -207,9 +207,9 @@ export default function LoginPage() {
             <p className="text-slate-400 text-sm font-medium">Belum memiliki akses? <a href="#" className="text-blue-600 font-bold hover:underline">Hubungi Admin IT</a></p>
             
             <div className="flex gap-4 items-center">
-               <div className="h-[1px] w-12 bg-slate-200"></div>
+               <div className="h-px w-12 bg-slate-200"></div>
                <LayoutDashboard size={16} className="text-slate-300" />
-               <div className="h-[1px] w-12 bg-slate-200"></div>
+               <div className="h-px w-12 bg-slate-200"></div>
             </div>
             
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">

@@ -80,7 +80,7 @@ export default function DataPemerintahPage() {
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-6 md:pt-10 pb-20">
-      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8">
+      <div className="max-w-375 w-full mx-auto px-4 md:px-6 lg:px-8">
         
         {/* Header & Search */}
         <div className="flex flex-col space-y-6 mb-8">
@@ -116,7 +116,7 @@ export default function DataPemerintahPage() {
           
           {/* ASIDE / FILTER: Responsive Drawer for Mobile */}
           <aside className={`
-            fixed inset-y-0 left-0 z-[110] w-[280px] bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
+            fixed inset-y-0 left-0 z-110 w-70 bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
             lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
             ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}
           `}>
@@ -150,7 +150,7 @@ export default function DataPemerintahPage() {
           {/* Overlay Mobile */}
           {isFilterOpen && (
             <div 
-              className="fixed inset-0 bg-black/50 z-[100] lg:hidden backdrop-blur-sm"
+              className="fixed inset-0 bg-black/50 z-100 lg:hidden backdrop-blur-sm"
               onClick={() => setIsFilterOpen(false)}
             />
           )}

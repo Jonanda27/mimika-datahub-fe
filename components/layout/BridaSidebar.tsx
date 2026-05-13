@@ -68,7 +68,7 @@ export default function BridaNavbar() {
   };
 
   return (
-    <header className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
+    <header className="w-full flex flex-col z-60 sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200 text-black">
         
@@ -90,11 +90,11 @@ export default function BridaNavbar() {
               className={`flex items-center gap-2.5 p-1 pr-3 rounded-full bg-white border-2 transition-all focus:outline-none 
                 ${isProfileOpen ? 'border-[#0071bc] shadow-md ring-4 ring-[#0071bc]/10' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
             >
-              <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-[#002244] to-[#0071bc] rounded-full flex items-center justify-center font-bold text-white text-xs shadow-inner">
+              <div className="w-8 h-8 md:w-9 md:h-9 bg-linear-to-br from-[#002244] to-[#0071bc] rounded-full flex items-center justify-center font-bold text-white text-xs shadow-inner">
                 {getInitials(profile?.full_name || "Agith")}
               </div>
               <div className="hidden sm:flex flex-col items-start leading-none">
-                <span className="text-[12px] font-bold text-[#002244] truncate max-w-[120px]">
+                <span className="text-[12px] font-bold text-[#002244] truncate max-w-30">
                   {profile?.full_name || "Agith"}
                 </span>
                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">

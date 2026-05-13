@@ -130,7 +130,7 @@ export default function NonPemerintahFilter({
 
         {/* SECTION: SUMBER DATA */}
         <FilterSection title="Lembaga / Sumber" isOpen={openSections.source} onToggle={() => toggleSection('source')}>
-          <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="space-y-1 max-h-75 overflow-y-auto pr-1 custom-scrollbar">
             <FilterItem label="Semua Lembaga" isActive={currentFilters.source_id === null} onClick={() => handleSelectFilter('source_id', null)} />
             {sources.map(s => (
               <FilterItem key={s.id} label={s.name} count={getSourceCount(s.id)} isActive={currentFilters.source_id === s.id} onClick={() => handleSelectFilter('source_id', s.id)} />

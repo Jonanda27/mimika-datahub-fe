@@ -30,7 +30,7 @@ export default function NonPemerintahTable({ data, onOpenDetail }: NonPemerintah
               data.map((row) => (
                 <tr key={row.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-4 md:px-6 py-4">
-                    <div className="flex flex-col max-w-[200px] md:max-w-sm whitespace-normal break-words">
+                    <div className="flex flex-col max-w-50 md:max-w-sm whitespace-normal wrap-break-word">
                       <span className="font-bold text-[#0071bc] cursor-pointer hover:underline" onClick={() => onOpenDetail(row)}>
                         {row.title}
                       </span>
@@ -76,7 +76,7 @@ function EmptyState({ colSpan }: { colSpan: number }) {
     <tr>
       <td colSpan={colSpan} className="px-4 py-24 bg-white">
         {/* Whitespace normal & break-words dimasukkan di div agar teks bisa turun */}
-        <div className="flex flex-col items-center justify-center text-center space-y-4 whitespace-normal break-words w-full max-w-full">
+        <div className="flex flex-col items-center justify-center text-center space-y-4 whitespace-normal wrap-break-word w-full max-w-full">
           <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-inner">
             <SearchX size={36} className="text-gray-400" />
           </div>

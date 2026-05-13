@@ -20,7 +20,7 @@ export default function PemerintahDetailModal({
   dataset, content, sources, sourceTypes, categories, onClose, onDownload 
 }: DetailModalProps) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-black">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-black">
       <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
@@ -59,11 +59,11 @@ export default function PemerintahDetailModal({
             <h4 className="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
               <TableIcon size={16} className="text-gray-400" /> Data Preview (100 Baris)
             </h4>
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-inner min-h-[300px]">
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-inner min-h-75">
               {!content ? (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2 font-bold uppercase animate-pulse">Memuat Baris Data...</div>
               ) : (
-                <div className="overflow-x-auto max-h-[400px]">
+                <div className="overflow-x-auto max-h-100">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
                       <tr>

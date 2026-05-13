@@ -87,7 +87,7 @@ export default function DataBridaPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
         <div className="space-y-6">
           <PageHeader 
             title="Data BRIDA" 
