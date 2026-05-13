@@ -1,6 +1,6 @@
 // src/services/dataset.service.ts
 import { API_BASE_URL } from "../lib/config";
-import { Dataset, ApproveResponse, DatasetContent, SidebarStats, DatasetFilterParams } from "../types/dataset";
+import { Dataset, ApproveResponse, DatasetContent, SidebarStats, DatasetFilterParams, DatasetRecentOut, LatestByCategoryResponse } from "../types/dataset";
 
 export const datasetService = {
   /**
@@ -174,6 +174,44 @@ export const datasetService = {
       method: "GET",
     });
     if (!response.ok) throw new Error("Gagal mengambil data non-pemerintah");
+    return response.json();
+  },
+
+  /**
+   * Mengambil 5 dataset terbaru beserta template layering (Twibbon)
+   * Endpoint: GET /api/v1/datasets/recent-with-templates
+   */
+  async getRecentWithTemplates(): Promise<DatasetRecentOut[]> {
+    const response = await fetch(`${API_BASE_URL}/v1/dashboard/recent-with-templates`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data dataset terbaru");
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Mengambil maksimal 5 dataset terbaru untuk setiap kategori
+   * Endpoint: GET /api/v1/datasets/latest-by-category
+   */
+  async getLatestByCategory(): Promise<LatestByCategoryResponse> {
+    const response = await fetch(`${API_BASE_URL}/v1/dashboard/latest-by-category`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data dataset per kategori");
+    }
+
     return response.json();
   },
 };

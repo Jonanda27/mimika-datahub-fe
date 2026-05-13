@@ -5,7 +5,8 @@ import { UploadRequest, UploadResponse } from "../types/ingest";
 export const ingestService = {
   async uploadProcess(data: UploadRequest): Promise<UploadResponse> {
     const formData = new FormData();
-
+    
+    // Data Text
     formData.append("title", data.title);
     formData.append("dataset_type", data.dataset_type);
     formData.append("source_id", data.source_id.toString());
@@ -25,15 +26,26 @@ export const ingestService = {
       formData.append("description", data.description);
     }
 
+    
+    if (data.description) formData.append("description", data.description);
+    
+    // Baru: Append district_id jika tersedia
+    if (data.district_id !== undefined && data.district_id !== null) {
+      formData.append("district_id", data.district_id.toString());
+    }
+
+    // Data Files
     formData.append("file", data.file);
+    formData.append("image", data.image);
 
     const token = localStorage.getItem("auth_token");
-
     const response = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {
       method: "POST",
       body: formData,
       headers: {
         "Authorization": `Bearer ${token}`
+        // Catatan: Jangan set Content-Type ke multipart/form-data secara manual, 
+        // biarkan browser yang menanganinya agar boundary file benar.
       }
     });
 

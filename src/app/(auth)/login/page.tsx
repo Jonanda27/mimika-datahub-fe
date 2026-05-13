@@ -48,10 +48,13 @@ export default function LoginPage() {
       const data = await authService.login(username, password);
       setAuth(data.access_token, data.role, username);
       
+      // LOGIKA REDIRECT DIPERBARUI DI SINI
       if (data.role === "admin") {
         router.push("/admin-dashboard");
+      } else if (data.role === "brida") {
+        router.push("/brida-dashboard");
       } else {
-        router.push("/dashboard");
+        router.push("/dashboard"); // Default untuk OPD / User
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Terjadi kesalahan saat login");
@@ -65,9 +68,6 @@ export default function LoginPage() {
   }
 
   return (
-    /** * Container Utama: h-[100dvh] memastikan tinggi pas dengan layar mobile (dynamic viewport height).
-     * overflow-hidden mencegah scroll pada container utama.
-     */
     <div className="h-screen h-[100dvh] w-full bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white overflow-hidden">
       
       {/* --- KIRI: VISUAL BRANDING (Desktop & iPad Landscape) --- */}
@@ -76,52 +76,53 @@ export default function LoginPage() {
           src="/mimika.jpg" 
           alt="Mimika Landscape"
           fill
-          className="object-cover opacity-40 grayscale-[20%]"
+          className="object-cover opacity-80" // Opacity ditingkatkan agar gambar lebih jelas
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-slate-900/90 to-slate-950"></div>
+        {/* Gradient diperhalus: Menggunakan Slate-950/20 ke Slate-950/80 agar gambar di tengah tetap terlihat */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/40"></div>
         
         <div className="relative z-10 w-full h-full p-12 xl:p-16 flex flex-col justify-between">
           <Link href="/" className="flex items-center gap-3 group w-fit">
-            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-all">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 group-hover:bg-white/40 transition-all">
               <ArrowLeft className="text-white" size={20} />
             </div>
-            <span className="text-white font-bold text-sm tracking-widest uppercase">Kembali ke Beranda</span>
+            <span className="text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">Kembali ke Beranda</span>
           </Link>
 
           <div className="space-y-6">
-            <h2 className="text-5xl xl:text-7xl font-[1000] text-white leading-[1] tracking-tighter">
+            <h2 className="text-5xl xl:text-7xl font-[1000] text-white leading-[1.1] tracking-tighter drop-shadow-2xl">
               Kelola Data <br />
-              <span className="text-blue-400">Kabupaten Mimika.</span>
+              <span className="text-blue-400 drop-shadow-lg">OPD.</span>
             </h2>
-            <p className="text-slate-300 text-lg max-w-md font-medium leading-relaxed">
+            <p className="text-white/90 text-lg max-w-md font-medium leading-relaxed drop-shadow-md">
               Masuk untuk mengakses dasbor sektoral, mengelola dataset, dan memantau statistik pembangunan daerah secara real-time.
             </p>
           </div>
 
-          <div className="flex items-center gap-6 pt-8 border-t border-white/10 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em]">
-            <span>© 2026 Mimika DataHub</span>
+          <div className="flex items-center gap-6 pt-8 border-t border-white/20 text-white/70 text-[10px] font-bold uppercase tracking-[0.3em]">
+            <span>© 2026 DataHub</span>
             <span>•</span>
-            <span>Diskominfo Mimika</span>
+            <span>BRIDA</span>
           </div>
         </div>
 
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
+        {/* Dekorasi Cahaya Biru dikurangi intensitasnya agar tidak menutupi gambar utama */}
+        <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]"></div>
       </div>
 
-      {/* --- KANAN: FORM LOGIN (Mobile, iPad, Desktop) --- */}
-      {/* overflow-y-auto memungkinkan scroll hanya di dalam area form jika layar sangat pendek */}
-      <div className="flex-1 h-full flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-slate-50/50 overflow-y-auto">
+      {/* --- KANAN: FORM LOGIN --- */}
+      <div className="flex-1 h-full flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white overflow-y-auto">
         <div className="w-full max-w-md py-8">
           
-          <div className="space-y-3 mb-10">
+          <div className="space-y-3 mb-10 text-black">
             <div className="lg:hidden flex justify-center mb-8">
-               <div className="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+               <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                   <Image src="/logo-mimika.png" alt="Logo" width={32} height={32} />
                   <span className="font-black tracking-tighter text-slate-900">MIMIKA DATAHUB</span>
                </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight">Selamat Datang</h1>
+            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight text-black">Selamat Datang</h1>
             <p className="text-slate-500 font-medium text-sm sm:text-base">Silakan masukkan akun resmi Anda untuk melanjutkan ke sistem.</p>
           </div>
 
@@ -146,7 +147,7 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="nama@mimika.go.id"
-                    className="w-full bg-white border border-slate-200 py-3.5 sm:py-4 pl-14 pr-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300 shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 py-3.5 sm:py-4 pl-14 pr-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300"
                     required
                   />
                 </div>
@@ -167,7 +168,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-white border border-slate-200 py-3.5 sm:py-4 pl-14 pr-12 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300 shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 py-3.5 sm:py-4 pl-14 pr-12 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300"
                     required
                     autoComplete="current-password"
                   />
@@ -212,7 +213,7 @@ export default function LoginPage() {
             </div>
             
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-              Dikelola oleh Bidang Statistik & Persandian <br /> Diskominfo Kabupaten Mimika 
+              Dikelola oleh Bidang Statistik & Persandian <br /> BRIDA 
             </p>
           </div>
         </div>
