@@ -4,41 +4,35 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-// Mendefinisikan kontrak props agar TypeScript mengenali isAtlasMode
 interface MapWrapperProps {
     isAtlasMode?: boolean;
 }
 
 /**
- * Import dinamis dari MimikaMap.
- * Mematikan Server-Side Rendering (ssr: false) karena Leaflet berinteraksi langsung dengan Window/DOM.
+ * Import dinamis MimikaMap dengan bypass SSR.
+ * Dibuat sebagai 'any' untuk sementara guna menghindari mismatch type pada dynamic import Next.js
  */
 const DynamicMimikaMap = dynamic(
     () => import('./MimikaMap'),
     {
         ssr: false,
         loading: () => (
-            // Penyesuaian Loader agar selaras dengan widget Dashboard (putih, rounded, shadow)
-            <div className="h-full w-full min-h-[400px] md:min-h-[500px] flex items-center justify-center bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="w-full h-full flex items-center justify-center bg-slate-50">
                 <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-[#0071bc] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="w-10 h-10 border-4 border-[#0071bc] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest animate-pulse">
-                        Menyiapkan Engine Pemetaan...
+                        Menyiapkan Geospasial...
                     </p>
                 </div>
             </div>
         )
     }
-);
+) as any;
 
-/**
- * MapWrapper Component
- * Berfungsi sebagai pembungkus yang aman untuk SSR dan membentengi Leaflet agar tidak kolaps di dalam CSS Grid.
- */
 export default function MapWrapper({ isAtlasMode = false }: MapWrapperProps) {
     return (
-        // Pembungkus absolut ini memastikan Peta menuruti aturan Grid dan memiliki radius sudut yang konsisten
-        <div className="w-full h-full min-h-[400px] md:min-h-[500px] relative rounded-3xl overflow-hidden border border-gray-100 shadow-sm bg-white z-0">
+        // Menggunakan h-full w-full agar peta memenuhi container h-[75vh] di page.tsx
+        <div className="w-full h-full relative z-0">
             <DynamicMimikaMap isAtlasMode={isAtlasMode} />
         </div>
     );

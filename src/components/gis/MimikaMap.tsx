@@ -169,9 +169,10 @@ export default function MimikaMap() {
         });
     };
 
+    // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
     if (loading) {
         return (
-            <div className="h-112.5 w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
+            <div className="h-full w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
                 <div className="text-center">
                     <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Memuat Peta Wilayah...</p>
@@ -254,7 +255,8 @@ export default function MimikaMap() {
     };
 
     return (
-        <div className="h-112.5 w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
+        // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
+        <div className="h-full w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
             <SafeMapContainer
                 center={mapCenter}
                 zoom={8}
