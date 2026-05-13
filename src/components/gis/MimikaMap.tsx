@@ -1,7 +1,7 @@
 // src/components/gis/MimikaMap.tsx
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSearchParams } from 'next/navigation';
@@ -12,7 +12,6 @@ import { SpatialStatResponse, DistrictDrilldownResponse } from '@/src/app/types/
 import type { LatLngExpression, PathOptions, Layer } from 'leaflet';
 
 // Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
-// Asumsi urutan ID pada master data Bappeda. Jika ID di DB berbeda, cukup sesuaikan value ini.
 const DISTRICT_MAP: Record<string, number> = {
     "mimikabaru": 1, "kualakencana": 2, "tembagapura": 3, "wania": 4, "iwaka": 5,
     "kwamkinarama": 6, "mimikatimur": 7, "mimikatengah": 8, "mimikabarat": 9,
@@ -20,7 +19,8 @@ const DISTRICT_MAP: Record<string, number> = {
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
 
-export default function MimikaMap() {
+// Sub-komponen yang memuat logika URL-Driven untuk dilindungi oleh Suspense Boundary
+function MimikaMapContent() {
     const searchParams = useSearchParams();
 
     const categoryId = searchParams.get('category_id');
@@ -31,7 +31,7 @@ export default function MimikaMap() {
     const [stats, setStats] = useState<SpatialStatResponse[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Local State untuk Pop-up Drilldown (Menggantikan Zustand)
+    // Local State untuk Pop-up Drilldown
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [drilldownData, setDrilldownData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingDrilldown, setLoadingDrilldown] = useState(false);
@@ -42,7 +42,7 @@ export default function MimikaMap() {
             setLoading(true);
             try {
                 const [geoRes, statsRes] = await Promise.all([
-                    fetch('/mimika_18_distrik.json').then(res => res.json()), // Gunakan file JSON terbaru hasil Mapshaper
+                    fetch('/mimika_18_distrik.json').then(res => res.json()),
                     gisService.fetchGisStats(
                         categoryId ? Number(categoryId) : undefined,
                         year ? Number(year) : undefined
@@ -116,6 +116,12 @@ export default function MimikaMap() {
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
+        // PERBAIKAN UX: Kembalikan tooltip native untuk interaksi hover awal
+        layer.bindTooltip(
+            `<div class="font-sans text-xs font-bold text-gray-700">${districtName}</div>`,
+            { sticky: true, direction: 'top', className: 'rounded-md shadow-sm border-none px-2 py-1' }
+        );
+
         layer.on({
             mouseover: (e: any) => {
                 const target = e.target;
@@ -127,9 +133,8 @@ export default function MimikaMap() {
                 target.setStyle({ weight: 1.5, color: 'white', fillOpacity: 0.8 });
             },
             click: (e: any) => {
-                // Eksekusi State Management Spasial
                 const distId = DISTRICT_MAP[key] || 0;
-                setDrilldownData(null); // Reset data lama
+                setDrilldownData(null);
                 setPopupInfo({
                     name: districtName,
                     latlng: e.latlng,
@@ -182,7 +187,6 @@ export default function MimikaMap() {
                 {popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
                         <div className="w-72 p-1 font-sans">
-                            {/* Layer Header */}
                             <h3 className="text-lg font-extrabold text-gray-800 border-b border-gray-200 pb-2 mb-3">
                                 Distrik {popupInfo.name}
                             </h3>
@@ -229,7 +233,6 @@ export default function MimikaMap() {
                                                                 {cat.total}
                                                             </span>
                                                         </div>
-                                                        {/* Routing Cerdas: Melempar parameter ke halaman tabel */}
                                                         <Link href={`/user-data-pemerintah?district_id=${popupInfo.id}&category_id=${cat.category_id}`}>
                                                             <button className="text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-md transition-colors">
                                                                 Eksplor
@@ -245,6 +248,9 @@ export default function MimikaMap() {
                                         </div>
                                     </div>
                                 </div>
+                            ) : popupInfo.id === 0 ? (
+                                // PERBAIKAN LOGIKA: Penanganan khusus distrik tak dikenal
+                                <p className="text-xs text-orange-500 py-4 text-center font-medium">Data master wilayah ini belum terdaftar di sistem Bappeda.</p>
                             ) : (
                                 <p className="text-xs text-red-500 py-4 text-center font-medium">Koneksi ke server spasial terputus.</p>
                             )}
@@ -253,5 +259,20 @@ export default function MimikaMap() {
                 )}
             </SafeMapContainer>
         </div>
+    );
+}
+
+// Komponen Wrapper untuk memenuhi standar Next.js App Router (Deoptimization Guard)
+export default function MimikaMap() {
+    return (
+        <Suspense fallback={
+            <div className="h-112.5 w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100">
+                <div className="text-center">
+                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                </div>
+            </div>
+        }>
+            <MimikaMapContent />
+        </Suspense>
     );
 }
