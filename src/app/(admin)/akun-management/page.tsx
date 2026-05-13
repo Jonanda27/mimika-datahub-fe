@@ -36,7 +36,7 @@ export default function AkunManagementPage() {
     email: "",
     full_name: "",
     password: "",
-    role: "user",
+    role: "opd", // Default role diperbarui
     is_active: true
   });
 
@@ -64,7 +64,7 @@ export default function AkunManagementPage() {
         email: "",
         full_name: "",
         password: "",
-        role: "user",
+        role: "opd", // Default role diperbarui
         is_active: true
       });
     }
@@ -105,6 +105,19 @@ export default function AkunManagementPage() {
     u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // --- Helpers untuk UI ---
+  const getAvatarColor = (role: string) => {
+    if (role === 'admin') return 'bg-indigo-500';
+    if (role === 'brida') return 'bg-teal-500';
+    return 'bg-blue-400'; // opd / default
+  };
+
+  const getBadgeStyle = (role: string) => {
+    if (role === 'admin') return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    if (role === 'brida') return 'bg-teal-50 text-teal-600 border-teal-100';
+    return 'bg-blue-50 text-blue-600 border-blue-100'; // opd / default
+  };
 
   if (isLoading && users.length === 0) {
     return (
@@ -162,8 +175,8 @@ export default function AkunManagementPage() {
                   <tr key={user.id} className="hover:bg-gray-50/40 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0 ${user.role === 'admin' ? 'bg-indigo-500' : 'bg-blue-400'}`}>
-                          {user.full_name.charAt(0)}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0 ${getAvatarColor(user.role)}`}>
+                          {user.full_name.charAt(0).toUpperCase()}
                         </div>
                         <div className="truncate max-w-[200px]">
                           <p className="font-bold text-gray-800">{user.full_name}</p>
@@ -172,7 +185,7 @@ export default function AkunManagementPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${user.role === 'admin' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getBadgeStyle(user.role)}`}>
                         <Shield size={12} /> {user.role}
                       </span>
                     </td>
@@ -262,7 +275,9 @@ export default function AkunManagementPage() {
                         onChange={(e) => setFormData({...formData, role: e.target.value})}
                         className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
                       >
-                        <option value="user">User (OPD)</option>
+                        {/* UPDATE: Pilihan Role */}
+                        <option value="opd">OPD</option>
+                        <option value="brida">BRIDA</option>
                         <option value="admin">Administrator</option>
                       </select>
                     </div>

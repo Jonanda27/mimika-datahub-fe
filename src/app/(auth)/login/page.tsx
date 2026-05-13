@@ -48,10 +48,13 @@ export default function LoginPage() {
       const data = await authService.login(username, password);
       setAuth(data.access_token, data.role, username);
       
+      // LOGIKA REDIRECT DIPERBARUI DI SINI
       if (data.role === "admin") {
         router.push("/admin-dashboard");
+      } else if (data.role === "brida") {
+        router.push("/brida-dashboard");
       } else {
-        router.push("/dashboard");
+        router.push("/dashboard"); // Default untuk OPD / User
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Terjadi kesalahan saat login");

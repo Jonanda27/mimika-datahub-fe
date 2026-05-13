@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import LoadingState from "@/components/ui/LoadingState";
-import { Search, LineChart, Database, FileText, LayoutGrid } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 // Import Komponen Modular
 import PemerintahFilter from "./components/PemerintahFilter";
 import PemerintahTable from "./components/PemerintahTable";
 import PemerintahDetailModal from "./components/PemerintahDetailModal";
+
+// Integrasi Store
+import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useSourceStore } from "./../../store/useSourceStore";
+import { useCategoryStore } from "./../../store/useCategoryStore";
+import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { Dataset, DatasetFilterParams } from "../../types/dataset";
-import { useSourceTypeStore } from "../../store/useSourceTypeStore";
-import { useSourceStore } from "../../store/useSourceStore";
-import { useCategoryStore } from "../../store/useCategoryStore";
-import { useDatasetStore } from "../../store/useDatasetStore";
 
+// PISAHKAN KONTEN UTAMA KE DALAM KOMPONEN TERSENDIRI
+function DataPemerintahContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || ""; // Ambil kata kunci dari URL
 
-
-export default function DataPemerintahPage() {
   const { 
     publicDatasets, fetchPublicDatasets, isLoading: isStoreLoading,
     downloadDataset, downloadDatasetList, fetchDatasetContent,
@@ -29,24 +34,33 @@ export default function DataPemerintahPage() {
   const { sourceTypes, fetchSourceTypes } = useSourceTypeStore();
   
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Set state awal berdasarkan URL Parameter
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // State untuk mobile filter
 
-  // State untuk menyimpan filter yang sedang aktif (Termasuk Year)
   const [filters, setFilters] = useState<DatasetFilterParams>({
     category_id: null,
     source_id: null,
     source_type_id: null,
-    year: null // Menambahkan filter tahun [cite: 304]
+    year: null
   });
 
-  // Fungsi untuk memuat data awal
+  // Pantau perubahan URL Parameter jika user kembali / maju dari browser history
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q !== null) {
+      setSearchTerm(q);
+    }
+  }, [searchParams]);
+
   const loadData = useCallback(async () => {
     setIsInitialLoading(true);
     try {
       await Promise.all([
         fetchPublicDatasets('pemerintah', filters), 
-        fetchSidebarStats('pemerintah'), // Mengambil statistik sidebar termasuk list tahun [cite: 31]
+        fetchSidebarStats('pemerintah'),
         fetchSources(),
         fetchCategories(),
         fetchSourceTypes()
@@ -60,9 +74,8 @@ export default function DataPemerintahPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
-  // Handler saat filter dropdown berubah
   const handleFilterChange = (newFilters: DatasetFilterParams) => {
     setFilters(newFilters);
     fetchPublicDatasets('pemerintah', newFilters);
@@ -74,89 +87,122 @@ export default function DataPemerintahPage() {
 
   if (isInitialLoading || isStoreLoading) {
     return (
-      <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8">
-        <div className="max-w-[1500px] w-full mx-auto p-4 md:p-6 lg:p-8">
-          <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
-        </div>
+      <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
+        <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
       </div>
     );
   }
 
   return (
-    <div className="bg-[#f0f4f8] min-h-screen font-sans animate-in fade-in duration-500 text-black pt-6 md:pt-10">
-      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
+    <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-6 md:pt-10 pb-20">
+      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8">
         
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 w-full">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight shrink-0">
-            Search Data
-          </h1>
+        {/* Header & Search */}
+        <div className="flex flex-col space-y-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+              Search Data
+            </h1>
+            
+            {/* Mobile Filter Toggle */}
+            <button 
+              onClick={() => setIsFilterOpen(true)}
+              className="lg:hidden flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg font-bold text-sm shadow-sm"
+            >
+              <SlidersHorizontal size={18} /> Filters
+            </button>
+          </div>
           
-          <div className="relative w-full md:max-w-2xl lg:max-w-4xl flex-1">
+          <div className="relative w-full">
             <input 
               type="text" 
               placeholder="Search data..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded px-4 py-3 md:py-4 text-base focus:outline-none focus:border-[#0071bc] focus:ring-1 focus:ring-[#0071bc] transition-all bg-white shadow-sm"
+              className="w-full border border-gray-300 rounded-xl px-5 py-3 md:py-5 text-base focus:outline-none focus:border-[#0071bc] focus:ring-2 focus:ring-[#0071bc]/20 transition-all bg-white shadow-sm"
             />
-            <button className="absolute right-4 top-1/2 -translate-y-1/2">
-              <Search size={22} className="text-gray-900 font-bold" />
+            <button className="absolute right-5 top-1/2 -translate-y-1/2">
+              <Search size={22} className="text-gray-400 hover:text-[#0071bc] transition-colors" />
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
-          <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 sticky top-24">
-            <PemerintahFilter 
-              sources={sources} 
-              sourceTypes={sourceTypes}
-              categories={categories}
-              sidebarStats={sidebarStats}
-              currentFilters={filters}
-              onFilterChange={handleFilterChange}
-              onSearch={setSearchTerm}
-              onReset={() => {
-                const resetObj = { category_id: null, source_id: null, source_type_id: null, year: null };
-                setSearchTerm("");
-                handleFilterChange(resetObj);
-              }}
-              onExport={(fmt) => downloadDatasetList('pemerintah', fmt)}
-            />
-          </aside>
-
-          <main className="flex-1 min-w-0 w-full bg-white border border-gray-200 rounded-sm shadow-sm">
-            <div className="flex items-center gap-6 px-6 pt-2 border-b border-gray-200 overflow-x-auto w-full hide-scrollbar">
-              <button className="py-3 text-sm font-bold text-[#0071bc] border-b-[3px] border-[#0071bc] flex items-center gap-2 whitespace-nowrap shrink-0">
-                All
+        <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+          
+          {/* ASIDE / FILTER: Responsive Drawer for Mobile */}
+          <aside className={`
+            fixed inset-y-0 left-0 z-[110] w-[280px] bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
+            lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
+            ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            {/* Close Button Mobile */}
+            <div className="lg:hidden flex justify-between items-center p-4 border-b">
+              <span className="font-bold">Filters</span>
+              <button onClick={() => setIsFilterOpen(false)} className="p-1 hover:bg-gray-100 rounded">
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-4 md:p-6 w-full">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 w-full">
-                <p className="text-sm text-gray-700">
-                  Showing <strong className="text-gray-900">{filteredData.length > 0 ? "1" : "0"}-{filteredData.length}</strong> of <strong className="text-gray-900">{publicDatasets.length}</strong> Datasets
+            <div className="h-full overflow-y-auto lg:h-auto lg:sticky lg:top-24 p-4 lg:p-0">
+              <PemerintahFilter 
+                sources={sources} 
+                sourceTypes={sourceTypes}
+                categories={categories}
+                sidebarStats={sidebarStats}
+                currentFilters={filters}
+                onFilterChange={handleFilterChange}
+                onSearch={setSearchTerm}
+                onReset={() => {
+                  const resetObj = { category_id: null, source_id: null, source_type_id: null, year: null };
+                  setSearchTerm("");
+                  handleFilterChange(resetObj);
+                }}
+                onExport={(fmt) => downloadDatasetList('pemerintah', fmt)}
+              />
+            </div>
+          </aside>
+
+          {/* Overlay Mobile */}
+          {isFilterOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-[100] lg:hidden backdrop-blur-sm"
+              onClick={() => setIsFilterOpen(false)}
+            />
+          )}
+
+          {/* MAIN CONTENT */}
+          <main className="flex-1 min-w-0 w-full bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="flex items-center gap-6 px-6 pt-2 border-b border-gray-200 overflow-x-auto w-full hide-scrollbar">
+              <button className="py-4 text-sm font-bold text-[#0071bc] border-b-[3px] border-[#0071bc] whitespace-nowrap">
+                All Datasets
+              </button>
+            </div>
+
+            <div className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <p className="text-sm text-gray-500">
+                  Showing <strong className="text-gray-900">{filteredData.length}</strong> of <strong className="text-gray-900">{publicDatasets.length}</strong> Datasets
+                  {searchTerm && (
+                    <span> for <strong className="text-[#0071bc]">"{searchTerm}"</strong></span>
+                  )}
                 </p>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600">Sort by:</label>
-                    <select className="border border-gray-300 bg-white text-gray-700 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#0071bc] cursor-pointer">
-                      <option>Last updated date</option>
-                      <option>A-Z (Alphabetical)</option>
-                      <option>Highest Quality</option>
-                    </select>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sort:</label>
+                  <select className="border border-gray-200 bg-gray-50 text-gray-700 rounded-lg px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#0071bc]/20">
+                    <option>Last updated date</option>
+                    <option>A-Z (Alphabetical)</option>
+                    <option>Highest Quality</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="w-full">
-                <PemerintahTable 
-                  data={filteredData} 
-                  onOpenDetail={(d) => {
-                    setSelectedDataset(d);
-                    fetchDatasetContent(d.id, 100);
-                  }} 
-                />
-              </div>
+              <PemerintahTable 
+                data={filteredData} 
+                onOpenDetail={(d) => {
+                  setSelectedDataset(d);
+                  fetchDatasetContent(d.id, 100);
+                }} 
+              />
             </div>
           </main>
         </div>
@@ -176,10 +222,23 @@ export default function DataPemerintahPage() {
           />
         )}
         
-        <footer className="mt-12 text-center text-gray-400 text-xs font-medium pb-8 w-full">
+        <footer className="mt-12 text-center text-gray-400 text-xs font-medium pb-8">
           © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
         </footer>
       </div>
     </div>
+  );
+}
+
+// BUNGKUS DENGAN SUSPENSE AGAR NEXT.JS BUILD TIDAK ERROR SAAT MENGGUNAKAN useSearchParams()
+export default function DataPemerintahPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
+        <LoadingState message="Memuat halaman pencarian..." />
+      </div>
+    }>
+      <DataPemerintahContent />
+    </Suspense>
   );
 }
