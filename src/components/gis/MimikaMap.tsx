@@ -35,6 +35,9 @@ export default function MimikaMap() {
     const [loading, setLoading] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(8);
 
+    // State Kunci Re-mount (Solusi Map Reuse)
+    const [mapKey, setMapKey] = useState(Date.now());
+
     // Local State untuk Pop-up Profil Wilayah
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
@@ -42,6 +45,14 @@ export default function MimikaMap() {
 
     // State UX untuk interaksi Expandable Text
     const [isTextExpanded, setIsTextExpanded] = useState(false);
+
+    // Membersihkan instansi map sebelum unmount
+    useEffect(() => {
+        return () => {
+            // Ketika komponen mati, paksa reset key di memori agar instance Leaflet terputus
+            setMapKey(Date.now());
+        };
+    }, []);
 
     // 1. Fetching Resource Peta (Hanya GeoJSON)
     useEffect(() => {
@@ -171,7 +182,7 @@ export default function MimikaMap() {
 
     if (loading) {
         return (
-            <div className="h-112.5 w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
+            <div className="h-full w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
                 <div className="text-center">
                     <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Memuat Peta Wilayah...</p>
@@ -254,8 +265,10 @@ export default function MimikaMap() {
     };
 
     return (
-        <div className="h-112.5 w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
+        // PERUBAHAN: Menghapus h-112.5 menjadi h-full
+        <div className="h-full w-full overflow-hidden relative z-10 bg-gray-50">
             <SafeMapContainer
+                key={mapKey} // INJEKSI KUNCI: Mencegah Reuse Container oleh Leaflet
                 center={mapCenter}
                 zoom={8}
                 scrollWheelZoom={false}

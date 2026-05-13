@@ -12,7 +12,8 @@ const MapWrapper = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="h-112.5 w-full flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-100">
+            // PERUBAHAN: Mengganti h-112.5 menjadi h-full agar mengisi penuh kontainer parent-nya
+            <div className="h-full w-full flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-100">
                 <div className="text-center">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                         Menyiapkan Engine Pemetaan...
