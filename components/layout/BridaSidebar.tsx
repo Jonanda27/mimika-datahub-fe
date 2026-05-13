@@ -4,16 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Upload, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Upload,
+  Menu,
   X,
   LogOut,
-  Search,
-  User as UserIcon,
   ChevronDown,
-  Globe
+  Globe,
+  Globe2
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -24,10 +23,14 @@ export default function BridaNavbar() {
   const [isOpen, setIsOpen] = useState(false); // Mobile menu state
   const [isProfileOpen, setIsProfileOpen] = useState(false); // Profile dropdown state
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
+  // State untuk menghindari Hydration Error
+  const [isMounted, setIsMounted] = useState(false);
+
   const { profile, fetchProfile, logout, isLoading } = useAuthStore();
 
   useEffect(() => {
+    setIsMounted(true);
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
 
@@ -46,8 +49,8 @@ export default function BridaNavbar() {
     { name: "Dashboard", href: "/brida-dashboard", icon: LayoutDashboard },
     { name: "Data Pemerintah", href: "/brida-user-data-pemerintah", icon: Upload },
     { name: "Data Non-Pemerintah", href: "/brida-user-data-non-pemerintah", icon: Upload },
-    { name: "Data Survey", href: "/survey", icon: Globe },
-    { name: "Data Upload", href: "/brida-upload-data", icon: Upload },
+    { name: "Data Survey", href: "/survey", icon: Globe2 },
+    { name: "Unggah Data", href: "/brida-upload-data", icon: Upload },
   ];
 
   const getInitials = (name: string) => {
@@ -67,11 +70,19 @@ export default function BridaNavbar() {
     }
   };
 
+  // Skeleton UI: Dirender di Server untuk menghindari Mismatch sebelum isMounted true
+  if (!isMounted) {
+    return (
+      <header className="w-full h-[116px] z-[60] sticky top-0 shadow-md bg-white border-b border-gray-200"></header>
+    );
+  }
+
   return (
-    <header className="w-full flex flex-col z-60 sticky top-0 shadow-md font-sans">
+    // suppressHydrationWarning ditambahkan untuk mengabaikan injeksi dari Ekstensi Browser
+    <header suppressHydrationWarning className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200 text-black">
-        
+
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
           <Image src="/logo-mimika.png" alt="Logo Mimika" width={50} height={15} className="object-contain" priority />
@@ -85,7 +96,8 @@ export default function BridaNavbar() {
         <div className="flex items-center gap-4 md:gap-6">
           {/* Profil Section with Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button 
+            <button
+              suppressHydrationWarning
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className={`flex items-center gap-2.5 p-1 pr-3 rounded-full bg-white border-2 transition-all focus:outline-none 
                 ${isProfileOpen ? 'border-[#0071bc] shadow-md ring-4 ring-[#0071bc]/10' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
@@ -101,9 +113,9 @@ export default function BridaNavbar() {
                   {profile?.role || "Member"}
                 </span>
               </div>
-              <ChevronDown 
-                size={14} 
-                className={`ml-1 transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-[#0071bc]' : 'text-gray-400'}`} 
+              <ChevronDown
+                size={14}
+                className={`ml-1 transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-[#0071bc]' : 'text-gray-400'}`}
               />
             </button>
 
@@ -115,10 +127,11 @@ export default function BridaNavbar() {
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Masuk Sebagai</p>
                   <p className="text-sm font-black text-[#002244] truncate">{profile?.username || "User"}</p>
                 </div>
-                
+
                 {/* Body Dropdown */}
                 <div className="p-2 space-y-1">
-                  <button 
+                  <button
+                    suppressHydrationWarning
                     onClick={handleLogout}
                     disabled={isLoading}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors font-bold group"
@@ -134,7 +147,8 @@ export default function BridaNavbar() {
           </div>
 
           {/* Tombol Hamburger (Mobile) */}
-          <button 
+          <button
+            suppressHydrationWarning
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden text-[#004b87] p-2 rounded-lg hover:bg-gray-100 border border-transparent active:border-gray-200 transition-colors"
           >
@@ -149,7 +163,7 @@ export default function BridaNavbar() {
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link 
+              <Link
                 key={item.href}
                 href={item.href}
                 className={`px-5 py-3 text-[13px] font-medium tracking-wide transition-colors flex items-center gap-2
@@ -167,21 +181,21 @@ export default function BridaNavbar() {
       {/* --- MENU DROPDOWN (Mobile) --- */}
       {isOpen && (
         <div className="md:hidden bg-[#0071bc] text-white flex flex-col absolute top-full left-0 w-full shadow-2xl border-t border-[#005a96] animate-in slide-in-from-top duration-200">
-            <nav className="flex flex-col">
-              {menuItems.map((item) => (
-                <Link 
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`px-6 py-4 text-sm font-medium border-b border-[#005a96] flex items-center gap-3
+          <nav className="flex flex-col">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={`px-6 py-4 text-sm font-medium border-b border-[#005a96] flex items-center gap-3
                     ${pathname === item.href ? "bg-[#005a96] font-bold" : "hover:bg-[#005a96] text-blue-100"}
                   `}
-                >
-                  <item.icon size={18} />
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+              >
+                <item.icon size={18} />
+                {item.name}
+              </Link>
+            ))}
+          </nav>
         </div>
       )}
     </header>

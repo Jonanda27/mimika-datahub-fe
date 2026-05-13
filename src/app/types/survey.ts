@@ -56,3 +56,12 @@ export interface SurveySubmitResponse {
   status: string;
   message: string;
 }
+
+export interface SurveyStats {
+  total: number;
+  active: number;
+  responses: number;
+  datasets: number;
+}
+
+export type ExportFormat = 'xlsx' | 'csv';
