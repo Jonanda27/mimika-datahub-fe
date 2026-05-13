@@ -1,4 +1,4 @@
-// src/types/ingest.ts
+// src/app/types/ingest.ts
 
 export interface IngestStats {
   inserted: number;
@@ -21,7 +21,6 @@ export interface UploadRequest {
   district_id?: number | null; // Baru: Opsional sesuai backend Form(None)
   file: File;
   image: File;
-
 }
 
 export interface UploadResponse {
