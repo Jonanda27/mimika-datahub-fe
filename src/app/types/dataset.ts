@@ -3,6 +3,12 @@
 export interface Dataset {
   id: number;
   title: string;
+  // Injeksi Spasial (GIS)
+  district_id?: number | null;
+  district?: {
+    id: number;
+    name: string;
+  } | null;
   source_id: number;
   category_id: number;
   source_type_id: number;
@@ -14,23 +20,6 @@ export interface Dataset {
   total_rows: number;
   quality_score: number;
   created_at: string;
-  // Injeksi Spasial (GIS)
-  district_id?: number | null;
-  district?: {
-    id: number;
-    name: string;
-  } | null;
-  source_id: number; 
-  category_id: number; 
-  source_type_id: number; 
-  year: number; 
-  period: string; 
-  dataset_type: 'pemerintah' | 'non-pemerintah'; 
-  description?: string; 
-  status: "pending" | "approved"; 
-  total_rows: number; 
-  quality_score: number; 
-  created_at: string; 
   image_url?: string;
 }
 
@@ -92,10 +81,10 @@ export interface DatasetByCategoryItem {
   image_url: string | null;
   source_name: string;
   created_at: string;
-  description?: string; 
-   source_type_id: number; 
-  year: number; 
-   source_id: number; 
+  description?: string;
+  source_type_id: number;
+  year: number;
+  source_id: number;
 }
 
 export interface CategoryGroup {

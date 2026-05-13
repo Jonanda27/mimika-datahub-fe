@@ -2,18 +2,26 @@
 "use client";
 
 import dynamic from 'next/dynamic';
+import React from 'react';
+
+// Mendefinisikan kontrak props agar TypeScript mengenali isAtlasMode
+interface MapWrapperProps {
+    isAtlasMode?: boolean;
+}
 
 /**
- * Wrapper Komponen Peta menggunakan Dynamic Import.
- * Mematikan Server-Side Rendering (ssr: false) karena Leaflet berinteraksi langsung dengan DOM.
+ * Import dinamis dari MimikaMap.
+ * Mematikan Server-Side Rendering (ssr: false) karena Leaflet berinteraksi langsung dengan Window/DOM.
  */
-const MapWrapper = dynamic(
+const DynamicMimikaMap = dynamic(
     () => import('./MimikaMap'),
     {
         ssr: false,
         loading: () => (
-            <div className="h-112.5 w-full flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-100">
+            // Penyesuaian Loader agar selaras dengan widget Dashboard (putih, rounded, shadow)
+            <div className="h-full w-full min-h-[400px] md:min-h-[500px] flex items-center justify-center bg-white rounded-3xl border border-gray-100 shadow-sm">
                 <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-[#0071bc] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                         Menyiapkan Engine Pemetaan...
                     </p>
@@ -23,4 +31,15 @@ const MapWrapper = dynamic(
     }
 );
 
-export default MapWrapper;
+/**
+ * MapWrapper Component
+ * Berfungsi sebagai pembungkus yang aman untuk SSR dan membentengi Leaflet agar tidak kolaps di dalam CSS Grid.
+ */
+export default function MapWrapper({ isAtlasMode = false }: MapWrapperProps) {
+    return (
+        // Pembungkus absolut ini memastikan Peta menuruti aturan Grid dan memiliki radius sudut yang konsisten
+        <div className="w-full h-full min-h-[400px] md:min-h-[500px] relative rounded-3xl overflow-hidden border border-gray-100 shadow-sm bg-white z-0">
+            <DynamicMimikaMap isAtlasMode={isAtlasMode} />
+        </div>
+    );
+}

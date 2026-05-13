@@ -168,7 +168,7 @@ export default function SurveyList() {
                   <Eye size={16} /> Preview
                 </Link>
 
-                <button 
+                {/* <button 
                   onClick={() => handleGenerateDataset(survey.id)}
                   disabled={isGenerating === survey.id}
                   className={`flex-1 lg:flex-none flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-2xl shadow-lg transition-all active:scale-95 ${
@@ -182,7 +182,7 @@ export default function SurveyList() {
                   ) : (
                     <><Database size={16} /> Generate Dataset</>
                   )}
-                </button>
+                </button> */}
               </div>
               
             </div>

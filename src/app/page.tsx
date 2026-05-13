@@ -1,23 +1,23 @@
+// src/app/page.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Search, 
-  ShieldCheck, 
-  Menu, 
-  X, 
-  Database, 
+import {
+  Search,
+  ShieldCheck,
+  Menu,
+  X,
+  Database,
   BarChart3,
-  Globe, 
+  Globe,
   Zap,
   ChevronRight,
   ChevronDown,
   FileText,
   Building2,
   Users2,
-  Maximize,
   Loader2,
   ArrowRight,
   Filter
@@ -25,7 +25,10 @@ import {
 
 // Integrasi Store
 import { useDatasetStore } from "@/src/app/store/useDatasetStore";
-import { useSearchStore } from "@/src/app/store/useSearchStore"; // Import search store
+import { useSearchStore } from "@/src/app/store/useSearchStore";
+
+// --- IMPORT KOMPONEN PETA ---
+import MapWrapper from "@/src/components/gis/MapWrapper";
 
 // --- DATA: NEWS & STORIES ---
 const NEWS_DATA = {
@@ -74,18 +77,18 @@ interface ThemeCardProps {
   sourceName: string;
   sourceType: number | string;
   profileLink: string;
-  imagePath: string; 
-  bgImage?: string;  
+  imagePath: string;
+  bgImage?: string;
 }
 
 // --- KOMPONEN KARTU TEMATIK ---
-function ThemeCard({ 
+function ThemeCard({
   title,
   description,
   year,
   sourceName,
   sourceType,
-  profileLink, 
+  profileLink,
   imagePath,
   bgImage
 }: ThemeCardProps) {
@@ -94,8 +97,8 @@ function ThemeCard({
       <div className="h-64 w-full relative shrink-0">
         <div className="absolute inset-0 p-4">
           <div className="relative w-full h-full">
-            <Image 
-              src={bgImage || "/bg-mimika.jpg"} 
+            <Image
+              src={bgImage || "/bg-mimika.jpg"}
               alt={`Background ${title}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
@@ -103,26 +106,26 @@ function ThemeCard({
             />
           </div>
         </div>
-        <Image 
-          src={imagePath || "/placeholder-icon.png"} 
+        <Image
+          src={imagePath || "/placeholder-icon.png"}
           alt={`Ikon ${title}`}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
-          className="object-contain z-10 p-4" 
+          className="object-contain z-10 p-4"
         />
       </div>
 
-      <div className="p-6 flex flex-col flex-grow text-black">
+      <div className="p-6 flex flex-col grow text-black">
         <div className="mb-3">
-           <h3 className="text-[#002244] font-black text-[15px] uppercase tracking-tight line-clamp-2 leading-snug">
-             {title}
-           </h3>
+          <h3 className="text-[#002244] font-black text-[15px] uppercase tracking-tight line-clamp-2 leading-snug">
+            {title}
+          </h3>
         </div>
-        
-        <div className="mb-4 flex-grow">
-           <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-3">
-             {description || "Tidak ada deskripsi spesifik."}
-           </p>
+
+        <div className="mb-4 grow">
+          <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-3">
+            {description || "Tidak ada deskripsi spesifik."}
+          </p>
         </div>
 
         <div className="text-right mb-6">
@@ -131,10 +134,10 @@ function ThemeCard({
             {sourceName} • {sourceType}
           </p>
         </div>
-        
+
         <div className="border-t border-gray-100 pt-4 mt-auto">
           <a href="#" className="text-[#0071bc] text-sm font-bold hover:text-[#002244] transition-colors flex items-center gap-1 group">
-            {profileLink} 
+            {profileLink}
             <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
           </a>
         </div>
@@ -148,21 +151,21 @@ export default function LandingPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // State untuk Integrasi Pencarian Sesuai UI Baru
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<{id: string | number, name: string} | null>(null);
-  
+  const [selectedCategory, setSelectedCategory] = useState<{ id: string | number, name: string } | null>(null);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const { datasetsByCategory, fetchLatestByCategory, isCategoryLoading } = useDatasetStore();
-  
+
   // Destructure Search Store
-  const { 
-    suggestions, 
-    isLoadingSuggestions, 
-    fetchSuggestions, 
+  const {
+    suggestions,
+    isLoadingSuggestions,
+    fetchSuggestions,
     clearSuggestions,
     searchResults,
     isSearching,
@@ -206,7 +209,7 @@ export default function LandingPage() {
       if (searchQuery.trim() !== "") {
         fetchSuggestions(searchQuery);
         // Reset pilihan kategori jika user mengetik ulang
-        setSelectedCategory(null); 
+        setSelectedCategory(null);
         clearResults();
       } else {
         clearSuggestions();
@@ -220,8 +223,8 @@ export default function LandingPage() {
 
   // Action ketika kategori chip ditekan
   const handleCategoryClick = (categoryId: string | number, categoryName: string) => {
-    if (!categoryId || isNaN(Number(categoryId))) return; 
-    
+    if (!categoryId || isNaN(Number(categoryId))) return;
+
     setSelectedCategory({ id: categoryId, name: categoryName });
     fetchByCategory(Number(categoryId), searchQuery);
   };
@@ -230,25 +233,24 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-800 selection:bg-[#0071bc] selection:text-white overflow-x-hidden">
-      
+
       {/* --- DYNAMIC NAVIGATION --- */}
-      <nav 
-        className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
-          scrolled 
-          ? "bg-white border-b border-gray-200 py-2 shadow-md" 
+      <nav
+        className={`fixed top-0 w-full z-100 transition-all duration-500 ${scrolled
+          ? "bg-white border-b border-gray-200 py-2 shadow-md"
           : "bg-transparent py-5"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <div className={`relative w-12 h-12 overflow-hidden p-1 transition-all ${scrolled ? "bg-transparent" : "bg-white/10 backdrop-blur rounded-lg"}`}>
-                <Image 
-                  src="/logo-mimika.png" 
-                  alt="Logo Mimika" 
-                  fill 
-                  sizes="48px" 
-                  className="object-contain" 
+                <Image
+                  src="/logo-mimika.png"
+                  alt="Logo Mimika"
+                  fill
+                  sizes="48px"
+                  className="object-contain"
                 />
               </div>
               <div className={`h-8 w-px hidden sm:block ${scrolled ? "bg-gray-300" : "bg-white/30"}`}></div>
@@ -262,9 +264,9 @@ export default function LandingPage() {
             <div className={`hidden md:flex items-center gap-8 text-[13px] font-bold uppercase tracking-wide transition-colors ${scrolled ? "text-gray-700" : "text-white/90"}`}>
               <a href="#tematik" className="hover:text-[#0071bc] transition-colors">Tema</a>
               <a href="#gis" className="hover:text-[#0071bc] transition-colors">GIS Peta</a>
-              
+
               <div className="relative" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-1.5 transition-colors uppercase hover:text-[#0071bc]"
                 >
@@ -272,10 +274,10 @@ export default function LandingPage() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                  <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-60">
                     <div className="p-2">
-                      <Link 
-                        href="/public-data-pemerintah" 
+                      <Link
+                        href="/public-data-pemerintah"
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors group"
                       >
@@ -287,8 +289,8 @@ export default function LandingPage() {
                           <span className="text-[10px] text-gray-500 font-medium">Statistik Sektoral OPD</span>
                         </div>
                       </Link>
-                      <Link 
-                        href="/public-data-non-pemerintah" 
+                      <Link
+                        href="/public-data-non-pemerintah"
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-lg transition-colors group"
                       >
@@ -306,11 +308,10 @@ export default function LandingPage() {
               </div>
 
               <a href="#fitur" className="hover:text-[#0071bc] transition-colors">Sektor</a>
-              <Link href="/login" className={`px-6 py-2.5 rounded-sm transition-all shadow-md font-black ${
-                scrolled 
-                ? "bg-[#0071bc] text-white hover:bg-[#005a96]" 
+              <Link href="/login" className={`px-6 py-2.5 rounded-sm transition-all shadow-md font-black ${scrolled
+                ? "bg-[#0071bc] text-white hover:bg-[#005a96]"
                 : "bg-white text-[#002244] hover:bg-gray-100"
-              }`}>
+                }`}>
                 MASUK SISTEM
               </Link>
             </div>
@@ -334,19 +335,19 @@ export default function LandingPage() {
       </nav>
 
       {/* --- MINIMALIST HERO SECTION WITH BG-MIMIKA.JPG --- */}
-      <header className="relative min-h-[90vh] flex items-center justify-center z-[60]">
-        
+      <header className="relative min-h-[90vh] flex items-center justify-center z-60">
+
         {/* Background Layer */}
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <Image 
-            src="/bg-mimika.jpg" 
-            alt="Background Mimika" 
-            fill 
+          <Image
+            src="/bg-mimika.jpg"
+            alt="Background Mimika"
+            fill
             className="object-cover scale-100"
             priority
           />
           <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#f4f7f9] via-transparent to-slate-950/50"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-[#f4f7f9] via-transparent to-slate-950/50"></div>
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center w-full mt-10">
@@ -354,32 +355,32 @@ export default function LandingPage() {
 
             <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
               Akses Data Terpadu <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">Kabupaten Mimika</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-cyan-300 to-emerald-400">Kabupaten Mimika</span>
             </h1>
 
-            <div className="max-w-4xl mx-auto mt-8 relative z-[70] text-left" ref={searchContainerRef}>
-              
+            <div className="max-w-4xl mx-auto mt-8 relative z-70 text-left" ref={searchContainerRef}>
+
               <div className="relative w-full flex flex-col items-center">
-                
+
                 {/* 1. Box Search Input */}
                 <div className="w-full relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+                  <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
                   <div className="relative flex items-center bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-2 transition-all border border-white/50">
-                    <div className="flex-grow flex items-center px-4">
+                    <div className="grow flex items-center px-4">
                       <Search className={`mr-3 transition-colors text-[#0071bc]`} size={24} />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Ketik kata kunci pencarian (contoh: stunting, pdrb)..." 
+                        placeholder="Ketik kata kunci pencarian (contoh: stunting, pdrb)..."
                         className="w-full py-4 bg-transparent text-slate-900 focus:outline-none placeholder:text-slate-400 font-bold text-base md:text-lg"
                       />
                       {isLoadingSuggestions && (
                         <Loader2 className="animate-spin text-[#0071bc] ml-3 shrink-0" size={20} />
                       )}
                     </div>
-                    <Link 
-                      href={`/public-data-pemerintah?q=${encodeURIComponent(searchQuery)}`} 
+                    <Link
+                      href={`/public-data-pemerintah?q=${encodeURIComponent(searchQuery)}`}
                       className="bg-[#0071bc] hover:bg-[#005a96] text-white py-4 px-8 md:px-10 text-sm font-black transition-all uppercase tracking-widest rounded-xl shadow-lg active:scale-95 shrink-0 text-center"
                     >
                       Cari Data
@@ -394,14 +395,14 @@ export default function LandingPage() {
                       <Filter size={16} />
                       <span className="text-xs font-semibold uppercase tracking-widest">Filter Berdasarkan Kategori</span>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-2">
                       {Object.entries(datasetsByCategory).map(([categoryName, group], index) => {
                         const cat = (group.category_info || {}) as any;
                         const ds = (group.datasets?.[0] || {}) as any;
-                        
-                        const rawId = cat.id || ds.category_id || (index + 1); 
-                        const catId = Number(rawId); 
+
+                        const rawId = cat.id || ds.category_id || (index + 1);
+                        const catId = Number(rawId);
                         const catName = cat.name || categoryName;
 
                         const isSelected = selectedCategory?.id === catId;
@@ -410,11 +411,10 @@ export default function LandingPage() {
                           <button
                             key={`chip-${categoryName}-${index}`}
                             onClick={() => handleCategoryClick(catId, catName)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-300 backdrop-blur-md flex items-center gap-2 ${
-                              isSelected 
-                                ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105" 
-                                : "bg-white/10 text-white/90 border-white/20 hover:bg-white/20 hover:border-white/40"
-                            }`}
+                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-300 backdrop-blur-md flex items-center gap-2 ${isSelected
+                              ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105"
+                              : "bg-white/10 text-white/90 border-white/20 hover:bg-white/20 hover:border-white/40"
+                              }`}
                           >
                             {catName}
                           </button>
@@ -427,7 +427,7 @@ export default function LandingPage() {
                 {/* 3. Dropdown Dataset */}
                 {selectedCategory && (
                   <div className="absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden text-left border border-white/50 animate-in fade-in slide-in-from-top-2 z-50">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-emerald-50 border-b border-gray-100 flex justify-between items-center">
+                    <div className="p-4 bg-linear-to-r from-blue-50 to-emerald-50 border-b border-gray-100 flex justify-between items-center">
                       <span className="text-sm font-semibold text-gray-700">
                         Hasil untuk <span className="font-bold text-[#002244]">"{searchQuery}"</span> di <span className="font-bold text-emerald-600">{selectedCategory.name}</span>
                       </span>
@@ -435,7 +435,7 @@ export default function LandingPage() {
                         <X size={16} />
                       </button>
                     </div>
-                    
+
                     <div className="max-h-[40vh] overflow-y-auto py-2 divide-y divide-gray-50 custom-scrollbar">
                       {isSearching ? (
                         <div className="p-10 flex flex-col items-center justify-center gap-3 text-gray-500">
@@ -444,9 +444,8 @@ export default function LandingPage() {
                         </div>
                       ) : searchResults && searchResults.length > 0 ? (
                         searchResults.map(dataset => (
-                          <Link 
-                            key={`res-${dataset.id}`} 
-                            // --- BAGIAN YANG DIUBAH: MENAMBAHKAN QUERY PARAMETER 'q' ---
+                          <Link
+                            key={`res-${dataset.id}`}
                             href={`/public-data-${dataset.dataset_type}?q=${encodeURIComponent(dataset.title)}`}
                             className="flex flex-col px-6 py-4 hover:bg-blue-50/50 transition-colors group"
                           >
@@ -511,7 +510,7 @@ export default function LandingPage() {
       {/* --- TEMATIK DATAHUB SECTION --- */}
       <section id="tematik" className="py-20 bg-white relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
-          <div className="border-b-[4px] border-[#0071bc] pb-6 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
+          <div className="border-b-4 border-[#0071bc] pb-6 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Fokus Tematik</h2>
               <p className="mt-4 text-gray-700 text-lg max-w-4xl font-light">
@@ -527,7 +526,7 @@ export default function LandingPage() {
               if (!ds) return null;
 
               return (
-                <ThemeCard 
+                <ThemeCard
                   key={categoryName}
                   title={ds.title || "Tanpa Judul"}
                   description={ds.description || ""}
@@ -546,42 +545,25 @@ export default function LandingPage() {
 
       {/* --- GIS PETA SECTION --- */}
       <section id="gis" className="py-20 bg-[#f4f7f9]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
-          <div className="border-b-[4px] border-[#0071bc] pb-6">
+        {/* 1. Kontainer Header Teks */}
+        <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 text-black mb-10">
+          <div className="border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
             <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
               Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
             </p>
           </div>
+        </div>
 
-          <div className="relative w-full h-[600px] bg-slate-200 border border-gray-200 rounded-2xl overflow-hidden shadow-inner group">
-            <Image 
-              src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2000&auto=format&fit=crop" 
-              alt="Geospatial Map View" 
-              fill 
-              sizes="100vw"
-              className="object-cover opacity-80" 
-            />
-            <div className="absolute inset-0 bg-blue-900/10 pointer-events-none"></div>
-
-            <div className="absolute top-6 right-6 flex flex-col gap-3">
-              <button className="p-3 bg-white shadow-xl rounded-lg text-[#002244] hover:bg-gray-50 transition-all active:scale-95 border border-gray-100">
-                <Maximize size={20} />
-              </button>
-              <div className="flex flex-col bg-white shadow-xl rounded-lg overflow-hidden border border-gray-100">
-                <button className="p-4 text-xl font-bold text-[#002244] border-b border-gray-100 hover:bg-gray-50 transition-colors">+</button>
-                <button className="p-4 text-xl font-bold text-[#002244] hover:bg-gray-50 transition-colors">-</button>
-              </div>
-            </div>
-
-            <div className="absolute bottom-6 left-6 bg-[#002244]/90 backdrop-blur-md px-5 py-3 rounded-lg shadow-2xl border border-white/10 text-[10px] font-mono font-bold text-white flex flex-col gap-1.5 uppercase tracking-widest">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span>Sistem Koordinat: GCS WGS 1984</span>
-              </div>
-              <div className="h-px bg-white/20 w-full"></div>
-              <span>Lokasi Fokus: Distrik Mimika Baru, Papua Tengah</span>
-            </div>
+        {/* 2. Kontainer Peta yang Diperbesar (Lebar & Tinggi) */}
+        <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Penjelasan Kelas Tailwind yang ditambahkan:
+            - h-[75vh]: Tinggi peta akan mengambil 75% dari tinggi layar perangkat yang membukanya.
+            - min-h-[600px]: Jika dibuka di layar kecil/HP, tingginya tidak akan kurang dari 600 pixel.
+            - max-h-[900px]: Agar di layar TV/Monitor raksasa tidak terlalu molor ke bawah.
+          */}
+          <div className="relative w-full h-[75vh] min-h-150 max-h-225 rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100">
+            <MapWrapper />
           </div>
         </div>
       </section>
@@ -589,11 +571,11 @@ export default function LandingPage() {
       {/* --- NEWS & STORIES SECTION --- */}
       <section className="py-20 bg-[#f8fafc] border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-10 border-b-[4px] border-[#0071bc] pb-6">
+          <div className="flex justify-between items-end mb-10 border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Berita & Publikasi</h2>
-            <a 
-              href="https://beritamimika.com" 
-              target="_blank" 
+            <a
+              href="https://beritamimika.com"
+              target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex text-[#0071bc] font-bold text-sm items-center gap-1 hover:text-[#002244] transition-colors uppercase tracking-widest"
             >
@@ -602,14 +584,14 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <a 
-              href={NEWS_DATA.featured.url} 
-              target="_blank" 
+            <a
+              href={NEWS_DATA.featured.url}
+              target="_blank"
               rel="noopener noreferrer"
               className="lg:col-span-2 group flex flex-col"
             >
-              <div className="relative w-full h-72 md:h-[450px] rounded-2xl overflow-hidden mb-6">
-                <Image 
+              <div className="relative w-full h-72 md:h-112.5 rounded-2xl overflow-hidden mb-6">
+                <Image
                   src={NEWS_DATA.featured.image}
                   alt={NEWS_DATA.featured.title}
                   fill
@@ -623,7 +605,7 @@ export default function LandingPage() {
               <h3 className="text-2xl md:text-3xl font-black text-[#002244] mb-4 hover:text-[#0071bc] transition-colors leading-tight">
                 {NEWS_DATA.featured.title}
               </h3>
-              <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
+              <p className="text-gray-600 text-base leading-relaxed mb-6 grow">
                 {NEWS_DATA.featured.excerpt}
               </p>
               <span className="text-[#0071bc] font-bold text-sm uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all">
@@ -633,15 +615,15 @@ export default function LandingPage() {
 
             <div className="flex flex-col gap-8 lg:border-l border-gray-200 lg:pl-10">
               {NEWS_DATA.list.map(item => (
-                <a 
-                  key={item.id} 
-                  href={item.url} 
-                  target="_blank" 
+                <a
+                  key={item.id}
+                  href={item.url}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex gap-5 group items-start"
                 >
                   <div className="relative w-28 h-24 shrink-0 rounded-xl overflow-hidden shadow-sm">
-                    <Image 
+                    <Image
                       src={item.image}
                       alt={item.title}
                       fill
@@ -666,7 +648,7 @@ export default function LandingPage() {
       {/* --- DATA SEKTORAL SECTION --- */}
       <section id="fitur" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
-          <div className="border-b-[4px] border-[#0071bc] pb-6">
+          <div className="border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Transparansi Data Sektoral</h2>
           </div>
 
@@ -749,7 +731,7 @@ export default function LandingPage() {
             <FooterColumn title="BANTUAN" links={["Panduan Pengguna", "Dokumentasi API", "FAQ", "Lapor Bug"]} />
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-400 gap-6 uppercase tracking-[0.1em]">
+          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-400 gap-6 uppercase tracking-widest">
             <p>© 2026 PEMERINTAH KABUPATEN MIMIKA. ALL RIGHTS RESERVED.</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Kebijakan Privasi</a>
@@ -759,9 +741,10 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      
+
       {/* Custom Scrollbar Styling (Khusus untuk dropdown) */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
