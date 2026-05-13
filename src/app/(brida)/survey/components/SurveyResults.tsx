@@ -184,7 +184,7 @@ export default function SurveyResults() {
                   <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex flex-col md:flex-row justify-between md:items-center gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <span className="bg-[#0f3460] text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-tighter">Soal {idx + 1}</span>
+                        <span className="bg-[#0f3460] text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-tighter"> {idx + 1}</span>
                         <h4 className="font-black text-gray-800 text-lg leading-snug">
                           {item.question}
                         </h4>

@@ -27,7 +27,7 @@ export default function SurveyBuilder({ onDataChange }: { onDataChange: () => vo
 
   const [activeId, setActiveId] = useState<string | number>('header'); 
   const [formData, setFormData] = useState({
-    name: 'Survey Tanpa Judul', 
+    name: 'Isi Judul Survey', 
     location: '', 
     startDate: '', 
     endDate: '', 
@@ -137,7 +137,7 @@ export default function SurveyBuilder({ onDataChange }: { onDataChange: () => vo
               type="text" 
               value={formData.name} 
               onChange={e => setFormData({...formData, name: e.target.value})} 
-              className="w-full text-3xl font-black text-gray-800 border-b-2 border-transparent focus:border-blue-100 focus:bg-blue-50/30 outline-none pb-2 mb-4 rounded-xl transition-all placeholder:text-gray-300" 
+              className="w-full text-2xl font-black text-gray-800 border-b-2 border-transparent focus:border-blue-100 focus:bg-blue-50/30 outline-none pb-2 mb-4 rounded-xl transition-all placeholder:text-gray-300" 
               placeholder="Masukkan Judul Survey..."
             />
             <textarea 
