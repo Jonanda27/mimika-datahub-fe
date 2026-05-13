@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Search, Bell, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/src/app/store/useAuthStore";
+import { UserProfile } from "@/src/app/types/auth";
 
 interface PageHeaderProps {
   title: string;
@@ -25,6 +26,7 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
 
   // Fungsi helper untuk inisial nama
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -37,21 +39,24 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
     <div className="rounded-2xl p-5 md:p-7 mb-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-md relative overflow-hidden min-h-35 gap-5">
       {/* 1. Background Image Layer */}
       <div className="absolute inset-0 z-0">
-        <Image 
-          src="/background-papua.jpg" 
+        <Image
+          src="/background-papua.jpg"
           alt="Background Papua"
           fill
           priority
           className="object-cover object-center grayscale-20"
         />
-        {/* Overlay Gradient agar teks tetap mudah dibaca di atas gambar */}
+        {/* FIX: bg-gradient-to-r diubah menjadi bg-linear-to-r */}
         <div className="absolute inset-0 bg-linear-to-r from-[#1e61d0]/90 to-[#0b3370]/80"></div>
       </div>
 
       {/* 2. Content Layer (Title & Subtitle) */}
       <div className="relative z-10 w-full md:w-auto">
         <h2 className="text-xl md:text-2xl font-bold mb-1 drop-shadow-md">{title}</h2>
-        <p className="text-blue-100 text-[10px] md:text-xs tracking-wide font-medium max-w-62.5 md:max-w-none">{subtitle}</p>
+        {/* FIX: max-w-[250px] diubah menjadi max-w-62.5 */}
+        <p className="text-blue-100 text-[10px] md:text-xs tracking-wide font-medium max-w-62.5 md:max-w-none drop-shadow-md">
+          {subtitle}
+        </p>
       </div>
 
       {/* 3. Action Layer (Search, Notifications & Profile) */}
@@ -60,9 +65,9 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
         {withSearch && (
           <div className="relative flex-1 md:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-            <input 
-              type="text" 
-              placeholder="Cari..." 
+            <input
+              type="text"
+              placeholder="Cari..."
               onChange={(e) => onSearch?.(e.target.value)}
               className="pl-9 pr-4 py-2 rounded-full bg-black/20 backdrop-blur-md border border-white/20 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-white w-full md:w-50 lg:w-70 text-sm transition-all"
             />
@@ -82,12 +87,13 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : profile ? (
-                getInitials(profile.full_name)
+                /* FIX: TypeScript Safety - Menggunakan data dari profil lengkap */
+                getInitials((profile as UserProfile).full_name)
               ) : (
                 <UserIcon size={16} />
               )}
             </div>
-            
+
             {/* Nama User (Hanya tampil di Desktop/iPad Landscape) */}
             <div className="hidden lg:flex flex-col items-start leading-tight">
               <span className="text-[11px] font-bold text-white truncate max-w-25">

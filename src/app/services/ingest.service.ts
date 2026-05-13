@@ -6,6 +6,7 @@ export const ingestService = {
   async uploadProcess(data: UploadRequest): Promise<UploadResponse> {
     const formData = new FormData();
 
+    // Data Text
     formData.append("title", data.title);
     formData.append("dataset_type", data.dataset_type);
     formData.append("source_id", data.source_id.toString());
@@ -25,10 +26,11 @@ export const ingestService = {
       formData.append("description", data.description);
     }
 
-    formData.append("file", data.file);
+    // Data Files
+    formData.append("file", data.file);      // File Excel/CSV
+    formData.append("image", data.image);    // [UPDATE] File Gambar Cover dari Branch Teman
 
     const token = localStorage.getItem("auth_token");
-
     const response = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {
       method: "POST",
       body: formData,

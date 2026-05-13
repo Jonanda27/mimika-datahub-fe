@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -13,54 +13,99 @@ import {
   Globe, 
   Zap,
   ChevronRight,
+  ChevronDown,
   FileText,
-  TrendingUp,
-  Construction,
-  Users as UsersIcon,
-  Stethoscope,
-  GraduationCap,
-  Map as MapIcon,
-  Layers,
-  Maximize
+  Building2,
+  Users2,
+  Maximize,
+  Loader2,
+  ArrowRight,
+  Filter
 } from "lucide-react";
+
+// Integrasi Store
+import { useDatasetStore } from "@/src/app/store/useDatasetStore";
+import { useSearchStore } from "@/src/app/store/useSearchStore"; // Import search store
+
+// --- DATA: NEWS & STORIES ---
+const NEWS_DATA = {
+  featured: {
+    id: 1,
+    title: "Freeport Setor Tambahan Rp2,88 Triliun untuk Pemda di Papua Tengah dari Bagian Keuntungan Bersih 2025",
+    date: "08 Mei 2026",
+    category: "Ekonomi dan Pembangunan",
+    excerpt: "PT Freeport Indonesia (PTFI) pada tanggal 8 April 2026 menyetorkan Rp2,88 triliun bagian keuntungan bersih tahun 2025 kepada Pemerintah Provinsi Papua Tengah termasuk delapan kabupaten di wilayahnya sebagai tambahan dari setoran sebesar Rp10,6 trilliun yang sudah dibayarkan sepanjang tahun 2025.",
+    image: "/berita.jpeg",
+    url: "https://beritamimika.com"
+  },
+  list: [
+    {
+      id: 2,
+      title: "8 Pemuda Suku Kamoro Lulus IPN, Siap Kerja di Industri Perhotelan",
+      date: "12 Mei 2026",
+      category: "Ekonomi dan Pembangunan",
+      image: "/berita2.jpeg",
+      url: "https://beritamimika.com"
+    },
+    {
+      id: 3,
+      title: "Kadisperindag : Harga LPG 12 Kg di Outlet Harus Rp390 Ribu",
+      date: "08 Mei 2026",
+      category: "Ekonomi dan Pembangunan",
+      image: "/berita3.jpeg",
+      url: "https://beritamimika.com"
+    },
+    {
+      id: 4,
+      title: "Warga Mimika Masih Bandel, Mickey Mouse Akhirnya Turun ke Jalan",
+      date: "02 Februari 2021",
+      category: "Kesehatan",
+      image: "/berita4.jpeg",
+      url: "https://beritamimika.com"
+    }
+  ]
+};
 
 // --- TYPE DEFINITIONS ---
 interface ThemeCardProps {
-  topic: string;
+  title: string;
   description: string;
-  metricValue: string;
-  metricLabel: string;
+  year: number | string;
+  sourceName: string;
+  sourceType: number | string;
   profileLink: string;
-  imagePath: string;
+  imagePath: string; 
+  bgImage?: string;  
 }
 
-// --- KOMPONEN KARTU TEMATIK (LAYERED IMAGES) ---
+// --- KOMPONEN KARTU TEMATIK ---
 function ThemeCard({ 
-  topic, 
-  description, 
-  metricValue, 
-  metricLabel, 
+  title,
+  description,
+  year,
+  sourceName,
+  sourceType,
   profileLink, 
-  imagePath
+  imagePath,
+  bgImage
 }: ThemeCardProps) {
   return (
     <div className="border border-gray-200 rounded-xl bg-white hover:shadow-2xl transition-all duration-300 h-full flex flex-col overflow-hidden">
-      <div className="h-64 w-full relative">
+      <div className="h-64 w-full relative shrink-0">
         <div className="absolute inset-0 p-4">
           <div className="relative w-full h-full">
             <Image 
-              src="/mimika.jpg" 
-              alt="Background Mimika"
+              src={bgImage || "/bg-mimika.jpg"} 
+              alt={`Background ${title}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
               className="object-cover z-0 rounded-lg"
-              priority
             />
           </div>
         </div>
         <Image 
-          src={imagePath} 
-          alt={`Ikon ${topic}`}
+          src={imagePath || "/placeholder-icon.png"} 
+          alt={`Ikon ${title}`}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
           className="object-contain z-10 p-4" 
@@ -69,16 +114,25 @@ function ThemeCard({
 
       <div className="p-6 flex flex-col flex-grow text-black">
         <div className="mb-3">
-           <h3 className="text-[#002244] font-black text-2xl uppercase tracking-tighter">{topic}</h3>
+           <h3 className="text-[#002244] font-black text-[15px] uppercase tracking-tight line-clamp-2 leading-snug">
+             {title}
+           </h3>
         </div>
-        <p className="text-gray-600 text-sm font-medium leading-relaxed mb-6 flex-grow">
-          {description}
-        </p>
+        
+        <div className="mb-4 flex-grow">
+           <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-3">
+             {description || "Tidak ada deskripsi spesifik."}
+           </p>
+        </div>
+
         <div className="text-right mb-6">
-          <p className="text-[#002244] text-5xl font-black leading-none tracking-tighter">{metricValue}</p>
-          <p className="text-gray-500 text-[10px] mt-2 font-bold uppercase tracking-wider">{metricLabel}</p>
+          <p className="text-[#002244] text-5xl font-black leading-none tracking-tighter">{year || "-"}</p>
+          <p className="text-gray-500 text-[10px] mt-2 font-bold uppercase tracking-wider line-clamp-1">
+            {sourceName} • {sourceType}
+          </p>
         </div>
-        <div className="border-t border-gray-100 pt-4">
+        
+        <div className="border-t border-gray-100 pt-4 mt-auto">
           <a href="#" className="text-[#0071bc] text-sm font-bold hover:text-[#002244] transition-colors flex items-center gap-1 group">
             {profileLink} 
             <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
@@ -89,146 +143,362 @@ function ThemeCard({
   );
 }
 
-// --- DATA KARTU ---
-const themeCardsData: ThemeCardProps[] = [
-  {
-    topic: "EKONOMI",
-    description: "Pertumbuhan PDRB, laju inflasi, dan indikator makro ekonomi daerah untuk memantau stabilitas finansial Mimika.",
-    metricValue: "5.42%",
-    metricLabel: "Laju Pertumbuhan Ekonomi Mimika, 2023",
-    profileLink: "Profil Ekonomi",
-    imagePath: "/kategori_ekonomi.png"
-  },
-  {
-    topic: "INFRASTRUKTUR",
-    description: "Data pembangunan jalan, jembatan, dan fasilitas umum untuk mendukung konektivitas antar distrik.",
-    metricValue: "85.4%",
-    metricLabel: "Indeks Kondisi Jalan Mantap, 2023",
-    profileLink: "Profil Infrastruktur",
-    imagePath: "/kategori_infra.png"
-  },
-  {
-    topic: "KEPENDUDUKAN",
-    description: "Informasi demografi, sebaran penduduk, dan statistik vital masyarakat di wilayah Kabupaten Mimika.",
-    metricValue: "312rb",
-    metricLabel: "Estimasi Total Penduduk Kabupaten Mimika, 2024",
-    profileLink: "Profil Penduduk",
-    imagePath: "/kategori_kependudukan.png"
-  },
-  {
-    topic: "KESEHATAN",
-    description: "Cakupan layanan kesehatan, ketersediaan tenaga medis, dan statistik derajat kesehatan masyarakat.",
-    metricValue: "71.2th",
-    metricLabel: "Angka Harapan Hidup (AHH) Mimika, 2023",
-    profileLink: "Profil Kesehatan",
-    imagePath: "/kategori_kesehatan.png"
-  },
-  {
-    topic: "PENDIDIKAN",
-    description: "Statistik angka partisipasi sekolah dan kualitas sarana pendidikan dasar hingga menengah.",
-    metricValue: "0.84",
-    metricLabel: "Indeks Pendidikan Kabupaten Mimika, 2023",
-    profileLink: "Profil Pendidikan",
-    imagePath: "/kategori_pendidikan.png"
-  }
-];
-
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  // State untuk Integrasi Pencarian Sesuai UI Baru
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<{id: string | number, name: string} | null>(null);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const { datasetsByCategory, fetchLatestByCategory, isCategoryLoading } = useDatasetStore();
+  
+  // Destructure Search Store
+  const { 
+    suggestions, 
+    isLoadingSuggestions, 
+    fetchSuggestions, 
+    clearSuggestions,
+    searchResults,
+    isSearching,
+    fetchByCategory,
+    clearResults
+  } = useSearchStore();
+
+  // Handle Navbar Scroll Effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Handle Initial Fetch
+  useEffect(() => {
+    setIsMounted(true);
+    fetchLatestByCategory();
+  }, [fetchLatestByCategory]);
+
+  // Handle Dropdown Nav & Search Clicks Outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+      // Tutup dropdown dataset jika klik di luar container pencarian
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSelectedCategory(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle Search Debounce API Call
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim() !== "") {
+        fetchSuggestions(searchQuery);
+        // Reset pilihan kategori jika user mengetik ulang
+        setSelectedCategory(null); 
+        clearResults();
+      } else {
+        clearSuggestions();
+        setSelectedCategory(null);
+        clearResults();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, fetchSuggestions, clearSuggestions, clearResults]);
+
+  // Action ketika kategori chip ditekan
+  const handleCategoryClick = (categoryId: string | number, categoryName: string) => {
+    if (!categoryId || isNaN(Number(categoryId))) return; 
+    
+    setSelectedCategory({ id: categoryId, name: categoryName });
+    fetchByCategory(Number(categoryId), searchQuery);
+  };
+
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-800 selection:bg-[#0071bc] selection:text-white overflow-x-hidden">
       
-      {/* --- TOP BAR --- */}
-      <div className="bg-[#002244] text-white py-1.5 px-4 text-[11px] font-semibold flex justify-end items-center md:px-10 gap-6 uppercase tracking-wider">
-        <a href="#" className="hover:text-blue-300 transition-colors">Pemerintah Kabupaten Mimika</a>
-        <a href="#" className="hover:text-blue-300 transition-colors">Bappeda</a>
-        <a href="#" className="hover:text-blue-300 transition-colors">ID / EN</a>
-      </div>
-
-      {/* --- NAVIGATION --- */}
-      <nav className="w-full bg-white border-b border-gray-200 z-50 relative">
+      {/* --- DYNAMIC NAVIGATION --- */}
+      <nav 
+        className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
+          scrolled 
+          ? "bg-white border-b border-gray-200 py-2 shadow-md" 
+          : "bg-transparent py-5"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
-              <div className="relative w-12 h-12 overflow-hidden bg-white p-1">
-                <Image src="/logo-mimika.png" alt="Logo Mimika" fill sizes="48px" className="object-contain" />
+              <div className={`relative w-12 h-12 overflow-hidden p-1 transition-all ${scrolled ? "bg-transparent" : "bg-white/10 backdrop-blur rounded-lg"}`}>
+                <Image 
+                  src="/logo-mimika.png" 
+                  alt="Logo Mimika" 
+                  fill 
+                  sizes="48px" 
+                  className="object-contain" 
+                />
               </div>
+              <div className={`h-8 w-px hidden sm:block ${scrolled ? "bg-gray-300" : "bg-white/30"}`}></div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-[#002244] leading-none tracking-tight">Mimika DataHub</span>
-                <span className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-[0.2em]">Open Data Portal</span>
+                <span className={`text-2xl font-bold leading-none tracking-tight transition-colors ${scrolled ? "text-[#004b87]" : "text-white"}`}>
+                  Mimika DataHub
+                </span>
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center gap-8 text-[13px] font-bold text-gray-700 uppercase tracking-wide">
+            <div className={`hidden md:flex items-center gap-8 text-[13px] font-bold uppercase tracking-wide transition-colors ${scrolled ? "text-gray-700" : "text-white/90"}`}>
               <a href="#tematik" className="hover:text-[#0071bc] transition-colors">Tema</a>
               <a href="#gis" className="hover:text-[#0071bc] transition-colors">GIS Peta</a>
-              <a href="#fitur" className="hover:text-[#0071bc] transition-colors">Data & Resources</a>
+              
+              <div className="relative" ref={dropdownRef}>
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-1.5 transition-colors uppercase hover:text-[#0071bc]"
+                >
+                  Data & Resources <ChevronDown size={14} />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                    <div className="p-2">
+                      <Link 
+                        href="/public-data-pemerintah" 
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center text-[#0071bc]">
+                          <Building2 size={18} />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[12px] font-black text-[#002244]">Data Pemerintah</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Statistik Sektoral OPD</span>
+                        </div>
+                      </Link>
+                      <Link 
+                        href="/public-data-non-pemerintah" 
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-lg transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-emerald-100 rounded-md flex items-center justify-center text-emerald-600">
+                          <Users2 size={18} />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[12px] font-black text-[#002244]">Data Non-Pemerintah</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Publik & Mitra Pembangunan</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <a href="#fitur" className="hover:text-[#0071bc] transition-colors">Sektor</a>
-              <a href="#statistik" className="hover:text-[#0071bc] transition-colors">Indikator</a>
-              <Link href="/login" className="bg-[#0071bc] text-white px-6 py-2.5 rounded-sm hover:bg-[#005a96] transition-shadow shadow-md">
+              <Link href="/login" className={`px-6 py-2.5 rounded-sm transition-all shadow-md font-black ${
+                scrolled 
+                ? "bg-[#0071bc] text-white hover:bg-[#005a96]" 
+                : "bg-white text-[#002244] hover:bg-gray-100"
+              }`}>
                 MASUK SISTEM
               </Link>
             </div>
 
-            <button className="md:hidden p-2 text-[#002244]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <button className={`md:hidden p-2 transition-colors ${scrolled ? "text-[#002244]" : "text-white"}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
 
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-200 px-4 py-6 space-y-4 absolute w-full shadow-2xl z-50 font-bold text-[#002244]">
-            <a href="#tematik" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY THEME</a>
-            <a href="#gis" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">GEOSPATIAL</a>
-            <a href="#fitur" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY SECTOR</a>
-            <a href="#statistik" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">BY INDICATOR</a>
-            <Link href="/login" className="block w-full bg-[#0071bc] text-white text-center py-3 rounded-sm">PORTAL MASUK</Link>
+            <a href="#tematik" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 uppercase">Tema</a>
+            <a href="#gis" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 uppercase">Geospatial</a>
+            <Link href="/public-data-pemerintah" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 uppercase">Data Pemerintah</Link>
+            <Link href="/public-data-non-pemerintah" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 uppercase">Data Non-Pemerintah</Link>
+            <Link href="/login" className="block w-full bg-[#0071bc] text-white text-center py-3 rounded-sm uppercase">Portal Masuk</Link>
           </div>
         )}
       </nav>
 
-      {/* --- HERO SECTION --- */}
-      <header className="bg-[#002244] py-16 md:py-28 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-black">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 text-center">Data Pembangunan Mimika</h1>
-          <p className="text-blue-100 text-lg md:text-xl mb-10 max-w-3xl mx-auto text-center font-light leading-relaxed">
-            Akses terbuka ke indikator statistik sektoral, demografi, dan profil ekonomi Kabupaten Mimika secara real-time dan transparan.
-          </p>
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row shadow-2xl">
-            <div className="relative flex-grow flex items-center bg-white">
-              <Search className="absolute left-5 text-gray-400" size={24} />
-              <input 
-                type="text" 
-                placeholder="Cari indikator (contoh: PDRB, Kemiskinan, Pendidikan)..." 
-                className="w-full py-5 pl-14 pr-6 text-gray-800 text-lg focus:outline-none placeholder:text-gray-400"
-              />
+      {/* --- MINIMALIST HERO SECTION WITH BG-MIMIKA.JPG --- */}
+      <header className="relative min-h-[90vh] flex items-center justify-center z-[60]">
+        
+        {/* Background Layer */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <Image 
+            src="/bg-mimika.jpg" 
+            alt="Background Mimika" 
+            fill 
+            className="object-cover scale-100"
+            priority
+          />
+          <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#f4f7f9] via-transparent to-slate-950/50"></div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center w-full mt-10">
+          <div className="space-y-8">
+
+            <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
+              Akses Data Terpadu <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">Kabupaten Mimika</span>
+            </h1>
+
+            <div className="max-w-4xl mx-auto mt-8 relative z-[70] text-left" ref={searchContainerRef}>
+              
+              <div className="relative w-full flex flex-col items-center">
+                
+                {/* 1. Box Search Input */}
+                <div className="w-full relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+                  <div className="relative flex items-center bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-2 transition-all border border-white/50">
+                    <div className="flex-grow flex items-center px-4">
+                      <Search className={`mr-3 transition-colors text-[#0071bc]`} size={24} />
+                      <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Ketik kata kunci pencarian (contoh: stunting, pdrb)..." 
+                        className="w-full py-4 bg-transparent text-slate-900 focus:outline-none placeholder:text-slate-400 font-bold text-base md:text-lg"
+                      />
+                      {isLoadingSuggestions && (
+                        <Loader2 className="animate-spin text-[#0071bc] ml-3 shrink-0" size={20} />
+                      )}
+                    </div>
+                    <Link 
+                      href={`/public-data-pemerintah?q=${encodeURIComponent(searchQuery)}`} 
+                      className="bg-[#0071bc] hover:bg-[#005a96] text-white py-4 px-8 md:px-10 text-sm font-black transition-all uppercase tracking-widest rounded-xl shadow-lg active:scale-95 shrink-0 text-center"
+                    >
+                      Cari Data
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 2. Category Chips Panel */}
+                {searchQuery.trim() !== "" && !isCategoryLoading && (
+                  <div className="w-full mt-3 p-4 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2 mb-3 px-1 text-white/80">
+                      <Filter size={16} />
+                      <span className="text-xs font-semibold uppercase tracking-widest">Filter Berdasarkan Kategori</span>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      {Object.entries(datasetsByCategory).map(([categoryName, group], index) => {
+                        const cat = (group.category_info || {}) as any;
+                        const ds = (group.datasets?.[0] || {}) as any;
+                        
+                        const rawId = cat.id || ds.category_id || (index + 1); 
+                        const catId = Number(rawId); 
+                        const catName = cat.name || categoryName;
+
+                        const isSelected = selectedCategory?.id === catId;
+
+                        return (
+                          <button
+                            key={`chip-${categoryName}-${index}`}
+                            onClick={() => handleCategoryClick(catId, catName)}
+                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-300 backdrop-blur-md flex items-center gap-2 ${
+                              isSelected 
+                                ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105" 
+                                : "bg-white/10 text-white/90 border-white/20 hover:bg-white/20 hover:border-white/40"
+                            }`}
+                          >
+                            {catName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Dropdown Dataset */}
+                {selectedCategory && (
+                  <div className="absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden text-left border border-white/50 animate-in fade-in slide-in-from-top-2 z-50">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-emerald-50 border-b border-gray-100 flex justify-between items-center">
+                      <span className="text-sm font-semibold text-gray-700">
+                        Hasil untuk <span className="font-bold text-[#002244]">"{searchQuery}"</span> di <span className="font-bold text-emerald-600">{selectedCategory.name}</span>
+                      </span>
+                      <button onClick={() => setSelectedCategory(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full shadow-sm">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="max-h-[40vh] overflow-y-auto py-2 divide-y divide-gray-50 custom-scrollbar">
+                      {isSearching ? (
+                        <div className="p-10 flex flex-col items-center justify-center gap-3 text-gray-500">
+                          <Loader2 className="animate-spin text-[#0071bc]" size={32} />
+                          <span className="text-sm font-medium animate-pulse">Menyaring dataset...</span>
+                        </div>
+                      ) : searchResults && searchResults.length > 0 ? (
+                        searchResults.map(dataset => (
+                          <Link 
+                            key={`res-${dataset.id}`} 
+                            // --- BAGIAN YANG DIUBAH: MENAMBAHKAN QUERY PARAMETER 'q' ---
+                            href={`/public-data-${dataset.dataset_type}?q=${encodeURIComponent(dataset.title)}`}
+                            className="flex flex-col px-6 py-4 hover:bg-blue-50/50 transition-colors group"
+                          >
+                            <span className="text-sm font-bold text-[#002244] group-hover:text-[#0071bc] leading-tight line-clamp-2">
+                              {dataset.title}
+                            </span>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-[10px] text-[#0071bc] font-black uppercase tracking-widest bg-blue-100/50 border border-blue-200 px-2.5 py-0.5 rounded-md">
+                                {dataset.dataset_type === "pemerintah" ? "Pemerintah" : "Non-Pemerintah"}
+                              </span>
+                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <Database size={12} /> Klik untuk melihat data
+                              </span>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="p-10 text-center flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <Search className="text-gray-300" size={28} />
+                          </div>
+                          <p className="text-gray-900 text-sm font-bold">Tidak Ditemukan</p>
+                          <p className="text-gray-500 text-xs font-medium mt-1">Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
-            <button className="bg-[#0071bc] hover:bg-[#005a96] text-white py-5 px-12 text-lg font-bold transition-colors uppercase tracking-widest border-l border-blue-400/20">
-              Cari Data
-            </button>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-500/5 -skew-x-12 transform translate-x-20"></div>
       </header>
 
       {/* --- QUICK LINKS --- */}
-      <section className="border-b border-gray-200 bg-[#f4f7f9] py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="border-b border-gray-200 bg-[#f4f7f9] py-14 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-black">
           <div className="grid grid-cols-1 md:grid-cols-3 text-center gap-12 md:gap-4 md:divide-x divide-gray-300">
-            <div className="px-6 text-center text-black">
+            <div className="px-6">
               <Database className="mx-auto text-[#0071bc] mb-4" size={40} />
               <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">Data Sektoral</h3>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">Eksplorasi data mentah berdasarkan Organisasi Perangkat Daerah (OPD).</p>
               <a href="#fitur" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Lihat Sektor <ChevronRight size={14} /></a>
             </div>
-            <div className="px-6 text-center text-black">
+            <div className="px-6">
               <BarChart3 className="mx-auto text-[#0071bc] mb-4" size={40} />
               <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">Indikator Utama</h3>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">Runtun waktu indikator makro pembangunan daerah Mimika.</p>
               <a href="#statistik" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Lihat Indikator <ChevronRight size={14} /></a>
             </div>
-            <div className="px-6 text-center text-black">
+            <div className="px-6">
               <Globe className="mx-auto text-[#0071bc] mb-4" size={40} />
               <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">GIS Mimika</h3>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">Pemetaan visual kondisi pembangunan antar distrik secara geospasial.</p>
@@ -239,27 +509,45 @@ export default function LandingPage() {
       </section>
 
       {/* --- TEMATIK DATAHUB SECTION --- */}
-      <section id="tematik" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="border-b-[4px] border-[#0071bc] pb-6 text-center md:text-left text-black">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Fokus Tematik</h2>
-            <p className="mt-4 text-gray-700 text-lg max-w-4xl font-light">
-              Koleksi data terkurasi untuk mendukung perencanaan pembangunan Kabupaten Mimika melalui fokus tematik Satu Data Indonesia.
-            </p>
+      <section id="tematik" className="py-20 bg-white relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
+          <div className="border-b-[4px] border-[#0071bc] pb-6 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Fokus Tematik</h2>
+              <p className="mt-4 text-gray-700 text-lg max-w-4xl font-light">
+                Koleksi data terkurasi untuk mendukung perencanaan pembangunan Kabupaten Mimika melalui fokus tematik Satu Data Indonesia.
+              </p>
+            </div>
+            {isCategoryLoading && <Loader2 className="animate-spin text-[#0071bc] mb-4" size={24} />}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {themeCardsData.map((data, index) => (
-              <ThemeCard key={index} {...data} />
-            ))}
+            {!isCategoryLoading && Object.entries(datasetsByCategory).map(([categoryName, group]) => {
+              const ds = group.datasets[0];
+              if (!ds) return null;
+
+              return (
+                <ThemeCard 
+                  key={categoryName}
+                  title={ds.title || "Tanpa Judul"}
+                  description={ds.description || ""}
+                  year={ds.year || "N/A"}
+                  sourceName={ds.source_name || "-"}
+                  sourceType={ds.source_type_id || "-"}
+                  profileLink={`Profil ${group.category_info.name}`}
+                  imagePath={group.category_info.template_url || ""}
+                  bgImage={ds.image_url || ""}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* --- GIS PETA SECTION --- */}
       <section id="gis" className="py-20 bg-[#f4f7f9]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="border-b-[4px] border-[#0071bc] pb-6 text-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
+          <div className="border-b-[4px] border-[#0071bc] pb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
             <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
               Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
@@ -274,7 +562,6 @@ export default function LandingPage() {
               sizes="100vw"
               className="object-cover opacity-80" 
             />
-            
             <div className="absolute inset-0 bg-blue-900/10 pointer-events-none"></div>
 
             <div className="absolute top-6 right-6 flex flex-col gap-3">
@@ -295,16 +582,82 @@ export default function LandingPage() {
               <div className="h-px bg-white/20 w-full"></div>
               <span>Lokasi Fokus: Distrik Mimika Baru, Papua Tengah</span>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* FIXED MARKER: Perbaikan Hydration Error (Ganti P ke DIV) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-               <div className="bg-white px-4 py-2.5 rounded-xl shadow-2xl border border-blue-100 mb-2 relative group-hover:scale-110 transition-transform text-black">
-                  <div className="text-[10px] font-black text-[#002244] uppercase leading-none">Distrik Tembagapura</div>
-                  <div className="text-[9px] text-blue-600 mt-1.5 font-bold uppercase flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div> Sektor Pertambangan
+      {/* --- NEWS & STORIES SECTION --- */}
+      <section className="py-20 bg-[#f8fafc] border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-10 border-b-[4px] border-[#0071bc] pb-6">
+            <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Berita & Publikasi</h2>
+            <a 
+              href="https://beritamimika.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:flex text-[#0071bc] font-bold text-sm items-center gap-1 hover:text-[#002244] transition-colors uppercase tracking-widest"
+            >
+              Lihat Semua <ArrowRight size={16} />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <a 
+              href={NEWS_DATA.featured.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="lg:col-span-2 group flex flex-col"
+            >
+              <div className="relative w-full h-72 md:h-[450px] rounded-2xl overflow-hidden mb-6">
+                <Image 
+                  src={NEWS_DATA.featured.image}
+                  alt={NEWS_DATA.featured.title}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute top-4 left-4 bg-[#0071bc] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-sm shadow-md">
+                  {NEWS_DATA.featured.category}
+                </div>
+              </div>
+              <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-3">{NEWS_DATA.featured.date}</p>
+              <h3 className="text-2xl md:text-3xl font-black text-[#002244] mb-4 hover:text-[#0071bc] transition-colors leading-tight">
+                {NEWS_DATA.featured.title}
+              </h3>
+              <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
+                {NEWS_DATA.featured.excerpt}
+              </p>
+              <span className="text-[#0071bc] font-bold text-sm uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all">
+                Baca Selengkapnya <ArrowRight size={16} />
+              </span>
+            </a>
+
+            <div className="flex flex-col gap-8 lg:border-l border-gray-200 lg:pl-10">
+              {NEWS_DATA.list.map(item => (
+                <a 
+                  key={item.id} 
+                  href={item.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex gap-5 group items-start"
+                >
+                  <div className="relative w-28 h-24 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                    <Image 
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-               </div>
-               <div className="w-5 h-5 bg-[#0071bc] rounded-full border-[5px] border-white shadow-2xl ring-8 ring-blue-500/10"></div>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-1.5">
+                      {item.date} • {item.category}
+                    </p>
+                    <h4 className="text-sm font-bold text-[#002244] leading-snug group-hover:text-[#0071bc] transition-colors line-clamp-3">
+                      {item.title}
+                    </h4>
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         </div>
@@ -312,19 +665,19 @@ export default function LandingPage() {
 
       {/* --- DATA SEKTORAL SECTION --- */}
       <section id="fitur" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="border-b-[4px] border-[#0071bc] pb-6 text-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
+          <div className="border-b-[4px] border-[#0071bc] pb-6">
             <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Transparansi Data Sektoral</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-12 text-black">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-12">
             <div className="md:col-span-4 bg-[#f8fafc] border border-gray-200 p-10 flex flex-col justify-between shadow-sm rounded-sm">
               <div>
                 <h3 className="text-2xl font-bold text-[#002244] mb-6">Analisis Indikator Makro Ekonomi</h3>
                 <p className="text-gray-600 mb-8 leading-relaxed text-base">
                   Mimika DataHub menyediakan dasbor interaktif yang dirancang untuk membantu pengambil kebijakan dan publik memantau pertumbuhan ekonomi serta tata kelola data secara efisien sesuai standar nasional.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 text-black">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
                   <div className="flex items-start gap-3">
                     <FileText size={24} className="text-[#0071bc] shrink-0" />
                     <span className="text-sm font-semibold text-gray-700">Kepatuhan Standar Satu Data Indonesia</span>
@@ -333,7 +686,7 @@ export default function LandingPage() {
                     <ShieldCheck size={24} className="text-[#0071bc] shrink-0" />
                     <span className="text-sm font-semibold text-gray-700">Integritas & Keamanan Data Terjamin</span>
                   </div>
-                  <div className="flex items-start gap-3 text-black">
+                  <div className="flex items-start gap-3">
                     <Zap size={24} className="text-[#0071bc] shrink-0" />
                     <span className="text-sm font-semibold text-gray-700">Update Berkala dari 54 Instansi</span>
                   </div>
@@ -362,7 +715,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 p-8 shadow-sm rounded-sm text-black">
+              <div className="bg-white border border-gray-200 p-8 shadow-sm rounded-sm">
                 <h4 className="text-[#002244] font-bold mb-4 uppercase text-xs tracking-wider">Akses Data API</h4>
                 <p className="text-sm text-gray-500 mb-6 leading-relaxed">
                   Kami menyediakan akses sistem bagi pengembang dan pengelola data OPD melalui portal terenkripsi.
@@ -378,7 +731,7 @@ export default function LandingPage() {
 
       {/* --- FOOTER --- */}
       <footer className="bg-[#333333] text-white pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-gray-600 pb-12 mb-10 text-white">
             <div className="md:col-span-1">
               <div className="flex items-center gap-3 mb-6">
@@ -406,24 +759,28 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      
+      {/* Custom Scrollbar Styling (Khusus untuk dropdown) */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}} />
     </div>
   );
 }
 
 // --- SUB-COMPONENTS ---
-
-function LayerToggle({ label, color, active = false }: { label: string, color: string, active?: boolean }) {
-  return (
-    <div className="flex items-center gap-3 group cursor-pointer transition-all hover:translate-x-1">
-      <div className={`w-4 h-4 rounded border-2 border-white shadow-sm shrink-0 ${color}`}></div>
-      <span className={`text-[11px] font-bold uppercase tracking-tight ${active ? 'text-[#002244]' : 'text-gray-400'}`}>{label}</span>
-      <div className={`ml-auto w-8 h-4 rounded-full relative transition-colors shadow-inner ${active ? 'bg-blue-600' : 'bg-gray-200'}`}>
-        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${active ? 'right-0.5' : 'left-0.5'}`}></div>
-      </div>
-    </div>
-  );
-}
-
 function StatItem({ label, val }: { label: string, val: string }) {
   return (
     <div className="flex justify-between items-end border-b border-white/10 pb-2">

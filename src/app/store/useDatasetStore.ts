@@ -1,6 +1,6 @@
 // src/store/useDatasetStore.ts
 import { create } from 'zustand';
-import { Dataset, DatasetContent, SidebarStats, DatasetFilterParams } from '../types/dataset';
+import { Dataset, DatasetContent, SidebarStats, DatasetFilterParams,DatasetRecentOut, LatestByCategoryResponse } from '../types/dataset';
 import { datasetService } from '../services/dataset.service';
 
 interface DatasetState {
@@ -12,8 +12,17 @@ interface DatasetState {
   isLoading: boolean;
   error: string | null;
   sidebarStats: SidebarStats | null;
+  recentDatasets: DatasetRecentOut[];
+  isRecentLoading: boolean;
   isSidebarLoading: boolean;
+  latestByCategory: LatestByCategoryResponse;
+  isLatestLoading: boolean;
+  datasetsByCategory: LatestByCategoryResponse;
+  isCategoryLoading: boolean;
 
+  fetchLatestByCategory: () => Promise<void>;
+
+  fetchRecentWithTemplates: () => Promise<void>;
   // Actions Fetching
   fetchPendingDatasets: () => Promise<void>;
   fetchApprovedDatasets: () => Promise<void>;
@@ -41,11 +50,37 @@ export const useDatasetStore = create<DatasetState>((set, get) => ({
   approvedDatasets: [],
   publicDatasets: [],
   myDatasets: [],
+  recentDatasets: [],
+  isRecentLoading: false,
   selectedDatasetContent: null,
   sidebarStats: null,
   isSidebarLoading: false,
   isLoading: false,
   error: null,
+  latestByCategory: {},
+  isLatestLoading: false,
+  datasetsByCategory: {},
+  isCategoryLoading: false,
+
+  fetchLatestByCategory: async () => {
+    set({ isCategoryLoading: true });
+    try {
+      const data = await datasetService.getLatestByCategory();
+      set({ datasetsByCategory: data, isCategoryLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isCategoryLoading: false });
+    }
+  },
+  
+  fetchRecentWithTemplates: async () => {
+    set({ isRecentLoading: true, error: null });
+    try {
+      const data = await datasetService.getRecentWithTemplates();
+      set({ recentDatasets: data, isRecentLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isRecentLoading: false });
+    }
+  },
 
   fetchPublicDatasets: async (type, filters) => {
     set({ isLoading: true, error: null });

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import {
   Database, CloudUpload, Building, Star, Clock,
   Flame, TrendingUp, Activity, AlertTriangle, Building2, Users,
-  Map // Tambahan Icon untuk Header Peta
+  Map
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -17,7 +17,7 @@ import StatCard from "@/components/ui/StatCard";
 import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
 
-// Import Komponen GIS Spasial
+// Import Komponen GIS Spasial (Kontribusi Anda)
 import MapWrapper from "@/src/components/gis/MapWrapper";
 
 // Integrasi Store
@@ -47,21 +47,21 @@ const OpdStatusRow = ({ opdName, terkirim, target, status }: { opdName: string, 
 export default function ManagerDashboardPage() {
   const { dashboardData, fetchMainStats, isLoading } = useStatsStore();
 
-  // Fetch Data dari API saat komponen dimuat
   useEffect(() => {
     fetchMainStats();
   }, [fetchMainStats]);
 
   if (isLoading || !dashboardData) {
     return (
-      <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans text-black">
-        <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
-        <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
+      <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
+          <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
+          <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
+        </div>
       </div>
     );
   }
 
-  // Mapping data trend untuk Recharts (Bulan 1-12 ke Nama)
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
   const formattedTrendData = dashboardData.quality_trend.map(item => ({
     name: monthNames[item.bulan - 1],
@@ -69,184 +69,181 @@ export default function ManagerDashboardPage() {
   }));
 
   return (
-    <div className="bg-[#f4f7fb] min-h-screen p-4 md:p-6 font-sans animate-in fade-in duration-500 text-black">
+    <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
 
-      {/* 1. HEADER BANNER */}
-      <PageHeader
-        title="Dashboard Utama"
-        subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika"
-        withSearch
-      />
+        {/* 1. HEADER BANNER */}
+        <PageHeader
+          title="Dashboard Utama"
+          subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika"
+          withSearch
+        />
 
-      {/* 2. SUMMARY CARDS - Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <StatCard
-          label="Total Dataset"
-          value={dashboardData.cards.total_dataset}
-          icon={<Database size={22} />}
-          iconBg="bg-[#7e57c2]"
-        />
-        <StatCard
-          label="OPD Aktif"
-          value={dashboardData.cards.total_sumber}
-          icon={<Building size={22} />}
-          iconBg="bg-[#29b6f6]"
-        />
-        <StatCard
-          label="User Aktif"
-          value={dashboardData.cards.user_aktif}
-          icon={<Users size={22} />}
-          iconBg="bg-[#ec407a]"
-        />
-        <StatCard
-          label="Rata-rata Kualitas"
-          value={dashboardData.cards.rata_rata_kualitas}
-          icon={<Star size={22} fill="currentColor" />}
-          iconBg="bg-[#66bb6a]"
-          valueColor="text-[#66bb6a]"
-        />
-      </div>
-
-      {/* ========================================== */}
-      {/* INTERVENSI GIS: PETA SPASIAL (CHOROPLETH)  */}
-      {/* ========================================== */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-8 relative z-10">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <Map size={18} className="text-[#1e61d0]" /> Sebaran Dataset Geospasial
-          </h3>
-          <span className="text-xs text-gray-400 font-medium italic">Data Agregasi O(1)</span>
+        {/* 2. SUMMARY CARDS */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
+          <StatCard
+            label="Total Dataset"
+            value={dashboardData.cards.total_dataset}
+            icon={<Database className="w-4 h-4 md:w-5.5 md:h-5.5" />}
+            iconBg="bg-[#7e57c2]"
+          />
+          <StatCard
+            label="Sumber Data"
+            value={dashboardData.cards.total_sumber}
+            icon={<Building className="w-4 h-4 md:w-5.5 md:h-5.5" />}
+            iconBg="bg-[#29b6f6]"
+          />
+          <StatCard
+            label="User Aktif"
+            value={dashboardData.cards.user_aktif}
+            icon={<Users className="w-4 h-4 md:w-5.5 md:h-5.5" />}
+            iconBg="bg-[#ec407a]"
+          />
+          <StatCard
+            label="Rata-rata Kualitas"
+            value={dashboardData.cards.rata_rata_kualitas}
+            icon={<Star className="w-4 h-4 md:w-5.5 md:h-5.5" fill="currentColor" />}
+            iconBg="bg-[#66bb6a]"
+            valueColor="text-[#66bb6a]"
+          />
         </div>
-        {/* MapWrapper diletakkan di dalam container yang sudah memiliki tinggi statis di dalam komponennya */}
-        <MapWrapper />
-      </div>
 
-      {/* 3. DATA LISTS - Responsive Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Dataset Terbaru */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
+        {/* 3. INTERVENSI GIS: PETA SPASIAL (Kontribusi Spasial) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-6 md:mb-8 relative z-10">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Clock size={18} className="text-gray-700" /> Dataset Terbaru
+            <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+              <Map size={18} className="text-[#1e61d0]" /> Sebaran Dataset Geospasial
             </h3>
-            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
+            <span className="text-[10px] text-gray-400 font-medium italic">Data Agregasi O(1)</span>
           </div>
-          <div className="space-y-5">
-            {dashboardData.recent.map((item) => (
-              <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                <div className="max-w-[70%]">
-                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-1 font-medium">Tahun {item.year} • {new Date(item.created_at).toLocaleDateString('id-ID')}</p>
-                </div>
-                <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-red-100 shrink-0">Baru</span>
-              </div>
-            ))}
-          </div>
+          <MapWrapper />
         </div>
 
-        {/* Dataset Populer */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
-          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Flame size={18} className="text-gray-700" /> Dataset Populer
-            </h3>
-            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
-          </div>
-          <div className="space-y-5">
-            {dashboardData.popular.map((item) => (
-              <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                <div className="max-w-[80%]">
-                  <h4 className="text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-1 font-medium">{item.total_rows} Record • {item.quality_score}% Kualitas</p>
+        {/* 4. DATA LISTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          {/* Dataset Terbaru */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                <Clock size={18} className="text-gray-700 shrink-0" /> Dataset Terbaru
+              </h3>
+              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter shrink-0">Lihat semua →</span>
+            </div>
+            <div className="space-y-5">
+              {dashboardData.recent.slice(0, 2).map((item) => (
+                <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className="max-w-[70%]">
+                    <h4 className="text-xs md:text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
+                    <p className="text-[10px] md:text-[11px] text-gray-500 mt-1 font-medium">Tahun {item.year} • {new Date(item.created_at).toLocaleDateString('id-ID')}</p>
+                  </div>
+                  <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-md shrink-0">Baru</span>
                 </div>
-                <TrendingUp size={18} className="text-[#ef4444] shrink-0" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 4. GRAFIK & ALERT - Responsive Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Tren Kualitas Data */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 overflow-hidden">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Activity size={18} className="text-gray-700" /> Tren Kualitas Data per Bulan
-            </h3>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
+              ))}
             </div>
           </div>
-          <div className="h-70 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v) => [`${v}%`, "Skor"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#ef4444"
-                  strokeWidth={4}
-                  dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
-                  activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+
+          {/* Dataset Populer */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                <Flame size={18} className="text-gray-700 shrink-0" /> Dataset Populer
+              </h3>
+              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter shrink-0">Lihat semua →</span>
+            </div>
+            <div className="space-y-5">
+              {dashboardData.popular.slice(0, 2).map((item) => (
+                <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className="max-w-[80%]">
+                    <h4 className="text-xs md:text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
+                    <p className="text-[10px] md:text-[11px] text-gray-500 mt-1 font-medium">{item.total_rows} Record • {item.quality_score}% Kualitas</p>
+                  </div>
+                  <TrendingUp size={16} className="text-[#ef4444] shrink-0" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Peringatan Kualitas (Contoh Statis Berdasarkan Skor Terendah) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
+        {/* 5. GRAFIK & ALERT */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 overflow-hidden">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                <Activity size={18} className="text-gray-700 shrink-0" /> Tren Kualitas Data per Bulan
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
+                <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
+              </div>
+            </div>
+            <div className="h-62.5 md:h-70 w-full -ml-4 sm:ml-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                    formatter={(v) => [`${v}%`, "Skor"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#ef4444"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
+                    activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Notifikasi Kualitas */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                <AlertTriangle size={18} className="text-[#ef4444] shrink-0" /> Notifikasi Kualitas
+              </h3>
+            </div>
+            <div className="space-y-4">
+              {dashboardData.popular.filter(d => d.quality_score < 80).length > 0 ? (
+                dashboardData.popular.filter(d => d.quality_score < 80).map(d => (
+                  <AlertCard key={d.id} title={d.title} desc={`Skor Kualitas terdeteksi rendah: ${d.quality_score}%`} />
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 italic text-center py-10">Tidak ada peringatan kualitas saat ini.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 6. STATUS KIRIM OPD (Kontribusi Spasial/HEAD) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-8">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <AlertTriangle size={18} className="text-[#ef4444]" /> Notifikasi Kualitas
+            <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+              <Building2 size={18} className="text-gray-700" /> Kepatuhan Pengiriman OPD (Bulan Ini)
             </h3>
-            <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Kelola →</span>
+            <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Detail →</span>
           </div>
-          <div className="space-y-4">
-            {dashboardData.popular.filter(d => d.quality_score < 80).length > 0 ? (
-              dashboardData.popular.filter(d => d.quality_score < 80).map(d => (
-                <AlertCard key={d.id} title={d.title} desc={`Skor Kualitas terdeteksi rendah: ${d.quality_score}%`} />
-              ))
-            ) : (
-              <p className="text-xs text-gray-400 italic text-center py-10">Tidak ada peringatan kualitas saat ini.</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+            <div className="space-y-1">
+              {dashboardData.opd_monthly_monitoring.slice(0, Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
+                <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+              ))}
+            </div>
+            <div className="space-y-1">
+              {dashboardData.opd_monthly_monitoring.slice(Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
+                <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 5. STATUS KIRIM OPD */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <Building2 size={18} className="text-gray-700" /> Kepatuhan Pengiriman OPD (Bulan Ini)
-          </h3>
-          <span className="text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Detail →</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
-          <div className="space-y-1">
-            {dashboardData.opd_monthly_monitoring.slice(0, Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
-              <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
-            ))}
-          </div>
-          <div className="space-y-1">
-            {dashboardData.opd_monthly_monitoring.slice(Math.ceil(dashboardData.opd_monthly_monitoring.length / 2)).map((opd, idx) => (
-              <OpdStatusRow key={idx} opdName={opd.opd_name} terkirim={opd.terkirim} target={opd.target} status={opd.status} />
-            ))}
-          </div>
-        </div>
+        <footer className="mt-8 text-center text-gray-400 text-[9px] md:text-[10px] font-medium tracking-widest uppercase pb-8">
+          © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+        </footer>
       </div>
-
-      <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase">
-        © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
-      </footer>
     </div>
   );
 }

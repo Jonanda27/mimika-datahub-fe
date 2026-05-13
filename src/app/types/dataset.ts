@@ -20,6 +20,7 @@ export interface Dataset {
     id: number;
     name: string;
   } | null;
+  image_url?: string;
 }
 
 // Tambahan untuk response general
@@ -63,3 +64,36 @@ export interface DatasetFilterParams {
   source_type_id?: number | null;
   year?: number | null;
 }
+
+export interface DatasetRecentOut {
+  id: number;
+  title: string;
+  image_url: string | null;
+  template_url: string | null;
+  category_name: string;
+  source_name: string;
+  created_at: string;
+}
+
+export interface DatasetByCategoryItem {
+  id: number;
+  title: string;
+  image_url: string | null;
+  source_name: string;
+  created_at: string;
+  description?: string; 
+   source_type_id: number; 
+  year: number; 
+   source_id: number; 
+}
+
+export interface CategoryGroup {
+  category_info: {
+    name: string;
+    template_url: string | null;
+  };
+  datasets: DatasetByCategoryItem[];
+}
+
+// Map Nama Kategori ke Group Data
+export type LatestByCategoryResponse = Record<string, CategoryGroup>;

@@ -5,7 +5,7 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
     <div className="min-h-screen bg-[#f4f7fb]">
       <UserSidebar />
       {/* ml-0 di mobile, ml-[260px] di layar besar (lg) */}
-      <div className="lg:ml-[px] transition-all duration-300">
+      <div className="lg:ml-[px] pt-0 transition-all duration-300">
         {children}
       </div>
     </div>
