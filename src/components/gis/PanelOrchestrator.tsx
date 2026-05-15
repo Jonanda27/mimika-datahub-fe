@@ -6,15 +6,19 @@ import { X, Map as MapIcon } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
-// TAHAP 5: Import Komponen Nyata yang sudah dibangun di tahap sebelumnya
+// Import Komponen Nyata
 import CategoryPanel from "./panels/CategoryPanel";
 import DetailPanel from "./panels/DetailPanel";
-import LayerControl from "./panels/LayerControl"; // <-- Import LayerControl
+import LayerControl from "./panels/LayerControl";
+
+// PERBAIKAN KRUSIAL: Import helper warna dari Pure Fabrication Engine (gisUtils)
+// Ini memutus rantai SSR error "window is not defined" dari Leaflet.
+import { getSemanticColor } from "@/src/app/lib/gisUtils";
 
 /**
- * PanelOrchestrator - The Stacking Drawer (FASE 3 & 5)
+ * PanelOrchestrator - The Stacking Drawer (Light Theme)
  * Bertanggung jawab merender tumpukan panel secara dinamis di sisi kiri 
- * (docking ke Slim Sidebar) dan Legenda Global di kanan bawah.
+ * dan Legenda Global di kanan bawah (Sinkronisasi Mutlak).
  */
 export default function PanelOrchestrator() {
     const { activePanels, closePanel, closePanelsToTheRight, activeIndicator } = useExplorerStore();
@@ -37,7 +41,7 @@ export default function PanelOrchestrator() {
         <div className="relative h-full w-full flex items-start pointer-events-none">
 
             {/* =====================================================================
-                1. SISTEM SHIFTING PANEL (LACI BERTUMPUK)
+                1. SISTEM SHIFTING PANEL (LACI BERTUMPUK TEMA TERANG)
             ====================================================================== */}
             {activePanels.map((panel, index) => {
                 // Logika Shifting: Menghitung posisi X berdasarkan urutan (index)
@@ -49,37 +53,37 @@ export default function PanelOrchestrator() {
                         className="absolute top-0 bottom-0 pointer-events-auto panel-transition"
                         style={{
                             width: `${PANEL_WIDTH}px`,
-                            maxWidth: 'calc(100vw - 32px)', // Keamanan responsivitas mobile
+                            maxWidth: 'calc(100vw - 32px)',
                             transform: `translateX(${xOffset}px)`,
-                            zIndex: 40 - index, // Panel lebih kanan berada "di bawah" secara visual
+                            zIndex: 40 - index,
                         }}
                     >
-                        {/* CONTAINER PANEL (Identitas Bold: Papuan Midnight & Neon) */}
-                        <div className="bg-[#0A192F]/95 backdrop-blur-xl h-full w-full rounded-2xl flex flex-col overflow-hidden border border-[#00E5FF]/20 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
+                        {/* TUGAS 1: CONTAINER PANEL (Light Theme: Putih, Bayangan Lembut) */}
+                        <div className="bg-white/95 backdrop-blur-md h-full w-full rounded-2xl flex flex-col overflow-hidden border border-slate-200 shadow-2xl shadow-slate-900/10">
 
                             {/* HEADER PANEL */}
-                            <div className="px-5 py-4 border-b border-[#00E5FF]/20 flex justify-between items-center bg-white/5">
+                            <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-[#00E5FF] uppercase tracking-[0.2em]">
+                                    <span className="text-[9px] font-black text-teal-600 uppercase tracking-[0.2em]">
                                         {panel.type.replace("-", " ")}
                                     </span>
-                                    <h3 className="text-sm font-black text-white truncate max-w-[200px] md:max-w-[240px] tracking-tight mt-0.5">
+                                    <h3 className="text-sm font-black text-slate-800 truncate max-w-[200px] md:max-w-[240px] tracking-tight mt-0.5">
                                         {panel.title}
                                     </h3>
                                 </div>
 
                                 <button
                                     onClick={() => closePanel(panel.id)}
-                                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-[#00E5FF] hover:text-[#0A192F] text-white/50 hover:border-[#00E5FF] transition-all active:scale-95"
+                                    className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 hover:border-rose-200 transition-all active:scale-95"
                                 >
                                     <X size={16} strokeWidth={2.5} />
                                 </button>
                             </div>
 
-                            {/* BODY PANEL (Konten Dinamis terintegrasi dengan komponen asli) */}
+                            {/* BODY PANEL (Konten Dinamis) */}
                             <div
                                 className="flex-1 overflow-y-auto custom-scrollbar p-5"
-                                onClick={() => closePanelsToTheRight(index)} // Autofokus: tutup panel di kanannya
+                                onClick={() => closePanelsToTheRight(index)}
                             >
                                 {renderPanelContent(panel.type, panel.data)}
                             </div>
@@ -90,7 +94,7 @@ export default function PanelOrchestrator() {
             })}
 
             {/* =====================================================================
-                2. TAHAP 5: LEGENDA DINAMIS PETA (GLOBAL OVERLAY)
+                2. LEGENDA DINAMIS PETA (SINKRONISASI MUTLAK)
             ====================================================================== */}
             {activeIndicator && <MapLegend indicatorKey={activeIndicator} />}
 
@@ -100,7 +104,6 @@ export default function PanelOrchestrator() {
 
 /**
  * Helper: Menyuntikkan Komponen Panel berdasarkan Tipe
- * (Indirection: Memisahkan logika render dari logika orchestrator)
  */
 function renderPanelContent(type: ExplorerPanelType, data: any) {
     switch (type) {
@@ -111,28 +114,27 @@ function renderPanelContent(type: ExplorerPanelType, data: any) {
             return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} />;
 
         case "indicator-config":
-            // TAHAP 2 & 3: Integrasi komponen LayerControl untuk mengatur Basemap & Opacity
             return <LayerControl />;
 
         case "search-result":
             return (
-                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
-                    <MapIcon size={48} className="text-[#00E5FF]" />
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-slate-400">
+                    <MapIcon size={48} className="text-teal-500/50" />
                     <div className="space-y-1">
-                        <p className="text-sm font-black text-white uppercase tracking-widest">Modul Pencarian</p>
-                        <p className="text-xs text-white/60">Fitur pencarian spasial sedang dalam tahap integrasi.</p>
+                        <p className="text-sm font-black text-slate-700 uppercase tracking-widest">Modul Pencarian</p>
+                        <p className="text-xs">Fitur pencarian spasial sedang dalam tahap integrasi.</p>
                     </div>
                 </div>
             );
 
         default:
-            return <div className="text-white/40 text-xs">Komponen panel belum didefinisikan.</div>;
+            return <div className="text-slate-400 text-xs">Komponen panel belum didefinisikan.</div>;
     }
 }
 
 /**
- * TAHAP 5: Sub-komponen Map Legend
- * Merender kotak legenda secara "Fixed" di pojok kanan bawah agar merespon viewport secara utuh.
+ * TUGAS 2: Sub-komponen Map Legend (Sinkronisasi Mutlak)
+ * Merender kotak legenda secara dinamis dengan membaca mesin warna `getSemanticColor`.
  */
 function MapLegend({ indicatorKey }: { indicatorKey: string }) {
     // Format teks indikator agar cantik (misal: "stunting_rate" -> "Stunting Rate")
@@ -141,38 +143,47 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 
-    return (
-        // Menggunakan posisi "fixed" agar menempel di kanan bawah layar berdampingan dengan Custom Zoom HUD
-        <div className="fixed bottom-8 right-[88px] md:right-8 pointer-events-auto z-50 bg-[#0A192F]/90 backdrop-blur-xl border border-[#00E5FF]/20 p-5 rounded-2xl shadow-[0_8px_32px_0_rgba(0,229,255,0.15)] w-60 md:w-64 animate-in fade-in slide-in-from-bottom-4">
+    // Definisi skala rentang nilai
+    const scaleBins = [
+        { label: "> 80% (Sangat Padat)", value: 90 },
+        { label: "60% - 80% (Padat)", value: 70 },
+        { label: "40% - 60% (Sedang)", value: 50 },
+        { label: "20% - 40% (Rendah)", value: 30 },
+        { label: "< 20% (Sangat Rendah)", value: 10 },
+    ];
 
-            <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
-                <MapIcon size={16} className="text-[#00E5FF]" />
-                <h4 className="text-[11px] font-black text-white uppercase tracking-widest truncate">
+    // Nilai maksimum patokan (disamakan dengan nilai max di MimikaMap)
+    const MAX_VALUE = 100;
+
+    return (
+        <div className="fixed bottom-8 right-[88px] md:right-28 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-200 p-5 rounded-2xl shadow-xl w-60 md:w-64 animate-in fade-in slide-in-from-bottom-4">
+
+            <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                <MapIcon size={16} className="text-teal-600" />
+                <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest truncate" title={formattedTitle}>
                     {formattedTitle}
                 </h4>
             </div>
 
             <div className="space-y-3">
-                <div className="flex items-center gap-3 group cursor-default">
-                    <div className="w-4 h-4 rounded-sm bg-[#1e3a8a] border border-white/10 shadow-[0_0_10px_rgba(30,58,138,0.8)] group-hover:scale-110 transition-transform"></div>
-                    <span className="text-[10px] font-bold text-white/70 group-hover:text-[#00E5FF] transition-colors"> 80% (Sangat Padat)</span>
-                </div>
-                <div className="flex items-center gap-3 group cursor-default">
-                    <div className="w-4 h-4 rounded-sm bg-[#1d4ed8] border border-white/10 group-hover:scale-110 transition-transform"></div>
-                    <span className="text-[10px] font-bold text-white/70 group-hover:text-[#00E5FF] transition-colors">60% - 80% (Padat)</span>
-                </div>
-                <div className="flex items-center gap-3 group cursor-default">
-                    <div className="w-4 h-4 rounded-sm bg-[#3b82f6] border border-white/10 group-hover:scale-110 transition-transform"></div>
-                    <span className="text-[10px] font-bold text-white/70 group-hover:text-[#00E5FF] transition-colors">40% - 60% (Sedang)</span>
-                </div>
-                <div className="flex items-center gap-3 group cursor-default">
-                    <div className="w-4 h-4 rounded-sm bg-[#93c5fd] border border-white/10 group-hover:scale-110 transition-transform"></div>
-                    <span className="text-[10px] font-bold text-white/70 group-hover:text-[#00E5FF] transition-colors">20% - 40% (Rendah)</span>
-                </div>
-                <div className="flex items-center gap-3 group cursor-default">
-                    <div className="w-4 h-4 rounded-sm bg-[#dbeafe] border border-white/10 group-hover:scale-110 transition-transform"></div>
-                    <span className="text-[10px] font-bold text-white/70 group-hover:text-[#00E5FF] transition-colors">&lt; 20% (Sangat Rendah)</span>
-                </div>
+                {scaleBins.map((bin, idx) => {
+                    // PANGGIL MESIN WARNA UTAMA:
+                    // Dapatkan warna aktual untuk rentang nilai ini berdasarkan tipe indikatornya
+                    const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
+
+                    return (
+                        <div key={idx} className="flex items-center gap-3 group cursor-default">
+                            {/* Kotak warna dirender dengan backgroundColor dinamis */}
+                            <div
+                                className="w-4 h-4 rounded-sm border border-black/10 group-hover:scale-110 transition-transform shadow-sm"
+                                style={{ backgroundColor: boxColor }}
+                            />
+                            <span className="text-[10px] font-bold text-slate-500 group-hover:text-slate-800 transition-colors">
+                                {bin.label}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
 
         </div>

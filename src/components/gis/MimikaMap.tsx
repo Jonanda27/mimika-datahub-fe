@@ -9,6 +9,9 @@ import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 
+// Mengimpor mesin warna murni (Pure Fabrication) dari utils agar aman untuk SSR
+import { getSemanticColor } from '@/src/app/lib/gisUtils';
+
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
 // Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
@@ -18,6 +21,10 @@ const DISTRICT_MAP: Record<string, number> = {
     "agimuga": 10, "jila": 11, "jita": 12, "mimikatimurjauh": 13, "mimikabaratjauh": 14,
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
+
+// Titik Pusat Default Kabupaten Mimika
+const DEFAULT_CENTER: LatLngExpression = [-4.5421, 136.8945];
+const DEFAULT_ZOOM = 8;
 
 interface MimikaMapProps {
     isAtlasMode?: boolean;
@@ -34,19 +41,23 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
-// Listener eksternal agar tombol Floating Zoom di luar MapContainer bisa mengendalikan peta
+// TUGAS 3: Listener eksternal murni Leaflet Engine (Zero Delay)
 function ExternalMapController() {
     const map = useMap();
     useEffect(() => {
         const handleZoomIn = () => map.zoomIn();
         const handleZoomOut = () => map.zoomOut();
+        // Menambahkan perintah kembalikan ke pusat peta untuk tombol Reset Peta
+        const handleResetView = () => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true });
 
         window.addEventListener('map-zoom-in', handleZoomIn);
         window.addEventListener('map-zoom-out', handleZoomOut);
+        window.addEventListener('map-reset-view', handleResetView);
 
         return () => {
             window.removeEventListener('map-zoom-in', handleZoomIn);
             window.removeEventListener('map-zoom-out', handleZoomOut);
+            window.removeEventListener('map-reset-view', handleResetView);
         };
     }, [map]);
     return null;
@@ -65,7 +76,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     // State Spasial & Render Peta
     const [geoData, setGeoData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [zoomLevel, setZoomLevel] = useState(8);
+    const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
     const [mapKey, setMapKey] = useState(Date.now());
 
     // Local State untuk Choropleth (Gradasi Warna)
@@ -160,59 +171,34 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     }, [geoData]);
 
     // ============================================================================
-    // FASE 5: SEMANTIC CHOROPLETH ENGINE (GFW Paradigm)
+    // REAKTIVITAS GAYA (STYLING)
     // ============================================================================
-    const getColorFromValue = (value: number, max: number, indicatorKey: string): string => {
-        const ratio = value / max;
-        const key = indicatorKey.toLowerCase();
-
-        // KESEHATAN / SOSIAL: Magenta - Deep Pink (Sangat Berani & Mencolok di atas hijau satelit)
-        if (key.includes('stunting') || key.includes('kesehatan') || key.includes('penduduk') || key.includes('miskin')) {
-            if (ratio > 0.8) return '#9d174d'; // Pink-800
-            if (ratio > 0.6) return '#be185d'; // Pink-700
-            if (ratio > 0.4) return '#db2777'; // Pink-600
-            if (ratio > 0.2) return '#f43f5e'; // Rose-500
-            return '#fda4af';                  // Rose-300
-        }
-        // EKONOMI: Emerald - Cyan (Representasi Uang, Kemakmuran)
-        else if (key.includes('pdrb') || key.includes('ekonomi') || key.includes('uang') || key.includes('dana')) {
-            if (ratio > 0.8) return '#064e3b'; // Emerald-900
-            if (ratio > 0.6) return '#047857'; // Emerald-700
-            if (ratio > 0.4) return '#059669'; // Emerald-600
-            if (ratio > 0.2) return '#10b981'; // Emerald-500
-            return '#6ee7b7';                  // Emerald-300
-        }
-        // INFRASTRUKTUR / DEFAULT: Amber - Burnt Orange
-        else {
-            if (ratio > 0.8) return '#b45309'; // Amber-700
-            if (ratio > 0.6) return '#d97706'; // Amber-600
-            if (ratio > 0.4) return '#f59e0b'; // Amber-500
-            if (ratio > 0.2) return '#fbbf24'; // Amber-400
-            return '#fde68a';                  // Amber-200
-        }
-    };
-
     const districtStyle = (feature: any): PathOptions => {
         const isZoomedIn = zoomLevel >= 14;
         const districtName = feature.properties?.district_name || "";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        // Default outline color jika tidak ada indikator
-        let baseColor = (isAtlasMode || isPreviewMode) ? '#00E5FF' : '#a7f3d0';
-
-        if (activeIndicator && indicatorValues && indicatorValues[key] !== undefined) {
-            baseColor = getColorFromValue(indicatorValues[key], maxValue, activeIndicator);
+        // TUGAS 1: BLANK CANVAS (Default State)
+        if (!activeIndicator || !indicatorValues || indicatorValues[key] === undefined) {
+            return {
+                fillColor: '#000000', // Hitam Netral
+                color: '#000000',     // Garis batas hitam
+                weight: isZoomedIn ? 0 : 1, // Ketebalan 1
+                fillOpacity: isZoomedIn ? 0 : 0.1, // Transparan 0.1
+                dashArray: '4' // Batas putus-putus halus untuk mode default
+            };
         }
 
+        // TUGAS 2: PANGGIL SEMANTIC CHOROPLETH JIKA ADA INDIKATOR AKTIF
+        const choroplethColor = getSemanticColor(indicatorValues[key], maxValue, activeIndicator);
         const opacityRatio = mapOpacity / 100;
-        const finalFillOpacity = isZoomedIn ? 0 : opacityRatio;
 
         return {
-            fillColor: baseColor,
-            weight: isZoomedIn ? 0 : 0.8,
-            color: activeIndicator ? '#ffffff' : baseColor, // Jika pewarnaan aktif, border putih tipis. Jika tidak, border pakai warna neon
-            dashArray: activeIndicator ? undefined : '3', // Garis solid untuk choropleth
-            fillOpacity: finalFillOpacity,
+            fillColor: choroplethColor,
+            weight: isZoomedIn ? 0 : 1,
+            color: '#ffffff', // Garis putih tipis agar warna choropleth pop-out
+            dashArray: undefined, // Garis solid
+            fillOpacity: isZoomedIn ? 0 : opacityRatio,
         };
     };
 
@@ -220,20 +206,32 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
+        // Tooltip menyesuaikan tema terang benderang
         layer.bindTooltip(
-            `<div class="font-sans text-[10px] font-black text-[#0A192F] uppercase tracking-tighter">Distrik ${districtName}</div>`,
-            { sticky: true, direction: 'top', className: 'rounded-lg shadow-xl border-none px-3 py-1.5 bg-[#00E5FF]' }
+            `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
+            { sticky: true, direction: 'top', className: 'rounded-lg shadow-lg border border-slate-200 px-3 py-1.5 bg-white' }
         );
 
         layer.on({
             mouseover: (e: any) => {
                 if (zoomLevel < 14) {
                     const target = e.target;
-                    target.setStyle({
-                        weight: 2.5,
-                        color: '#00E5FF', // Neon border on hover
-                        fillOpacity: Math.min((mapOpacity / 100) + 0.3, 1)
-                    });
+
+                    if (activeIndicator) {
+                        // Highlight untuk mode Analisis (Lebih tebal dan solid)
+                        target.setStyle({
+                            weight: 2.5,
+                            color: '#ffffff',
+                            fillOpacity: Math.min((mapOpacity / 100) + 0.3, 1)
+                        });
+                    } else {
+                        // Highlight untuk mode Default / Blank Canvas
+                        target.setStyle({
+                            weight: 2,
+                            color: '#000000',
+                            fillOpacity: 0.3
+                        });
+                    }
                     target.bringToFront();
                 }
             },
@@ -244,7 +242,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     target.setStyle({
                         weight: originalStyle.weight,
                         color: originalStyle.color,
-                        fillOpacity: originalStyle.fillOpacity
+                        fillOpacity: originalStyle.fillOpacity,
+                        dashArray: originalStyle.dashArray
                     });
                 }
             },
@@ -297,12 +296,10 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     const getTileMaxZoom = () => {
-        return activeBaseMap === 'satellite' ? 22 : 20; // Satelit google punya zoom sampai 22
+        return activeBaseMap === 'satellite' ? 22 : 20;
     };
 
     if (loading) return null;
-
-    const mapCenter: LatLngExpression = [-4.5421, 136.8945];
 
     // Bypass Tipe Khusus React 19 / Next.js 15
     const SafeMapContainer = MapContainer as any;
@@ -315,7 +312,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         if (loadingProfile) {
             return (
                 <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-[#00E5FF] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             );
         }
@@ -345,16 +342,16 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     return (
-        <div className={`h-full w-full relative z-10 ${(isAtlasMode || isPreviewMode) ? 'bg-[#0A192F]' : 'bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-sm'}`}>
+        <div className={`h-full w-full relative z-10 ${(isAtlasMode || isPreviewMode) ? 'bg-slate-100' : 'bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-sm'}`}>
             <SafeMapContainer
                 key={mapKey}
-                center={mapCenter}
-                zoom={8}
+                center={DEFAULT_CENTER}
+                zoom={DEFAULT_ZOOM}
                 minZoom={7}
                 scrollWheelZoom={!isPreviewMode}
                 dragging={!isPreviewMode}
                 doubleClickZoom={!isPreviewMode}
-                zoomControl={false} // MATIKAN ZOOM DEFAULT LEAFLET KARENA KITA PAKAI HUD CUSTOM
+                zoomControl={false} // MATIKAN ZOOM DEFAULT LEAFLET
                 attributionControl={!(isAtlasMode || isPreviewMode)}
                 className="h-full w-full z-0 outline-none"
             >
@@ -368,19 +365,19 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     maxZoom={getTileMaxZoom()}
                 />
 
-                {/* Layer 1: Inverted Masking (Warna Papuan Midnight transparan) */}
+                {/* Layer 1: Inverted Masking (Gelap Halus agar Area Mimika Menonjol) */}
                 {maskingPositions.length > 0 && (
                     <SafePolygon
                         positions={maskingPositions}
                         pathOptions={{
-                            fillColor: (isAtlasMode || isPreviewMode) ? '#0A192F' : '#1e293b',
-                            fillOpacity: zoomLevel >= 14 ? 0 : (isAtlasMode || isPreviewMode) ? 0.4 : 0.5,
+                            fillColor: '#000000',
+                            fillOpacity: zoomLevel >= 14 ? 0 : (isAtlasMode || isPreviewMode) ? 0.3 : 0.5,
                             stroke: false
                         }}
                     />
                 )}
 
-                {/* Layer 2: Poligon Batas Distrik (Semantic Choropleth) */}
+                {/* Layer 2: Poligon Batas Distrik (Semantic Choropleth / Blank Canvas) */}
                 {geoData && (
                     <SafeGeoJSON
                         data={geoData}
@@ -392,7 +389,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 {!isAtlasMode && !isPreviewMode && popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
                         <div className="w-72 p-1 font-sans">
-                            <h3 className="text-lg font-extrabold text-[#0A192F] border-b border-gray-200 pb-2 mb-3">
+                            <h3 className="text-lg font-extrabold text-slate-800 border-b border-gray-200 pb-2 mb-3">
                                 Distrik {popupInfo.name}
                             </h3>
                             {renderPopupContent()}

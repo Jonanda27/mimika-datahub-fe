@@ -2,9 +2,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import {
-    Home,
     Search,
     Layers,
     Database,
@@ -14,39 +12,28 @@ import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
 /**
- * ExplorerSidebar - The Slim Anchor (FASE 2)
- * Desain: Ultra-Thin Ribbon dengan identitas warna Papuan Midnight & Neon Cyan.
+ * ExplorerSidebar - The Slim Anchor (Light Mode)
+ * Desain: Ultra-Thin Ribbon dengan identitas warna Clean White & Corporate Teal.
  * Responsif: Menempel di kiri (Desktop) dan di bawah (Mobile).
  */
 export default function ExplorerSidebar() {
-    const router = useRouter();
     const { openPanel, activePanels, closePanelsToTheRight } = useExplorerStore();
 
     // Definisi Menu Navigasi (Command Center)
     const navigationItems = [
         {
-            action: "link",
-            path: "/",
-            label: "Home",
-            icon: Home,
-            title: "Kembali ke Beranda"
-        },
-        {
-            action: "panel",
             type: "search-result" as ExplorerPanelType,
             label: "Cari",
             icon: Search,
             title: "Pencarian Spasial Global"
         },
         {
-            action: "panel",
             type: "category-selector" as ExplorerPanelType,
             label: "Sektor",
             icon: Database,
             title: "Katalog Data Sektoral"
         },
         {
-            action: "panel",
             type: "indicator-config" as ExplorerPanelType,
             label: "Layers",
             icon: Layers,
@@ -60,9 +47,7 @@ export default function ExplorerSidebar() {
     };
 
     const handleNavClick = (item: typeof navigationItems[0]) => {
-        if (item.action === "link" && item.path) {
-            router.push(item.path);
-        } else if (item.type) {
+        if (item.type) {
             // Karena ini adalah "Root Menu", klik di sini akan mereset panel anak
             // dan hanya membuka panel utama yang dipilih (GFW Paradigm)
             closePanelsToTheRight(-1);
@@ -71,7 +56,8 @@ export default function ExplorerSidebar() {
     };
 
     return (
-        <aside className="fixed bottom-0 left-0 w-full h-16 md:static md:w-[88px] md:h-full flex flex-row md:flex-col items-center md:py-6 bg-[#0A192F]/95 backdrop-blur-xl border-t md:border-t-0 md:border-r border-white/10 z-50 transition-all">
+        // Memperbaiki w-[88px] menjadi w-22 sesuai anjuran canonical Tailwind
+        <aside className="fixed bottom-0 left-0 w-full h-16 md:static md:w-22 md:h-full flex flex-row md:flex-col items-center md:py-6 bg-white/95 backdrop-blur-xl border-t md:border-t-0 md:border-r border-slate-200 z-50 transition-all shadow-sm">
 
             {/* BAGIAN UTAMA: Menu Navigasi */}
             <div className="flex-1 flex flex-row md:flex-col justify-around md:justify-start items-center gap-1 md:gap-5 w-full px-2 md:px-4">
@@ -84,8 +70,8 @@ export default function ExplorerSidebar() {
                                 onClick={() => handleNavClick(item)}
                                 className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300 relative overflow-hidden active:scale-95
                                     ${isActive
-                                        ? "bg-[#00E5FF] text-[#0A192F] shadow-[0_0_25px_rgba(0,229,255,0.4)]"
-                                        : "text-white/40 hover:text-white hover:bg-white/10"
+                                        ? "bg-teal-600 text-white shadow-[0_0_15px_rgba(13,148,136,0.3)]"
+                                        : "text-slate-400 hover:text-teal-700 hover:bg-teal-50"
                                     }`}
                             >
                                 <item.icon size={isActive ? 24 : 22} strokeWidth={isActive ? 2.5 : 2} />
@@ -98,15 +84,15 @@ export default function ExplorerSidebar() {
 
                                 {/* Indikator Titik Aktif (Mobile) */}
                                 {isActive && (
-                                    <div className="md:hidden absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-[#0A192F]" />
+                                    <div className="md:hidden absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-white" />
                                 )}
                             </button>
 
                             {/* Tooltip Label (Desktop Only) */}
-                            <div className="hidden md:block absolute top-1/2 left-full -translate-y-1/2 ml-4 px-3 py-2 bg-[#00E5FF] text-[#0A192F] text-[11px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap shadow-[0_0_20px_rgba(0,229,255,0.3)] z-50">
+                            <div className="hidden md:block absolute top-1/2 left-full -translate-y-1/2 ml-4 px-3 py-2 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap shadow-lg z-50">
                                 {item.title}
                                 {/* Panah Tooltip */}
-                                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-[#00E5FF] rotate-45 rounded-sm" />
+                                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-slate-800 rotate-45 rounded-sm" />
                             </div>
                         </div>
                     );
@@ -115,7 +101,7 @@ export default function ExplorerSidebar() {
 
             {/* BAGIAN BAWAH: Info & Branding (Sembunyi di Mobile untuk menghemat ruang) */}
             <div className="hidden md:flex flex-col items-center gap-5 w-full px-4">
-                <div className="w-8 h-px bg-white/10" />
+                <div className="w-8 h-px bg-slate-200" />
 
                 <div className="relative group w-full flex justify-center">
                     <button
@@ -123,19 +109,21 @@ export default function ExplorerSidebar() {
                             closePanelsToTheRight(-1);
                             openPanel("search-result", "Informasi Sistem", { section: "about" });
                         }}
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white/30 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-all active:scale-95"
                     >
                         <Info size={20} />
                     </button>
                     {/* Tooltip Info */}
-                    <div className="absolute top-1/2 left-full -translate-y-1/2 ml-4 px-3 py-2 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-2xl border border-white/10 z-50">
+                    <div className="absolute top-1/2 left-full -translate-y-1/2 ml-4 px-3 py-2 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-lg z-50">
                         Tentang DataHub
+                        <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-slate-800 rotate-45 rounded-sm" />
                     </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00E5FF] to-blue-600 p-[2px] shadow-[0_0_15px_rgba(0,229,255,0.3)]">
-                    <div className="w-full h-full rounded-full bg-[#0A192F] flex items-center justify-center">
-                        <span className="text-[12px] font-black text-[#00E5FF]">M</span>
+                {/* Memperbaiki bg-gradient-to-br menjadi bg-linear-to-br dan p-[2px] menjadi p-0.5 */}
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-teal-400 to-teal-600 p-0.5 shadow-sm">
+                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                        <span className="text-[12px] font-black text-teal-600">M</span>
                     </div>
                 </div>
             </div>

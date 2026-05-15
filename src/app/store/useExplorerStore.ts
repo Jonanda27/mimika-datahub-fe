@@ -59,6 +59,12 @@ interface ExplorerState {
      * Mengubah tile layer dasar peta.
      */
     setActiveBaseMap: (baseMapId: string) => void;
+
+    /**
+     * Me-reset eksplorasi peta ke kondisi awal (Blank Canvas).
+     * Menghapus indikator aktif dan menutup panel detail wilayah.
+     */
+    resetMapData: () => void;
 }
 
 export const useExplorerStore = create<ExplorerState>()(
@@ -67,13 +73,21 @@ export const useExplorerStore = create<ExplorerState>()(
             // Inisialisasi State Default
             activePanels: [],
             activeIndicator: null,
-            mapOpacity: 70, // Default 70% agar menyatu dengan Glassmorphism
+            mapOpacity: 70, // Default 70%
             activeBaseMap: "satellite", // Default basemap
 
             // Mutator: Konteks Eksplorasi
             setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
             setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
             setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
+
+            // Mutator: Reset Data Peta (Jalan Keluar Analisis)
+            resetMapData: () =>
+                set((state) => ({
+                    activeIndicator: null, // Peta akan merespons ini dengan mengembalikan warna ke default
+                    // Tutup panel detail wilayah jika sedang terbuka, biarkan panel kategori/layer tetap ada
+                    activePanels: state.activePanels.filter((p) => p.type !== "district-detail"),
+                })),
 
             // Mutator: Manajemen Panel
             openPanel: (type, title, data = null) =>
@@ -93,7 +107,7 @@ export const useExplorerStore = create<ExplorerState>()(
                         return { activePanels: updatedPanels };
                     }
 
-                    // Jika panel baru, buat objek panel baru patuh pada interface Fase 1
+                    // Jika panel baru, buat objek panel baru
                     const newPanel: ExplorerPanel = {
                         id: `${type}-${Date.now()}`, // Unique ID untuk list rendering
                         type,

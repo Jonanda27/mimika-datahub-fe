@@ -18,27 +18,21 @@ import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
 
 /**
  * CategoryPanel - Komponen untuk memilih kategori dan indikator data.
- * Memungkinkan user melakukan pencarian lintas sektoral.
- * Terintegrasi dengan ExplorerStore untuk memicu update pada Map & Panel lain.
+ * Tema Terang (Light Mode) untuk pembacaan analitik yang maksimal.
  */
 export default function CategoryPanel() {
     const [searchQuery, setSearchQuery] = useState("");
-
-    // TAHAP 2: Destrukturisasi activeIndicator dan setActiveIndicator dari Store
     const { openPanel, activeIndicator, setActiveIndicator } = useExplorerStore();
 
-    // Mapping Icon berdasarkan ID Kategori (Information Expert)
     const categoryIcons: Record<number, any> = {
-        1: Activity,      // Kesehatan
-        2: BarChart4,     // Ekonomi
-        3: Users,         // Sosial & Kependudukan
-        4: GraduationCap, // Pendidikan (contoh tambahan)
+        1: Activity,
+        2: BarChart4,
+        3: Users,
+        4: GraduationCap,
     };
 
-    // Logika Pencarian Indikator (Client-side filtering for speed)
     const filteredCategories = useMemo(() => {
         if (!searchQuery) return MOCK_ATLAS_CATEGORIES;
-
         return MOCK_ATLAS_CATEGORIES.map(cat => ({
             ...cat,
             indicators: cat.indicators.filter(ind =>
@@ -48,11 +42,7 @@ export default function CategoryPanel() {
     }, [searchQuery]);
 
     const handleIndicatorClick = (indicator: AtlasIndicatorBrief) => {
-        // 1. TAHAP 2: Perintahkan Store untuk menyimpan state indikator aktif.
-        // Ini akan otomatis didengar oleh MimikaMap untuk me-render ulang Choropleth.
         setActiveIndicator(indicator.key);
-
-        // 2. Buka Panel Konfigurasi/Legenda untuk indikator tersebut
         openPanel(
             "indicator-config",
             `Analisa: ${indicator.title}`,
@@ -66,7 +56,7 @@ export default function CategoryPanel() {
             {/* SECTION 1: SEARCH & FILTER */}
             <div className="relative group">
                 <Search
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
                     size={16}
                 />
                 <input
@@ -74,7 +64,7 @@ export default function CategoryPanel() {
                     placeholder="Cari indikator (mis: Stunting)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/10 transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:bg-white transition-all shadow-sm"
                 />
             </div>
 
@@ -88,19 +78,18 @@ export default function CategoryPanel() {
                             <div key={category.category_id} className="space-y-4">
                                 {/* Category Header */}
                                 <div className="flex items-center gap-3 px-1">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
-                                        <Icon size={18} />
+                                    <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100 shadow-sm">
+                                        <Icon size={18} strokeWidth={2.5} />
                                     </div>
-                                    <h4 className="text-xs font-black text-white/80 uppercase tracking-widest">
+                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
                                         {category.category_name}
                                     </h4>
-                                    <div className="flex-1 h-px bg-white/5 ml-2" />
+                                    <div className="flex-1 h-px bg-slate-200 ml-2" />
                                 </div>
 
                                 {/* Indicators List */}
                                 <div className="grid gap-2">
                                     {category.indicators.map((indicator) => {
-                                        // TAHAP 2: Pengecekan status aktif untuk Visual Feedback
                                         const isActive = activeIndicator === indicator.key;
 
                                         return (
@@ -108,23 +97,25 @@ export default function CategoryPanel() {
                                                 key={indicator.key}
                                                 onClick={() => handleIndicatorClick(indicator)}
                                                 className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all text-left active:scale-[0.98] ${isActive
-                                                    ? 'bg-blue-600/20 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.15)]'
-                                                    : 'bg-white/5 border-white/5 hover:bg-blue-600/10 hover:border-blue-500/30'
+                                                    ? 'bg-teal-50 border-teal-400 shadow-sm'
+                                                    : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-2 h-2 rounded-full transition-all ${isActive
-                                                        ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]'
-                                                        : 'bg-blue-500 opacity-40 group-hover:opacity-100'
+                                                        ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]'
+                                                        : 'bg-slate-300 group-hover:bg-slate-400'
                                                         }`} />
-                                                    <span className={`text-sm font-medium transition-colors ${isActive ? 'text-white font-bold' : 'text-white/70 group-hover:text-white'
+                                                    <span className={`text-sm transition-colors ${isActive
+                                                        ? 'text-teal-800 font-black'
+                                                        : 'text-slate-600 font-bold group-hover:text-slate-800'
                                                         }`}>
                                                         {indicator.title}
                                                     </span>
                                                 </div>
                                                 <ChevronRight
                                                     size={16}
-                                                    className={`transition-all ${isActive ? 'text-blue-400 translate-x-1' : 'text-white/20 group-hover:text-blue-400 group-hover:translate-x-1'
+                                                    className={`transition-all ${isActive ? 'text-teal-600 translate-x-1' : 'text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1'
                                                         }`}
                                                 />
                                             </button>
@@ -137,17 +128,16 @@ export default function CategoryPanel() {
                 ) : (
                     /* Empty State */
                     <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-white/20">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
                             <Search size={32} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-bold text-white/60">Indikator tidak ditemukan</p>
-                            <p className="text-xs text-white/30">Coba gunakan kata kunci yang lebih umum.</p>
+                            <p className="text-sm font-black text-slate-700">Indikator tidak ditemukan</p>
+                            <p className="text-xs text-slate-500 font-medium">Coba gunakan kata kunci yang lebih umum.</p>
                         </div>
                     </div>
                 )}
             </div>
-
         </div>
     );
 }
