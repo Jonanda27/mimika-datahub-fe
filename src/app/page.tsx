@@ -263,7 +263,16 @@ export default function LandingPage() {
 
             <div className={`hidden md:flex items-center gap-8 text-[13px] font-bold uppercase tracking-wide transition-colors ${scrolled ? "text-gray-700" : "text-white/90"}`}>
               <a href="#tematik" className="hover:text-[#0071bc] transition-colors">Tema</a>
-              <a href="#gis" className="hover:text-[#0071bc] transition-colors">GIS Peta</a>
+
+              <Link
+                href="/explorer"
+                className="hover:text-[#0071bc] transition-colors font-bold flex items-center gap-2"
+              >
+                <span className="relative">
+                  GIS Peta
+                  {/* Opsional: Badge kecil untuk menandai ini fitur baru/canggih */}
+                </span>
+              </Link>
 
               <div className="relative" ref={dropdownRef}>
                 <button

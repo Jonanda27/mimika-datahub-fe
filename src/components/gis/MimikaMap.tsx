@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, useMapEvents } from '
 import 'leaflet/dist/leaflet.css';
 import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
+import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
@@ -16,6 +17,10 @@ const DISTRICT_MAP: Record<string, number> = {
     "agimuga": 10, "jila": 11, "jita": 12, "mimikatimurjauh": 13, "mimikabaratjauh": 14,
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
+
+interface MimikaMapProps {
+    isAtlasMode?: boolean;
+}
 
 // ============================================================================
 // FASE 4: Event Handler Khusus untuk memantau perubahan Zoom Kamera Peta
@@ -29,19 +34,32 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
-export default function MimikaMap() {
+export default function MimikaMap({ isAtlasMode = false }: MimikaMapProps) {
     // State Spasial & Render Peta
     const [geoData, setGeoData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(8);
 
-    // Local State untuk Pop-up Profil Wilayah
+    // State Kunci Re-mount (Solusi Map Reuse)
+    const [mapKey, setMapKey] = useState(Date.now());
+
+    // Zustand Store Integration (Fase 3 & 4)
+    const { openPanel } = useExplorerStore();
+
+    // Local State untuk Pop-up Profil Wilayah (Mode Non-Explorer / Standar)
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
 
     // State UX untuk interaksi Expandable Text
     const [isTextExpanded, setIsTextExpanded] = useState(false);
+
+    // Membersihkan instansi map sebelum unmount untuk mencegah memory leak
+    useEffect(() => {
+        return () => {
+            setMapKey(Date.now());
+        };
+    }, []);
 
     // 1. Fetching Resource Peta (Hanya GeoJSON)
     useEffect(() => {
@@ -60,9 +78,9 @@ export default function MimikaMap() {
         loadMapResources();
     }, []);
 
-    // 2. Fetching Data Profil saat Poligon di-Klik
+    // 2. Fetching Data Profil saat Poligon di-Klik (Hanya aktif jika bukan mode Explorer)
     useEffect(() => {
-        if (popupInfo && popupInfo.id > 0) {
+        if (!isAtlasMode && popupInfo && popupInfo.id > 0) {
             let isMounted = true;
             setLoadingProfile(true);
 
@@ -77,7 +95,7 @@ export default function MimikaMap() {
 
             return () => { isMounted = false; };
         }
-    }, [popupInfo]);
+    }, [popupInfo, isAtlasMode]);
 
     // ============================================================================
     // FASE 3: Logika Konstruksi Inverted Polygon Masking
@@ -114,12 +132,13 @@ export default function MimikaMap() {
     const districtStyle = (): PathOptions => {
         const isZoomedIn = zoomLevel >= 14;
         return {
-            fillColor: '#a7f3d0', // Warna Hijau Pastel
-            weight: isZoomedIn ? 0 : 1.5,
+            // Menggunakan warna primer sistem jika mode Atlas aktif
+            fillColor: isAtlasMode ? '#3b82f6' : '#a7f3d0',
+            weight: isZoomedIn ? 0 : 1,
             opacity: isZoomedIn ? 0 : 1,
-            color: 'white',
+            color: 'black',
             dashArray: '3',
-            fillOpacity: isZoomedIn ? 0 : 0.6,
+            fillOpacity: isZoomedIn ? 0 : 0.1,
         };
     };
 
@@ -128,58 +147,65 @@ export default function MimikaMap() {
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
         layer.bindTooltip(
-            `<div class="font-sans text-xs font-bold text-gray-700">Distrik ${districtName}</div>`,
-            { sticky: true, direction: 'top', className: 'rounded-md shadow-sm border-none px-2 py-1' }
+            `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
+            { sticky: true, direction: 'top', className: 'rounded-lg shadow-xl border-none px-3 py-1.5' }
         );
 
         layer.on({
             mouseover: (e: any) => {
                 if (zoomLevel < 14) {
                     const target = e.target;
-                    target.setStyle({ weight: 3, color: '#059669', fillOpacity: 0.8 });
+                    target.setStyle({
+                        weight: 1.5,
+                        color: isAtlasMode ? '#60a5fa' : '#059669',
+                        fillOpacity: 0
+                    });
                     target.bringToFront();
                 }
             },
             mouseout: (e: any) => {
                 if (zoomLevel < 14) {
                     const target = e.target;
-                    target.setStyle({ weight: 1.5, color: 'white', fillOpacity: 0.6 });
+                    target.setStyle({ weight: 1, color: 'black', fillOpacity: 0});
                 }
             },
             click: (e: any) => {
                 const target = e.target;
                 const map: LeafletMap = target._map;
+                const distId = DISTRICT_MAP[key] || 0;
 
                 // Auto-Focus/Zoom In Terbang mulus ke batas poligon
                 map.flyToBounds(target.getBounds(), {
-                    padding: [50, 50],
-                    duration: 1.2
+                    padding: [100, 100],
+                    duration: 1.5
                 });
 
-                const distId = DISTRICT_MAP[key] || 0;
-                setProfileData(null);
-                setIsTextExpanded(false); // Pastikan state expander selalu kereset saat distrik baru diklik
-
-                setPopupInfo({
-                    name: districtName,
-                    latlng: target.getBounds().getCenter(),
-                    id: distId
-                });
+                if (isAtlasMode) {
+                    /** * LOGIKA MODE EXPLORER (GFW Paradigm):
+                     * Klik poligon tidak memunculkan popup, melainkan membuka
+                     * Floating Panel di sebelah kiri layar.
+                     */
+                    openPanel("district-detail", `Profil Distrik ${districtName}`, {
+                        id: distId,
+                        name: districtName
+                    });
+                } else {
+                    /** * LOGIKA MODE STANDAR:
+                     * Menampilkan pop-up klasik di dalam kontainer peta.
+                     */
+                    setProfileData(null);
+                    setIsTextExpanded(false);
+                    setPopupInfo({
+                        name: districtName,
+                        latlng: target.getBounds().getCenter(),
+                        id: distId
+                    });
+                }
             }
         });
     };
 
-    // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
-    if (loading) {
-        return (
-            <div className="h-full w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
-                <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Memuat Peta Wilayah...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return null; // Loading state sudah dihandle oleh MapWrapper
 
     const mapCenter: LatLngExpression = [-4.5421, 136.8945];
 
@@ -190,7 +216,7 @@ export default function MimikaMap() {
     const SafePopup = Popup as any;
     const SafePolygon = Polygon as any;
 
-    // Helper untuk merender isi pop-up
+    // Helper untuk merender isi pop-up (Hanya untuk mode Standar)
     const renderPopupContent = () => {
         if (loadingProfile) {
             return (
@@ -208,12 +234,11 @@ export default function MimikaMap() {
             return <p className="text-xs text-red-500 py-4 text-center font-medium">Koneksi ke server spasial terputus.</p>;
         }
 
-        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia. Silakan hubungi administrator Bappeda untuk melengkapi narasi distrik ini.";
-        const isLongText = deskripsi.length > 150; // Threshold untuk memunculkan tombol expand
+        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
+        const isLongText = deskripsi.length > 150;
 
         return (
             <div className="space-y-4">
-                {/* Layer Profil Statis dengan Expandable Text */}
                 <div className="text-sm text-gray-600 space-y-1">
                     <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
                         <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>
@@ -221,20 +246,18 @@ export default function MimikaMap() {
                         </p>
                     </div>
 
-                    {/* Tombol Toggling Logis */}
                     {isLongText && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsTextExpanded(!isTextExpanded);
                             }}
-                            className="text-[11px] font-bold text-[#0071bc] hover:text-[#005a96] hover:underline transition-colors mt-1 inline-block"
+                            className="text-[11px] font-bold text-[#0071bc] hover:text-[#005a96] transition-colors mt-1 inline-block"
                         >
                             {isTextExpanded ? "Tutup selengkapnya" : "Baca selengkapnya..."}
                         </button>
                     )}
 
-                    {/* Grid Data Angka */}
                     <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
                         <div className="bg-emerald-50 p-2.5 rounded-lg border border-emerald-100">
                             <span className="block text-[10px] text-emerald-600 font-bold uppercase mb-1">Luas Wilayah</span>
@@ -255,28 +278,31 @@ export default function MimikaMap() {
     };
 
     return (
-        // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
-        <div className="h-full w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
+        <div className={`h-full w-full relative z-10 ${isAtlasMode ? 'bg-slate-950' : 'bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-sm'}`}>
             <SafeMapContainer
+                key={mapKey}
                 center={mapCenter}
                 zoom={8}
-                scrollWheelZoom={false}
+                minZoom={7}
+                scrollWheelZoom={true}
                 className="h-full w-full z-0"
+                zoomControl={!isAtlasMode} // Kontrol Zoom disembunyikan jika di mode Explorer (Ganti dengan kustom UI)
+                attributionControl={!isAtlasMode}
             >
                 <MapEventsHandler onZoomChange={setZoomLevel} />
 
                 <SafeTileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    attribution='&copy; OpenStreetMap'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* Layer 1: Inverted Masking (Dunia gelap, Mimika terang) */}
+                {/* Layer 1: Inverted Masking (Visual Masking Gelap) */}
                 {maskingPositions.length > 0 && (
                     <SafePolygon
                         positions={maskingPositions}
                         pathOptions={{
-                            fillColor: '#1e293b',
-                            fillOpacity: zoomLevel >= 14 ? 0 : 0.5,
+                            fillColor: isAtlasMode ? '#0f172a' : '#1e293b',
+                            fillOpacity: zoomLevel >= 14 ? 0 : isAtlasMode ? 0.2 : 0.5,
                             stroke: false
                         }}
                     />
@@ -291,8 +317,8 @@ export default function MimikaMap() {
                     />
                 )}
 
-                {/* UI Pop-up: Eksklusif Profil Wilayah Bappeda */}
-                {popupInfo && (
+                {/* UI Pop-up: Hanya untuk mode Standar (Bukan Explorer) */}
+                {!isAtlasMode && popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
                         <div className="w-72 p-1 font-sans">
                             <h3 className="text-lg font-extrabold text-gray-800 border-b border-gray-200 pb-2 mb-3">
