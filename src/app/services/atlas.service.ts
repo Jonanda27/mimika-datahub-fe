@@ -1,6 +1,6 @@
 // src/app/services/atlas.service.ts
 import { API_BASE_URL } from "../lib/config";
-import { AtlasIndicatorResponse, AtlasIndicatorBrief } from "../types/atlas";
+import { AtlasIndicatorResponse, AtlasIndicatorBrief } from "@/src/app/types/atlas";
 
 /**
  * Service layer (Pure Fabrication) untuk menangani komunikasi data Atlas

@@ -1,5 +1,15 @@
 // src/app/types/dataset.ts
 
+/**
+ * Abstraksi entitas Item dasar untuk digunakan di berbagai komponen UI (seperti dropdown form)
+ * dan manajemen state. Dipisahkan dari Presentation Layer untuk mematuhi prinsip 
+ * Separation of Concerns dan Low Coupling.
+ */
+export interface Item {
+  id: string | number;
+  name: string;
+}
+
 export interface Dataset {
   id: number;
   title: string;

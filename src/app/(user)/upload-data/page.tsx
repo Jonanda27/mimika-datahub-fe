@@ -21,7 +21,6 @@ import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
 
-
 // --- Types ---
 export interface UploadLog {
   date: string;
@@ -45,7 +44,6 @@ export default function UploadDataPage() {
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
-  
 
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -62,7 +60,6 @@ export default function UploadDataPage() {
           fetchCategories(),
           fetchSourceTypes(),
           fetchMyDatasets(),
-         
         ]);
       } catch (error) {
         console.error("Gagal memuat data awal:", error);
@@ -98,7 +95,7 @@ export default function UploadDataPage() {
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) { // Up to 20MB (Best Practice v2.0)
+    if (file.size > 20 * 1024 * 1024) {
       showAlert("Ukuran file maksimal 20MB", "danger");
       return;
     }
@@ -148,7 +145,6 @@ export default function UploadDataPage() {
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
 
-    // Pemetaan data dari form (Menggabungkan kunci HEAD & Incoming agar akurat)
     const requestData = {
       title: (formData.get("title") || formData.get("datasetName")) as string,
       dataset_type: formData.get("dataset_type") as string,
@@ -158,9 +154,9 @@ export default function UploadDataPage() {
       year: Number(formData.get("year")),
       period: formData.get("period") as string,
       description: formData.get("description") as string,
-      district_id: selectedDistrictId, // GIS Support
+      district_id: selectedDistrictId,
       file: selectedFile,
-      image: selectedImage // Cover Image Support
+      image: selectedImage
     };
 
     if (!requestData.title || !requestData.source_id || !requestData.category_id) {
@@ -177,7 +173,6 @@ export default function UploadDataPage() {
 
       await fetchMyDatasets();
 
-      // Reset Form
       setSelectedFile(null);
       setSelectedImage(null);
       setSelectedDistrictId(null);
@@ -192,7 +187,7 @@ export default function UploadDataPage() {
   if (isLoading && sources.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul Ingest v2.0..." />
           <LoadingState message="Menghubungkan ke Cleaning Engine Mimika DataHub..." />
         </div>
@@ -202,7 +197,7 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
 
         <PageHeader
           title="Upload Data"
@@ -234,12 +229,9 @@ export default function UploadDataPage() {
             sources={sources}
             categories={categories}
             sourceTypes={sourceTypes}
-        
             isProcessing={isProcessing}
             selectedImage={selectedImage}
-            
             onImageChange={setSelectedImage}
-           
             onSubmit={handleUpload}
             onAddSource={() => setShowSourceModal(true)}
             onAddCategory={() => setShowCategoryModal(true)}
