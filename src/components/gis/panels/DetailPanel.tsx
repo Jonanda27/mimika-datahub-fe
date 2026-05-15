@@ -195,7 +195,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
                                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50 shadow-inner">
                                     <div
-                                        className={`h-full bg-gradient-to-r ${barColor} rounded-full shadow-sm transition-all ease-out duration-1000`}
+                                        className={`h-full bg-linear-to-r ${barColor} rounded-full shadow-sm transition-all ease-out duration-1000`}
                                         style={{
                                             width: animateBars ? `${Math.max(barPercentage, 2)}%` : '0%',
                                         }}

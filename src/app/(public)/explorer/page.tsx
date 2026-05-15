@@ -35,7 +35,7 @@ const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
 export default function ExplorerPage() {
     return (
         // Latar belakang diatur ke terang (slate-50) dengan warna seleksi teks biru
-        <main className="relative h-[100dvh] w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 selection:bg-blue-200 selection:text-blue-900">
+        <main className="relative h-dvh w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 selection:bg-blue-200 selection:text-blue-900">
 
             {/* =====================================================================
                 LAYER 0: THE INFINITE CANVAS (PETA)
@@ -71,7 +71,7 @@ export default function ExplorerPage() {
                 Diberikan margin atas (top-20) agar tidak menempel keras ke Navbar.
                 Berada di sebelah kanan Sidebar (left-[88px]).
             ====================================================================== */}
-            <div className="absolute top-20 bottom-4 left-[88px] z-30 pointer-events-none">
+            <div className="absolute top-20 bottom-4 left-22 z-30 pointer-events-none">
                 <PanelOrchestrator />
             </div>
 

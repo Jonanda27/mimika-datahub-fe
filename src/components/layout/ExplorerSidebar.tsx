@@ -22,19 +22,19 @@ export default function ExplorerSidebar() {
     // Definisi Menu Navigasi (Command Center)
     const navigationItems = [
         {
-            type: "search-result" as ExplorerPanelType,
+            type: "hasil-pencarian" as ExplorerPanelType,
             label: "Cari",
             icon: Search,
             title: "Pencarian Spasial Global"
         },
         {
-            type: "category-selector" as ExplorerPanelType,
+            type: "seleksi-kategori" as ExplorerPanelType,
             label: "Sektor",
             icon: Database,
             title: "Katalog Data Sektoral"
         },
         {
-            type: "indicator-config" as ExplorerPanelType,
+            type: "konfigurasi" as ExplorerPanelType,
             label: "Layers",
             icon: Layers,
             title: "Konfigurasi Lapisan Peta"
@@ -106,8 +106,9 @@ export default function ExplorerSidebar() {
                 <div className="relative group w-full flex justify-center">
                     <button
                         onClick={() => {
+                            // Reset seluruh tumpukan panel dan buka panel 'Tentang'
                             closePanelsToTheRight(-1);
-                            openPanel("search-result", "Informasi Sistem", { section: "about" });
+                            openPanel("tentang", "Tentang Mimika DataHub");
                         }}
                         className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-all active:scale-95"
                     >
@@ -117,13 +118,6 @@ export default function ExplorerSidebar() {
                     <div className="absolute top-1/2 left-full -translate-y-1/2 ml-4 px-3 py-2 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-lg z-50">
                         Tentang DataHub
                         <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-slate-800 rotate-45 rounded-sm" />
-                    </div>
-                </div>
-
-                {/* Memperbaiki bg-gradient-to-br menjadi bg-linear-to-br dan p-[2px] menjadi p-0.5 */}
-                <div className="w-10 h-10 rounded-full bg-linear-to-br from-teal-400 to-teal-600 p-0.5 shadow-sm">
-                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                        <span className="text-[12px] font-black text-teal-600">M</span>
                     </div>
                 </div>
             </div>

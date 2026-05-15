@@ -44,7 +44,7 @@ export default function CategoryPanel() {
     const handleIndicatorClick = (indicator: AtlasIndicatorBrief) => {
         setActiveIndicator(indicator.key);
         openPanel(
-            "indicator-config",
+            "konfigurasi",
             `Analisa: ${indicator.title}`,
             { indicatorKey: indicator.key }
         );

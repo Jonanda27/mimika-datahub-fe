@@ -171,7 +171,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     }, [geoData]);
 
     // ============================================================================
-    // REAKTIVITAS GAYA (STYLING)
+    // REAKTIVITAS GAYA (STYLING): Pengaturan Warna dan Opacity Poligon
     // ============================================================================
     const districtStyle = (feature: any): PathOptions => {
         const isZoomedIn = zoomLevel >= 14;
@@ -179,13 +179,19 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
         // TUGAS 1: BLANK CANVAS (Default State)
+        // Logika ini berjalan saat belum ada Indikator Sektoral yang dipilih
         if (!activeIndicator || !indicatorValues || indicatorValues[key] === undefined) {
+
+            // --- IMPLEMENTASI LOGIKA WARNA KHUSUS BASEMAP GELAP ---
+            const isDarkMode = activeBaseMap === 'dark';
+
             return {
-                fillColor: '#000000', // Hitam Netral
-                color: '#000000',     // Garis batas hitam
-                weight: isZoomedIn ? 0 : 1, // Ketebalan 1
-                fillOpacity: isZoomedIn ? 0 : 0.1, // Transparan 0.1
-                dashArray: '4' // Batas putus-putus halus untuk mode default
+                // Jika basemap Dark, gunakan warna putih (opacity 0.05). Jika tidak, gunakan hitam (opacity 0.1)
+                fillColor: isDarkMode ? '#ffffff' : '#000000',
+                color: isDarkMode ? '#ffffff' : '#000000',     // Garis batas (outline)
+                weight: isZoomedIn ? 0 : 1, // Ketebalan outline 1
+                fillOpacity: isZoomedIn ? 0 : (isDarkMode ? 0. : 0),
+                dashArray: '2' // Batas putus-putus halus
             };
         }
 
@@ -196,7 +202,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return {
             fillColor: choroplethColor,
             weight: isZoomedIn ? 0 : 1,
-            color: '#ffffff', // Garis putih tipis agar warna choropleth pop-out
+            color: activeBaseMap === 'dark' ? '#000000' : '#ffffff', // Garis putih tipis (hitam jika basemap gelap) agar warna choropleth pop-out
             dashArray: undefined, // Garis solid
             fillOpacity: isZoomedIn ? 0 : opacityRatio,
         };
@@ -222,14 +228,15 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                         target.setStyle({
                             weight: 2.5,
                             color: '#ffffff',
-                            fillOpacity: Math.min((mapOpacity / 100) + 0.3, 1)
+                            fillOpacity: Math.min((mapOpacity / 100) + 0.15, 1)
                         });
                     } else {
                         // Highlight untuk mode Default / Blank Canvas
+                        const isDarkMode = activeBaseMap === 'dark';
                         target.setStyle({
                             weight: 2,
-                            color: '#000000',
-                            fillOpacity: 0.3
+                            color: isDarkMode ? '#ffffff' : '#000000',
+                            fillOpacity: isDarkMode ? 0 : 0.15
                         });
                     }
                     target.bringToFront();
@@ -263,7 +270,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 });
 
                 if (isAtlasMode) {
-                    openPanel("district-detail", `Profil Distrik ${districtName}`, {
+                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
                         id: distId,
                         name: districtName
                     });
@@ -341,6 +348,19 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         );
     };
 
+    // Helper untuk menghitung opasitas wilayah di luar Mimika (Masking)
+    const getMaskingOpacity = () => {
+        if (zoomLevel >= 14) return 0;
+
+        if (activeBaseMap === 'dark') {
+            return 0.7; // Lebih pekat untuk basemap gelap
+        } else if (activeBaseMap === 'street') {
+            return 0.4; // Lebih terang untuk basemap roadmap/jalanan
+        } else {
+            return 0.5; // Sedang untuk basemap satelit
+        }
+    };
+
     return (
         <div className={`h-full w-full relative z-10 ${(isAtlasMode || isPreviewMode) ? 'bg-slate-100' : 'bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-sm'}`}>
             <SafeMapContainer
@@ -371,7 +391,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                         positions={maskingPositions}
                         pathOptions={{
                             fillColor: '#000000',
-                            fillOpacity: zoomLevel >= 14 ? 0 : (isAtlasMode || isPreviewMode) ? 0.3 : 0.5,
+                            // --- TUNING OPACITY DI LUAR MIMIKA ADA DI SINI ---
+                            fillOpacity: getMaskingOpacity(),
                             stroke: false
                         }}
                     />

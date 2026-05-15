@@ -10,6 +10,7 @@ import { ExplorerPanelType } from "@/src/app/types/gis";
 import CategoryPanel from "./panels/CategoryPanel";
 import DetailPanel from "./panels/DetailPanel";
 import LayerControl from "./panels/LayerControl";
+import AboutPanel from "./panels/AboutPanel";
 
 // PERBAIKAN KRUSIAL: Import helper warna dari Pure Fabrication Engine (gisUtils)
 // Ini memutus rantai SSR error "window is not defined" dari Leaflet.
@@ -67,7 +68,7 @@ export default function PanelOrchestrator() {
                                     <span className="text-[9px] font-black text-teal-600 uppercase tracking-[0.2em]">
                                         {panel.type.replace("-", " ")}
                                     </span>
-                                    <h3 className="text-sm font-black text-slate-800 truncate max-w-[200px] md:max-w-[240px] tracking-tight mt-0.5">
+                                    <h3 className="text-sm font-black text-slate-800 truncate max-w-50 md:max-w-60 tracking-tight mt-0.5">
                                         {panel.title}
                                     </h3>
                                 </div>
@@ -107,16 +108,19 @@ export default function PanelOrchestrator() {
  */
 function renderPanelContent(type: ExplorerPanelType, data: any) {
     switch (type) {
-        case "category-selector":
+        case "seleksi-kategori":
             return <CategoryPanel />;
 
-        case "district-detail":
+        case "detil-distrik":
             return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} />;
 
-        case "indicator-config":
+        case "konfigurasi":
             return <LayerControl />;
 
-        case "search-result":
+        case "tentang":
+            return <AboutPanel />;
+
+        case "hasil-pencarian":
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-slate-400">
                     <MapIcon size={48} className="text-teal-500/50" />
@@ -156,7 +160,7 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
     const MAX_VALUE = 100;
 
     return (
-        <div className="fixed bottom-8 right-[88px] md:right-28 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-200 p-5 rounded-2xl shadow-xl w-60 md:w-64 animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-8 right-22 md:right-28 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-200 p-5 rounded-2xl shadow-xl w-60 md:w-64 animate-in fade-in slide-in-from-bottom-4">
 
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
                 <MapIcon size={16} className="text-teal-600" />

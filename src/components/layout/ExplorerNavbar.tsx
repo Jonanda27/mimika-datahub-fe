@@ -6,71 +6,92 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     Search,
-    Settings,
-    HelpCircle,
-    User as UserIcon,
     ChevronLeft,
-    Share2
+    Share2,
+    Check,
+    UserIcon
 } from "lucide-react";
 import { useAuthStore } from "@/src/app/store/useAuthStore";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
 /**
- * ExplorerNavbar - Komponen Navigasi Immersive (Light Mode)
- * Sekarang terhubung penuh dengan Global Store untuk interaksi aktual.
+ * ExplorerNavbar - Komponen Navigasi Minimalis (Fokus Kolaborasi)
+ * Menghapus fitur sekunder dan mengoptimalkan fitur Share menjadi Context-Aware.
  */
 export default function ExplorerNavbar() {
     const { profile, isLoading } = useAuthStore();
+    const {
+        activeIndicator,
+        activeBaseMap,
+        openPanel,
+        closePanelsToTheRight,
+        clearPanels,
+        resetMapData
+    } = useExplorerStore();
 
-    // Menarik fungsi kontrol UI dari Store GIS
-    const { openPanel, closePanelsToTheRight, clearPanels, resetMapData } = useExplorerStore();
-
-    // Local state untuk menangani input pencarian
     const [searchQuery, setSearchQuery] = useState("");
+    const [isCopied, setIsCopied] = useState(false);
 
     const getInitials = (name: string) => {
         return name?.split(" ").map((n) => n[0]).join("").toUpperCase().substring(0, 2) || "U";
     };
 
-    // Handler untuk Pencarian Global (Search Bar)
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!searchQuery.trim()) return;
-
-        // Reset panel anak, lalu buka panel pencarian
         closePanelsToTheRight(-1);
-        openPanel(
-            "search-result",
-            "Hasil Pencarian",
-            { query: searchQuery } // Melempar data query ke panel hasil
-        );
+        openPanel("hasil-pencarian", "Hasil Pencarian", { query: searchQuery });
     };
 
-    // Handler untuk Logo (Soft Reset)
     const handleLogoClick = (e: React.MouseEvent) => {
         e.preventDefault();
         clearPanels();
         resetMapData();
+        setSearchQuery("");
     };
 
-    // Handler untuk Tombol Settings
-    const handleSettingsClick = () => {
-        closePanelsToTheRight(-1);
-        openPanel("indicator-config", "Pengaturan Peta");
-    };
+    /**
+     * LOGIKA SMART SHARE (Context-Aware)
+     * Membuat tautan yang membawa state peta saat ini.
+     */
+    const handleShareClick = async () => {
+        // 1. Konstruksi URL dengan Query Parameters berdasarkan state Store
+        const baseUrl = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams();
 
-    // Handler untuk Tombol Bagikan (Mock)
-    const handleShareClick = () => {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            alert("Tautan peta berhasil disalin ke clipboard!");
-        });
+        if (activeIndicator) params.set("indicator", activeIndicator);
+        if (activeBaseMap) params.set("basemap", activeBaseMap);
+
+        const shareUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+
+        // 2. Mencoba Native Web Share API (Mobile/Modern Browser)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Mimika DataHub - Eksplorasi Spasial',
+                    text: `Lihat data spasial ${activeIndicator || 'Kabupaten Mimika'} di DataHub.`,
+                    url: shareUrl,
+                });
+                return;
+            } catch (err) {
+                console.log("Share cancelled or failed", err);
+            }
+        }
+
+        // 3. Fallback: Copy to Clipboard
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000); // Reset icon setelah 2 detik
+        } catch (err) {
+            console.error("Gagal menyalin tautan", err);
+        }
     };
 
     return (
         <nav className="w-full h-16 px-6 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm relative z-50">
 
-            {/* BAGIAN KIRI: Branding & Back Button */}
+            {/* KIRI: Branding */}
             <div className="flex items-center gap-6">
                 <Link
                     href="/"
@@ -79,84 +100,67 @@ export default function ExplorerNavbar() {
                     <div className="p-1.5 rounded-lg group-hover:bg-slate-100 transition-colors">
                         <ChevronLeft size={20} />
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-widest hidden md:block">Beranda Utama</span>
+                    <span className="text-xs font-bold uppercase tracking-widest hidden md:block">Beranda</span>
                 </Link>
 
                 <div className="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
 
-                <a
-                    href="#"
-                    onClick={handleLogoClick}
-                    className="flex items-center gap-3 active:scale-95 transition-transform cursor-pointer"
-                >
+                <button onClick={handleLogoClick} className="flex items-center gap-3 active:scale-95 transition-transform group">
                     <div className="relative w-8 h-8">
                         <Image
                             src="/logo-mimika.png"
                             alt="Logo Mimika"
                             fill
                             sizes="32px"
-                            className="object-contain filter drop-shadow-sm"
+                            className="object-contain filter drop-shadow-sm group-hover:brightness-110"
                         />
                     </div>
-                    <div className="flex flex-col leading-none">
+                    <div className="flex flex-col leading-none text-left">
                         <span className="text-sm font-black text-slate-800 tracking-tighter uppercase">
                             Mimika <span className="text-teal-600">DataHub</span>
                         </span>
                         <span className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">
-                            Spatial Explorer
+                            Eksplorasi Spasial
                         </span>
                     </div>
-                </a>
+                </button>
             </div>
 
-            {/* BAGIAN TENGAH: Search Bar (Interactive) */}
+            {/* TENGAH: Search */}
             <div className="hidden lg:flex flex-1 max-w-xl mx-12">
                 <form onSubmit={handleSearchSubmit} className="w-full relative group">
-                    <Search
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
-                        size={18}
-                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors" size={18} />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari lokasi, distrik, atau metrik sektoral (Tekan Enter)..."
-                        className="w-full bg-slate-100 border border-slate-200 rounded-full py-2.5 pl-12 pr-6 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:bg-white transition-all shadow-inner"
+                        placeholder="Cari lokasi atau indikator sektoral..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 pl-12 pr-6 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:bg-white transition-all shadow-inner"
                     />
                 </form>
             </div>
 
-            {/* BAGIAN KANAN: Tools & Profile */}
+            {/* KANAN: Single Tool & Profile */}
             <div className="flex items-center gap-3 md:gap-5">
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1 md:gap-2">
-                    <button
-                        onClick={() => alert("Pusat Bantuan sedang dalam pengembangan.")}
-                        className="p-2.5 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded-xl transition-all title-tooltip"
-                        title="Pusat Bantuan"
-                    >
-                        <HelpCircle size={20} />
-                    </button>
-                    <button
-                        onClick={handleShareClick}
-                        className="p-2.5 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded-xl transition-all"
-                        title="Bagikan Tampilan Saat Ini"
-                    >
-                        <Share2 size={20} />
-                    </button>
-                    <button
-                        onClick={handleSettingsClick}
-                        className="p-2.5 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded-xl transition-all active:scale-90"
-                        title="Pengaturan Lapisan Peta"
-                    >
-                        <Settings size={20} />
-                    </button>
-                </div>
+                {/* UNITARY TOOL: Enhanced Share Button */}
+                <button
+                    onClick={handleShareClick}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all active:scale-95 ${isCopied
+                        ? "bg-teal-50 border-teal-200 text-teal-600"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
+                    title="Bagikan tampilan peta saat ini"
+                >
+                    {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+                    <span className="text-xs font-black uppercase tracking-widest hidden sm:block">
+                        {isCopied ? "Tersalin!" : "Bagikan"}
+                    </span>
+                </button>
 
                 <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                {/* User Profile Avatar */}
+                {/* Profile */}
                 <Link
                     href="/login"
                     className="flex items-center gap-3 p-1.5 pl-1.5 pr-4 rounded-full bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-teal-200 transition-all group"
@@ -172,10 +176,10 @@ export default function ExplorerNavbar() {
                     </div>
                     <div className="hidden sm:flex flex-col items-start">
                         <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight line-clamp-1 max-w-20">
-                            {profile?.full_name || "Guest User"}
+                            {profile?.full_name || "Login"}
                         </span>
                         <span className="text-[8px] text-teal-600 font-bold uppercase tracking-widest">
-                            {profile?.role || "Portal Access"}
+                            {profile?.role || "Publik"}
                         </span>
                     </div>
                 </Link>

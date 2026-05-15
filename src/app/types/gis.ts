@@ -4,7 +4,12 @@
  * Definisi identitas panel untuk logika Shifting Panels (GFW Paradigm).
  * Membantu Orchestrator menentukan komponen mana yang harus dirender di stack.
  */
-export type ExplorerPanelType = 'category-selector' | 'district-detail' | 'indicator-config' | 'search-result';
+export type ExplorerPanelType =
+    | 'seleksi-kategori'
+    | 'detil-distrik'
+    | 'konfigurasi'
+    | 'hasil-pencarian'
+    | 'tentang'; // Penambahan tipe baru untuk modul informasi aplikasi
 
 /**
  * Interface untuk mengelola state panel yang sedang terbuka.
@@ -15,12 +20,12 @@ export interface ExplorerPanel {
     type: ExplorerPanelType;  // Jenis komponen panel
     title: string;            // Judul pada header panel
     isVisible: boolean;       // Status visibility untuk animasi
-    data?: any;               // Payload data dinamis (misal: ID Distrik yang diklik)
+    data?: any;               // Payload data dinamis (misal: ID Distrik yang diklik atau query pencarian)
 }
 
 /**
  * Domain Entitas: Profil Statis Distrik.
- * Sinkron dengan Pydantic Schema 'DistrictProfile' di Backend.
+ * Sinkron dengan Pydantic Schema 'DistrictProfile' di Backend (FastAPI).
  */
 export interface DistrictProfile {
     id: number;
@@ -61,7 +66,7 @@ export interface DistrictDrilldownResponse {
 }
 
 /**
- * Kontrak data awal untuk memetakan kepadatan dataset ke GeoJSON.
+ * Kontrak data awal untuk memetakan kepadatan dataset ke GeoJSON (Choropleth Awal).
  */
 export interface SpatialStatResponse {
     district_name: string;

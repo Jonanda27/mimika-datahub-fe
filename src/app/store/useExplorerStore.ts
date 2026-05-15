@@ -86,7 +86,7 @@ export const useExplorerStore = create<ExplorerState>()(
                 set((state) => ({
                     activeIndicator: null, // Peta akan merespons ini dengan mengembalikan warna ke default
                     // Tutup panel detail wilayah jika sedang terbuka, biarkan panel kategori/layer tetap ada
-                    activePanels: state.activePanels.filter((p) => p.type !== "district-detail"),
+                    activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik"),
                 })),
 
             // Mutator: Manajemen Panel
