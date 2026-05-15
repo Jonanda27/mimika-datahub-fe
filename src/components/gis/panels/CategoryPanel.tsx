@@ -23,7 +23,9 @@ import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
  */
 export default function CategoryPanel() {
     const [searchQuery, setSearchQuery] = useState("");
-    const { openPanel } = useExplorerStore();
+
+    // TAHAP 2: Destrukturisasi activeIndicator dan setActiveIndicator dari Store
+    const { openPanel, activeIndicator, setActiveIndicator } = useExplorerStore();
 
     // Mapping Icon berdasarkan ID Kategori (Information Expert)
     const categoryIcons: Record<number, any> = {
@@ -46,8 +48,9 @@ export default function CategoryPanel() {
     }, [searchQuery]);
 
     const handleIndicatorClick = (indicator: AtlasIndicatorBrief) => {
-        // 1. Perintahkan Map untuk memuat data Choropleth (via logic di phase selanjutnya)
-        console.log(`Mengaktifkan Indikator: ${indicator.key}`);
+        // 1. TAHAP 2: Perintahkan Store untuk menyimpan state indikator aktif.
+        // Ini akan otomatis didengar oleh MimikaMap untuk me-render ulang Choropleth.
+        setActiveIndicator(indicator.key);
 
         // 2. Buka Panel Konfigurasi/Legenda untuk indikator tersebut
         openPanel(
@@ -96,24 +99,37 @@ export default function CategoryPanel() {
 
                                 {/* Indicators List */}
                                 <div className="grid gap-2">
-                                    {category.indicators.map((indicator) => (
-                                        <button
-                                            key={indicator.key}
-                                            onClick={() => handleIndicatorClick(indicator)}
-                                            className="group flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-blue-600/10 hover:border-blue-500/30 transition-all text-left active:scale-[0.98]"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500 opacity-40 group-hover:opacity-100 transition-opacity" />
-                                                <span className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-                                                    {indicator.title}
-                                                </span>
-                                            </div>
-                                            <ChevronRight
-                                                size={16}
-                                                className="text-white/20 group-hover:text-blue-400 group-hover:translate-x-1 transition-all"
-                                            />
-                                        </button>
-                                    ))}
+                                    {category.indicators.map((indicator) => {
+                                        // TAHAP 2: Pengecekan status aktif untuk Visual Feedback
+                                        const isActive = activeIndicator === indicator.key;
+
+                                        return (
+                                            <button
+                                                key={indicator.key}
+                                                onClick={() => handleIndicatorClick(indicator)}
+                                                className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all text-left active:scale-[0.98] ${isActive
+                                                    ? 'bg-blue-600/20 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.15)]'
+                                                    : 'bg-white/5 border-white/5 hover:bg-blue-600/10 hover:border-blue-500/30'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-2 h-2 rounded-full transition-all ${isActive
+                                                        ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]'
+                                                        : 'bg-blue-500 opacity-40 group-hover:opacity-100'
+                                                        }`} />
+                                                    <span className={`text-sm font-medium transition-colors ${isActive ? 'text-white font-bold' : 'text-white/70 group-hover:text-white'
+                                                        }`}>
+                                                        {indicator.title}
+                                                    </span>
+                                                </div>
+                                                <ChevronRight
+                                                    size={16}
+                                                    className={`transition-all ${isActive ? 'text-blue-400 translate-x-1' : 'text-white/20 group-hover:text-blue-400 group-hover:translate-x-1'
+                                                        }`}
+                                                />
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );

@@ -3,10 +3,11 @@
 
 import dynamic from 'next/dynamic';
 import React from 'react';
-import LoadingState from '@/components/ui/LoadingState';
+import LoadingState from '@/components/ui/LoadingState'; // Dibiarkan sesuai kode eksisting Anda
 
 interface MapWrapperProps {
     isAtlasMode?: boolean;
+    isPreviewMode?: boolean; // Penambahan parameter untuk skenario Landing Page
 }
 
 /**
@@ -38,20 +39,24 @@ const DynamicMimikaMap = dynamic(
 /**
  * MapWrapper - Gateway utama mesin pemetaan.
  * Bertindak sebagai kontainer absolut yang mengisi seluruh ruang parent (Base Layer).
+ * Menerapkan pola Indirection untuk mendistribusikan konfigurasi ke mesin utama.
  */
-export default function MapWrapper({ isAtlasMode = false }: MapWrapperProps) {
+export default function MapWrapper({ isAtlasMode = false, isPreviewMode = false }: MapWrapperProps) {
     return (
         <div className="w-full h-full relative z-0 overflow-hidden">
-            {/* isAtlasMode dikirimkan ke MimikaMap untuk menentukan 
-        apakah peta harus menampilkan kontrol default Leaflet atau 
-        menggunakan kontrol kustom yang kita buat di Page Explorer.
+            {/* isAtlasMode dan isPreviewMode dikirimkan ke MimikaMap untuk menentukan 
+        apakah peta harus merespons interaksi penuh atau hanya sekadar tampilan statis (Teaser).
       */}
-            <DynamicMimikaMap isAtlasMode={isAtlasMode} />
+            <DynamicMimikaMap
+                isAtlasMode={isAtlasMode}
+                isPreviewMode={isPreviewMode}
+            />
 
             {/* Overlay Vignette: Memberikan efek gelap di pinggiran peta 
-          agar UI melayang di atasnya terlihat lebih kontras (Best Practice UX) 
+          agar UI melayang di atasnya terlihat lebih kontras (Best Practice UX).
+          Hanya diaktifkan jika berada pada mode Atlas/Immersive penuh.
       */}
-            {isAtlasMode && (
+            {isAtlasMode && !isPreviewMode && (
                 <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.3)] z-1" />
             )}
         </div>

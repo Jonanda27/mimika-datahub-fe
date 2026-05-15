@@ -271,6 +271,9 @@ export default function LandingPage() {
                 <span className="relative">
                   GIS Peta
                   {/* Opsional: Badge kecil untuk menandai ini fitur baru/canggih */}
+                  <span className="absolute -top-3 -right-6 text-[8px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full animate-pulse">
+                    PRO
+                  </span>
                 </span>
               </Link>
 
@@ -510,7 +513,7 @@ export default function LandingPage() {
               <Globe className="mx-auto text-[#0071bc] mb-4" size={40} />
               <h3 className="text-xl font-bold text-[#002244] mb-3 uppercase tracking-tight">GIS Mimika</h3>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">Pemetaan visual kondisi pembangunan antar distrik secara geospasial.</p>
-              <a href="#gis" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Buka Peta <ChevronRight size={14} /></a>
+              <Link href="/explorer" className="text-[#0071bc] font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-1">Buka Peta <ChevronRight size={14} /></Link>
             </div>
           </div>
         </div>
@@ -552,27 +555,53 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- GIS PETA SECTION --- */}
+      {/* --- FASE PREVIEW: GIS PETA SECTION --- */}
       <section id="gis" className="py-20 bg-[#f4f7f9]">
         {/* 1. Kontainer Header Teks */}
         <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 text-black mb-10">
-          <div className="border-b-4 border-[#0071bc] pb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
-            <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
-              Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
-            </p>
+          <div className="border-b-4 border-[#0071bc] pb-6 flex flex-col md:flex-row justify-between items-end">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
+              <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
+                Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* 2. Kontainer Peta yang Diperbesar (Lebar & Tinggi) */}
+        {/* 2. Kontainer Peta Preview dengan CTA Overlay */}
         <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Penjelasan Kelas Tailwind yang ditambahkan:
-            - h-[75vh]: Tinggi peta akan mengambil 75% dari tinggi layar perangkat yang membukanya.
-            - min-h-[600px]: Jika dibuka di layar kecil/HP, tingginya tidak akan kurang dari 600 pixel.
-            - max-h-[900px]: Agar di layar TV/Monitor raksasa tidak terlalu molor ke bawah.
-          */}
-          <div className="relative w-full h-[75vh] min-h-150 max-h-225 rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100">
-            <MapWrapper />
+          <div className="relative w-full h-[75vh] min-h-150 max-h-225 rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-gray-100 group">
+
+            {/* Shield/Lock Layer: Mengunci interaksi peta dari scroll/drag (Best Practice UX) */}
+            <div className="w-full h-full pointer-events-none">
+              {/* Injeksi isPreviewMode ke MapWrapper */}
+              <MapWrapper isPreviewMode={true} />
+            </div>
+
+            {/* Overlay Call to Action (Glassmorphism Modal) */}
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/30 backdrop-blur-[2px] transition-all duration-500">
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-10 rounded-3xl flex flex-col items-center text-center max-w-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transform transition-transform duration-500 group-hover:scale-105">
+
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 text-blue-400 border border-blue-500/30 relative">
+                  <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+                  <Globe size={32} className="relative z-10" />
+                </div>
+
+                <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">Mimika Immersive Explorer</h3>
+                <p className="text-white/80 text-sm font-medium mb-8 leading-relaxed px-4">
+                  Masuk ke ruang kerja khusus untuk menganalisa metrik kewilayahan, distribusi sektoral, dan indikator pembangunan antar distrik secara interaktif.
+                </p>
+
+                <Link
+                  href="/explorer"
+                  className="flex items-center gap-3 bg-[#0071bc] hover:bg-[#005a96] text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(0,113,188,0.4)] hover:shadow-[0_0_30px_rgba(0,113,188,0.6)] transition-all duration-300 active:scale-95"
+                >
+                  Buka Mode Eksplorasi <ArrowRight size={18} />
+                </Link>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

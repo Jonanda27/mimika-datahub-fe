@@ -13,14 +13,24 @@ import {
     Palette,
     Info
 } from "lucide-react";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
 /**
  * LayerControl - Pengaturan Lapisan & Legenda Visual
  * Memungkinkan user mengatur base-map, transparansi data, dan skema warna.
+ * TAHAP 2: Komponen ini sekarang terikat (bound) langsung ke Global Store.
  */
 export default function LayerControl() {
-    const [opacity, setOpacity] = useState(70);
-    const [activeBaseMap, setActiveBaseMap] = useState("satellite");
+    // TAHAP 2: Destrukturisasi state dan action dari Store, menghapus local useState
+    const {
+        mapOpacity,
+        setMapOpacity,
+        activeBaseMap,
+        setActiveBaseMap
+    } = useExplorerStore();
+
+    // showLabels tetap menggunakan local state karena untuk saat ini 
+    // pengaturan label bisa di-handle secara independen jika diperlukan
     const [showLabels, setShowLabels] = useState(true);
 
     // Definisi Base Maps (Indirection untuk kemudahan ekspansi)
@@ -71,7 +81,7 @@ export default function LayerControl() {
                         <Settings2 size={14} />
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Transparansi Data</h4>
                     </div>
-                    <span className="text-xs font-black text-blue-400 font-mono">{opacity}%</span>
+                    <span className="text-xs font-black text-blue-400 font-mono">{mapOpacity}%</span>
                 </div>
 
                 <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-4">
@@ -79,8 +89,8 @@ export default function LayerControl() {
                         type="range"
                         min="0"
                         max="100"
-                        value={opacity}
-                        onChange={(e) => setOpacity(parseInt(e.target.value))}
+                        value={mapOpacity}
+                        onChange={(e) => setMapOpacity(parseInt(e.target.value))}
                         className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
                     />
                     <div className="flex justify-between text-[9px] font-bold text-white/20 uppercase tracking-tighter">

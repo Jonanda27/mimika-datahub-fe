@@ -1,6 +1,7 @@
 // src/app/services/gis.service.ts
 import { API_BASE_URL } from "../lib/config";
 import { SpatialStatResponse, DistrictDrilldownResponse } from "../types/gis";
+import { MOCK_INDICATOR_DETAILS, MOCK_DISTRICT_DRILLDOWN } from "../lib/mockExplorerData";
 
 /**
  * Konfigurasi Sakelar Mock (Fase 5: Indirection)
@@ -19,7 +20,7 @@ const simulateDelay = (ms: number = 800) => new Promise((resolve) => setTimeout(
 export const gisService = {
     /**
      * Mengambil data statistik distribusi dataset per distrik.
-     * Digunakan untuk pewarnaan peta tematik (Choropleth).
+     * Digunakan untuk pewarnaan peta tematik (Choropleth standar).
      */
     fetchGisStats: async (categoryId?: number, year?: number): Promise<SpatialStatResponse[]> => {
         if (USE_MOCK) {
@@ -60,6 +61,47 @@ export const gisService = {
             return response.json();
         } catch (error) {
             console.error("Error fetching GIS stats:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * TAHAP 3: Action Logic: Fetch Indicator Data (Choropleth Engine)
+     * Mengambil nilai agregat spesifik (misal: prevalensi stunting) untuk setiap distrik.
+     * @param indicatorKey - Kunci unik indikator (contoh: "stunting_rate")
+     */
+    fetchIndicatorData: async (indicatorKey: string): Promise<any> => {
+        if (USE_MOCK) {
+            await simulateDelay(600); // Simulasi kalkulasi backend
+            const data = MOCK_INDICATOR_DETAILS[indicatorKey];
+
+            if (!data) {
+                throw new Error(`Data simulasi untuk indikator '${indicatorKey}' tidak ditemukan.`);
+            }
+
+            return data;
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            // Endpoint Backend untuk mengambil agregasi data indikator per wilayah
+            const url = `${API_BASE_URL}/v1/gis/indicator/${indicatorKey}`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data indikator: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error(`Error fetching indicator data for ${indicatorKey}:`, error);
             throw error;
         }
     },
@@ -106,22 +148,28 @@ export const gisService = {
      */
     fetchDistrictDrilldown: async (districtId: number): Promise<DistrictDrilldownResponse> => {
         if (USE_MOCK) {
-            await simulateDelay(1200);
-            // Mock Data Patuh pada Interface Fase 1
+            await simulateDelay(800);
+
+            // Peningkatan Best Practice: Menggunakan data dari mockExplorerData jika tersedia
+            if (MOCK_DISTRICT_DRILLDOWN && MOCK_DISTRICT_DRILLDOWN[districtId]) {
+                return MOCK_DISTRICT_DRILLDOWN[districtId];
+            }
+
+            // Fallback Data Simulasi
             return {
                 district_id: districtId,
-                district_name: "Distrik Mimika Baru (Simulasi)",
+                district_name: `Distrik Simulasi ${districtId}`,
                 profile: {
                     id: districtId,
                     luas_wilayah: 2216,
                     jumlah_penduduk: 142000,
-                    deskripsi: "Distrik Mimika Baru merupakan pusat pertumbuhan ekonomi dan pemerintahan di Kabupaten Mimika. Wilayah ini memiliki tingkat densitas data tertinggi dengan fokus pada sektor jasa dan perdagangan.",
-                    batas_wilayah: "Utara: Distrik Iwaka, Selatan: Laut Arafuru",
+                    deskripsi: "Profil wilayah simulasi. Silakan pilih Mimika Baru, Kuala Kencana, atau Tembagapura untuk melihat mock data yang lebih detail.",
+                    batas_wilayah: "-",
                 },
                 categories: [
-                    { category_id: 1, name: "Kesehatan", total: 12 },
-                    { category_id: 2, name: "Pendidikan", total: 8 },
-                    { category_id: 3, name: "Infrastruktur", total: 15 },
+                    { category_id: 1, name: "Kesehatan", total: Math.floor(Math.random() * 50) },
+                    { category_id: 2, name: "Ekonomi", total: Math.floor(Math.random() * 80) },
+                    { category_id: 3, name: "Infrastruktur", total: Math.floor(Math.random() * 40) },
                 ],
                 last_updated: new Date().toISOString()
             } as DistrictDrilldownResponse;
