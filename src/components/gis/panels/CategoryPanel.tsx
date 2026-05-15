@@ -148,21 +148,6 @@ export default function CategoryPanel() {
                 )}
             </div>
 
-            {/* SECTION 3: FOOTER INFO */}
-            <div className="pt-6 border-t border-white/5">
-                <div className="p-4 rounded-2xl bg-blue-600/5 border border-blue-500/10 flex gap-4">
-                    <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                        <CheckCircle2 size={20} />
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-black text-white uppercase tracking-tight">Kesiapan Data</p>
-                        <p className="text-[10px] text-white/40 leading-relaxed">
-                            Seluruh indikator telah divalidasi oleh tim <span className="text-blue-400">Bappeda Mimika</span> untuk periode tahun 2025/2026.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
         </div>
     );
 }

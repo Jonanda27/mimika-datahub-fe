@@ -3,7 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import React from 'react';
-import LoadingState from '@/components/ui/LoadingState'; // Dibiarkan sesuai kode eksisting Anda
+import LoadingState from '@/components/ui/LoadingState';
 
 interface MapWrapperProps {
     isAtlasMode?: boolean;
@@ -12,7 +12,7 @@ interface MapWrapperProps {
 
 /**
  * Import dinamis MimikaMap dengan bypass SSR.
- * Loading state disesuaikan dengan tema Immersive (Dark) 
+ * Loading state disesuaikan dengan tema "Papuan Midnight & Neon" 
  * agar transisi visual lebih halus pada halaman Explorer.
  */
 const DynamicMimikaMap = dynamic(
@@ -20,15 +20,15 @@ const DynamicMimikaMap = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="w-full h-full flex items-center justify-center bg-slate-950">
+            <div className="w-full h-full flex items-center justify-center bg-[#0A192F]">
                 <div className="text-center">
-                    {/* Menggunakan spinner biru khas Mimika DataHub */}
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
-                    <p className="text-xs text-blue-400 font-black uppercase tracking-[0.3em] animate-pulse">
+                    {/* Menggunakan spinner Electric Cyan khas identitas baru */}
+                    <div className="w-12 h-12 border-4 border-[#00E5FF] border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-[0_0_20px_rgba(0,229,255,0.5)]"></div>
+                    <p className="text-xs text-[#00E5FF] font-black uppercase tracking-[0.3em] animate-pulse">
                         Inisialisasi Mesin Spasial...
                     </p>
-                    <p className="text-[10px] text-white/30 mt-2 font-medium">
-                        Menyiapkan data vektor distrik Mimika
+                    <p className="text-[10px] text-white/40 mt-2 font-medium">
+                        Menyiapkan kanvas geospasial Mimika
                     </p>
                 </div>
             </div>
@@ -43,21 +43,24 @@ const DynamicMimikaMap = dynamic(
  */
 export default function MapWrapper({ isAtlasMode = false, isPreviewMode = false }: MapWrapperProps) {
     return (
-        <div className="w-full h-full relative z-0 overflow-hidden">
+        // Memastikan lebar dan tinggi 100% mengikuti parent (Infinite Canvas).
+        // Background diset ke Papuan Midnight agar saat tile belum termuat, layarnya tidak berkedip putih.
+        <div className={`w-full h-full relative z-0 overflow-hidden ${isAtlasMode ? 'bg-[#0A192F]' : 'bg-gray-50'}`}>
+
             {/* isAtlasMode dan isPreviewMode dikirimkan ke MimikaMap untuk menentukan 
-        apakah peta harus merespons interaksi penuh atau hanya sekadar tampilan statis (Teaser).
-      */}
+                apakah peta harus merespons interaksi penuh atau hanya sekadar tampilan statis (Teaser).
+            */}
             <DynamicMimikaMap
                 isAtlasMode={isAtlasMode}
                 isPreviewMode={isPreviewMode}
             />
 
             {/* Overlay Vignette: Memberikan efek gelap di pinggiran peta 
-          agar UI melayang di atasnya terlihat lebih kontras (Best Practice UX).
-          Hanya diaktifkan jika berada pada mode Atlas/Immersive penuh.
-      */}
+                agar UI (Sidebar & HUD) yang melayang di atasnya terlihat lebih kontras (Best Practice UX).
+                Vignette disesuaikan dengan warna Midnight Blue agar blend dengan peta satelit/gelap.
+            */}
             {isAtlasMode && !isPreviewMode && (
-                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.3)] z-1" />
+                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(10,25,47,0.9)] z-10" />
             )}
         </div>
     );

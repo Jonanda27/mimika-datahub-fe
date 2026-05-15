@@ -4,91 +4,84 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-// Import Komponen UI Melayang (Floating UI)
-// Catatan: Komponen ini akan dibuat di fase berikutnya, saat ini kita siapkan strukturnya.
-import ExplorerNavbar from "@/src/components/layout/ExplorerNavbar";
+// Komponen Sidebar Slim (The Anchor) - Layer navigasi utama
 import ExplorerSidebar from "@/src/components/layout/ExplorerSidebar";
+// Orchestrator untuk Panel Bertumpuk (The Stacking Drawer)
 import PanelOrchestrator from "@/src/components/gis/PanelOrchestrator";
 import LoadingState from "@/components/ui/LoadingState";
+import MapHUD from "@/src/components/gis/MapHUD"; // Pastikan diimport
 
-// Import MapWrapper secara dinamis untuk menghindari mismatch SSR
+// Import MapWrapper secara dinamis (Bypass SSR)
 const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
     ssr: false,
     loading: () => (
-        <div className="h-full w-full bg-slate-900 flex items-center justify-center">
-            <LoadingState message="Menyiapkan Kanvas Geospasial..." />
+        // Loading state menggunakan identitas warna baru: Papuan Midnight (#0A192F) dan Electric Cyan (#00E5FF)
+        <div className="h-full w-full bg-[#0A192F] flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-[#00E5FF] border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(0,229,255,0.5)]"></div>
+            <LoadingState message="Memuat Ruang Spasial..." />
         </div>
     ),
 });
 
 /**
- * ExplorerPage - The Immersive Shell
- * * Menggunakan prinsip "Map-as-Canvas". Seluruh viewport (100vw/100vh) adalah peta.
- * Komponen UI diletakkan di atas peta menggunakan layering Z-Index.
+ * ExplorerPage - The Immersive Command Center
+ * Mengadopsi GFW Paradigm (Absolute Map Canvas + Stacking Drawers).
+ * Tidak ada lagi navbar tradisional di atas. Semua UI menempel di kiri atau melayang.
  */
 export default function ExplorerPage() {
     return (
-        <main className="relative h-screen w-screen overflow-hidden bg-slate-950 font-sans">
+        // Menggunakan 100dvh untuk responsivitas mobile browser bar yang lebih sempurna
+        <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#0A192F] font-sans selection:bg-[#00E5FF] selection:text-[#0A192F]">
 
-            {/* LAYER 0: MAP CANVAS (The Base) */}
+            {/* =====================================================================
+                LAYER 0: THE INFINITE CANVAS (PETA)
+                Memenuhi 100% layar. Semua interaksi scroll halaman dimatikan.
+            ====================================================================== */}
             <div className="absolute inset-0 z-0">
-                <Suspense fallback={<div className="h-full w-full bg-slate-900" />}>
-                    {/* Prop isAtlasMode diaktifkan agar MapWrapper tahu 
-             ia harus merender peta dalam mode full-page tanpa margin.
-          */}
+                <Suspense fallback={<div className="h-full w-full bg-[#0A192F]" />}>
                     <MapWrapper isAtlasMode={true} />
                 </Suspense>
             </div>
 
-            {/* LAYER 1: NAVIGATION OVERLAY (Navbar & Sidebar) */}
-            {/* Z-Index diletakkan tinggi (z-50) agar selalu di atas panel data */}
-            <div className="pointer-events-none absolute inset-0 z-50 flex flex-col">
-                {/* Navbar: Menggunakan glassmorphism agar peta tetap "tembus" */}
-                <div className="pointer-events-auto">
-                    <ExplorerNavbar />
-                </div>
-
-                <div className="flex-1 flex items-stretch">
-                    {/* Sidebar: Navigasi vertikal tipis di sisi kiri */}
-                    <div className="pointer-events-auto shrink-0">
-                        <ExplorerSidebar />
-                    </div>
-
-                    {/* Spacer untuk membiarkan peta terlihat di tengah */}
-                    <div className="flex-1" />
+            {/* =====================================================================
+                LAYER 1: THE SLIM ANCHOR (SIDEBAR KIRI)
+                Identitas Bold (Papuan Midnight) yang menjadi jangkar utama navigasi.
+            ====================================================================== */}
+            <div className="absolute top-0 bottom-0 left-0 z-50 pointer-events-none">
+                <div className="h-full pointer-events-auto">
+                    <ExplorerSidebar />
                 </div>
             </div>
 
-            {/* LAYER 2: SHIFTING PANELS (The Orchestrator) */}
-            {/* Z-Index 40: Diletakkan di bawah Navbar tapi di atas Peta.
-         Komponen ini akan menangani logika panel yang bergeser ke kanan 
-         berdasarkan interaksi user (klik sidebar atau klik poligon).
-      */}
-            <div className="absolute top-20 bottom-8 left-20 z-40 pointer-events-none">
+            {/* =====================================================================
+                LAYER 2: THE STACKING DRAWERS (PANEL ANALISIS)
+                Panel akan menumpuk bergeser ke kanan, bermula tepat di sebelah sidebar.
+                (Sidebar width nanti diasumsikan ~72px-80px, jadi left-[88px] memberi jarak pas).
+            ====================================================================== */}
+            <div className="absolute top-4 bottom-4 left-[88px] z-40 pointer-events-none">
                 <PanelOrchestrator />
             </div>
 
-            {/* LAYER 3: MAP CONTROLS (Right-side Actions) */}
-            {/* Lokasi untuk tombol Zoom, Reset Center, Layer Toggle, dll */}
-            <div className="absolute bottom-10 right-8 z-30 flex flex-col gap-3">
-                {/* Komponen MapControls akan diimplementasikan di fase berikutnya */}
-                <div className="flex flex-col gap-2 pointer-events-auto">
-                    <button className="w-10 h-10 bg-white/90 backdrop-blur shadow-xl rounded-xl flex items-center justify-center font-bold text-slate-800 hover:bg-white transition-all">
+            {/* =====================================================================
+                LAYER 3: MAP HUD & CONTROLS (KANAN BAWAH)
+                Custom Zoom, Integritas Data, dan Tooltip Spasial melayang di atas peta.
+            ====================================================================== */}
+            <div className="absolute bottom-8 right-8 z-30 flex flex-col items-end gap-6 pointer-events-none">
+
+                {/* HUD: MapControls (Zoom) yang akan dibuat dinamis di FASE 4 */}
+                <div className="pointer-events-auto flex flex-col gap-2">
+                    <button
+                        onClick={() => window.dispatchEvent(new Event('map-zoom-in'))}
+                        className="w-12 h-12 bg-[#0A192F]/90 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl flex items-center justify-center font-black text-2xl text-white hover:bg-[#00E5FF] hover:text-[#0A192F] transition-all hover:scale-110 active:scale-95">
                         +
                     </button>
-                    <button className="w-10 h-10 bg-white/90 backdrop-blur shadow-xl rounded-xl flex items-center justify-center font-bold text-slate-800 hover:bg-white transition-all">
+                    <button
+                        onClick={() => window.dispatchEvent(new Event('map-zoom-out'))}
+                        className="w-12 h-12 bg-[#0A192F]/90 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl flex items-center justify-center font-black text-2xl text-white hover:bg-[#00E5FF] hover:text-[#0A192F] transition-all hover:scale-110 active:scale-95">
                         -
                     </button>
                 </div>
-            </div>
 
-            {/* LAYER 4: BRANDING FOOTER (Bottom Left) */}
-            <div className="absolute bottom-6 left-20 z-20 pointer-events-none">
-                <div className="bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/10">
-                    <p className="text-[9px] text-white/60 font-medium uppercase tracking-[0.2em]">
-                        Mimika DataHub Explorer &copy; 2026
-                    </p>
-                </div>
             </div>
 
         </main>
