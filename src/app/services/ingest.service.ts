@@ -18,7 +18,7 @@ export const ingestService = {
     // ==========================================
     // INTERVENSI GIS: Injeksi district_id
     // ==========================================
-    if (data.district_id) {
+    if (data.district_id !== undefined && data.district_id !== null) {
       formData.append("district_id", data.district_id.toString());
     }
 

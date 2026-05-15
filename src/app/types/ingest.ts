@@ -28,5 +28,6 @@ export interface UploadResponse {
   dataset_id: number;
   headers_found: string[];
   message: string;
+  file_url?: string;
   stats: IngestStats; // Struktur berubah menjadi nested object
 }

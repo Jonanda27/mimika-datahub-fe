@@ -94,11 +94,11 @@ export default function UploadDataPage() {
 
   const handleFileChange = (file: File) => {
     // [UPDATE] Menambahkan .xls ke dalam daftar format yang didukung
-    const validTypes = [".xlsx", ".xls", ".csv", ".json"];
+    const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
 
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan .xlsx, .xls, .csv, atau .json", "danger");
+      showAlert("Format file tidak didukung. Gunakan Excel, CSV, JSON, atau Dokumen (PDF/Word)", "danger");
       return;
     }
 
