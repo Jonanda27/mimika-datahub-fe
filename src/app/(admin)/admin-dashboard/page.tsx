@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import {
   Database, Building, Star, Clock,
   Flame, TrendingUp, Activity, AlertTriangle, Building2, Users,
-  Map
+  Map, ChevronRight
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -14,7 +14,7 @@ import {
 // Import Komponen Global
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import StatusBadge, { StatusType } from "@/components/ui/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingState from "@/components/ui/LoadingState";
 
 // Import Komponen GIS Spasial
@@ -80,64 +80,63 @@ export default function ManagerDashboardPage() {
           withSearch
         />
 
-        {/* 2. SUMMARY CARDS */}
+        {/* 2. SUMMARY CARDS - Responsive Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
           <StatCard
             label="Total Dataset"
             value={dashboardData.cards.total_dataset}
-            /* PERBAIKAN: Normalisasi width/height tailwind */
-            icon={<Database className="w-4 h-4 md:w-[22px] md:h-[22px]" />}
+            icon={<Database className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
             iconBg="bg-[#7e57c2]"
           />
           <StatCard
             label="Sumber Data"
             value={dashboardData.cards.total_sumber}
-            icon={<Building className="w-4 h-4 md:w-[22px] md:h-[22px]" />}
+            icon={<Building className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
             iconBg="bg-[#29b6f6]"
           />
           <StatCard
             label="User Aktif"
             value={dashboardData.cards.user_aktif}
-            icon={<Users className="w-4 h-4 md:w-[22px] md:h-[22px]" />}
+            icon={<Users className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
             iconBg="bg-[#ec407a]"
           />
           <StatCard
             label="Rata-rata Kualitas"
             value={dashboardData.cards.rata_rata_kualitas}
-            icon={<Star className="w-4 h-4 md:w-[22px] md:h-[22px]" fill="currentColor" />}
+            icon={<Star className="w-5 h-5 md:w-[22px] md:h-[22px]" fill="currentColor" />}
             iconBg="bg-[#66bb6a]"
             valueColor="text-[#66bb6a]"
           />
         </div>
 
         {/* 3. INTERVENSI GIS: PETA SPASIAL */}
-        {/* PERBAIKAN: Memberikan tinggi eksplisit (h-[500px]) pada kontainer, dan menggunakan flex-1 untuk MapWrapper */}
+        {/* PERBAIKAN: Memberikan tinggi eksplisit pada kontainer, dan menggunakan flex-1 untuk MapWrapper agar Leaflet render dengan benar */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-6 md:mb-8 relative z-10 flex flex-col h-[450px] md:h-[550px]">
           <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-4 shrink-0">
             <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
               <Map size={18} className="text-[#1e61d0]" /> Sebaran Dataset Geospasial
             </h3>
-            <span className="text-[10px] text-gray-400 font-medium italic">Data Agregasi O(1)</span>
+            <span className="text-[10px] text-gray-400 font-medium italic hidden sm:block">Data Agregasi O(1)</span>
           </div>
           <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-gray-100">
             <MapWrapper />
           </div>
         </div>
 
-        {/* 4. DATA LISTS */}
+        {/* 4. DATA LISTS (RECENT & POPULAR) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Dataset Terbaru */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
             <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
               <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
-                <Clock size={18} className="text-gray-700 shrink-0" /> Dataset Terbaru
+                <Clock size={18} className="text-gray-700" /> Dataset Terbaru
               </h3>
-              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter shrink-0">Lihat semua →</span>
+              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
             </div>
             <div className="space-y-5">
-              {dashboardData.recent.slice(0, 2).map((item) => (
+              {dashboardData.recent.slice(0, 4).map((item) => (
                 <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                  <div className="max-w-[70%]">
+                  <div className="max-w-[75%]">
                     <h4 className="text-xs md:text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
                     <p className="text-[10px] md:text-[11px] text-gray-500 mt-1 font-medium">Tahun {item.year} • {new Date(item.created_at).toLocaleDateString('id-ID')}</p>
                   </div>
@@ -151,12 +150,12 @@ export default function ManagerDashboardPage() {
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
             <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
               <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
-                <Flame size={18} className="text-gray-700 shrink-0" /> Dataset Populer
+                <Flame size={18} className="text-orange-500" /> Dataset Terpopuler
               </h3>
-              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter shrink-0">Lihat semua →</span>
+              <span className="text-[10px] md:text-xs text-[#ef4444] font-bold cursor-pointer hover:underline uppercase tracking-tighter">Lihat semua →</span>
             </div>
             <div className="space-y-5">
-              {dashboardData.popular.slice(0, 2).map((item) => (
+              {dashboardData.popular.slice(0, 4).map((item) => (
                 <div key={item.id} className="flex justify-between items-center group cursor-pointer pb-4 border-b border-gray-50 last:border-0 last:pb-0">
                   <div className="max-w-[80%]">
                     <h4 className="text-xs md:text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
@@ -174,14 +173,14 @@ export default function ManagerDashboardPage() {
           <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 overflow-hidden">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
               <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
-                <Activity size={18} className="text-gray-700 shrink-0" /> Tren Kualitas Data per Bulan
+                <Activity size={18} className="text-gray-700" /> Tren Kualitas Data per Bulan
               </h3>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#ef4444] rounded-full"></div>
                 <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
               </div>
             </div>
-            {/* PERBAIKAN: Normalisasi tinggi grafik (h-[250px]) */}
+            {/* PERBAIKAN: margin left untuk mencegah angka Y-Axis Recharts terpotong di mobile */}
             <div className="h-[250px] md:h-[280px] w-full -ml-4 sm:ml-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
@@ -209,7 +208,7 @@ export default function ManagerDashboardPage() {
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
             <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
               <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
-                <AlertTriangle size={18} className="text-[#ef4444] shrink-0" /> Notifikasi Kualitas
+                <AlertTriangle size={18} className="text-[#ef4444]" /> Notifikasi Kualitas
               </h3>
             </div>
             <div className="space-y-4">
@@ -246,7 +245,7 @@ export default function ManagerDashboardPage() {
           </div>
         </div>
 
-        <footer className="mt-8 text-center text-gray-400 text-[9px] md:text-[10px] font-medium tracking-widest uppercase pb-8">
+        <footer className="mt-8 text-center text-gray-400 text-[9px] md:text-[10px] font-medium tracking-widest uppercase pb-10">
           © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
         </footer>
       </div>

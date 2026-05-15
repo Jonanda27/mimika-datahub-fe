@@ -180,6 +180,7 @@ export default function MimikaMap() {
         });
     };
 
+    // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
     if (loading) {
         return (
             <div className="h-full w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
@@ -265,8 +266,7 @@ export default function MimikaMap() {
     };
 
     return (
-        // PERUBAHAN: Menghapus h-112.5 menjadi h-full
-        <div className="h-full w-full overflow-hidden relative z-10 bg-gray-50">
+        <div className="h-full w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
             <SafeMapContainer
                 key={mapKey} // INJEKSI KUNCI: Mencegah Reuse Container oleh Leaflet
                 center={mapCenter}

@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Info, Plus, Send, Image as ImageIcon, X } from "lucide-react";
-import { Item } from "../page";
+// Menggunakan resolusi modul ke Domain Layer untuk memutus Circular Dependency
+import { Item } from "@/src/app/types/dataset";
 import { SourceType } from "@/src/app/types/source-type";
 
 // Data Master Hardcode (MVP) - 18 Distrik Kabupaten Mimika
@@ -34,8 +35,8 @@ interface DatasetFormProps {
   categories: Item[];
   sourceTypes: SourceType[];
   isProcessing: boolean;
-  selectedImage: File | null; // [NEW] Props dari Branch Teman
-  onImageChange: (file: File | null) => void; // [NEW] Props dari Branch Teman
+  selectedImage: File | null;
+  onImageChange: (file: File | null) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onAddSource: () => void;
   onAddCategory: () => void;
@@ -49,7 +50,7 @@ export default function DatasetForm({
 }: DatasetFormProps) {
 
   // ======================================================================
-  // STATE & LOGIC: GIS District (Dari Branch Anda)
+  // STATE & LOGIC: GIS District
   // ======================================================================
   const [districtId, setDistrictId] = useState<number | null>(null);
 
@@ -59,7 +60,7 @@ export default function DatasetForm({
   };
 
   // ======================================================================
-  // STATE & LOGIC: Cover Image Upload (Dari Branch Teman Anda)
+  // STATE & LOGIC: Cover Image Upload
   // ======================================================================
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -203,14 +204,13 @@ export default function DatasetForm({
               <option value="Semester">Semester</option>
               <option value="Tahunan">Tahunan</option>
             </select>
-            <p className="pt-1 italic text-[10px] text-gray-400">* Pastikan format file sesuai standar template</p>
           </div>
 
           {/* INTERVENSI GIS: Distrik / Wilayah (Controlled Component) */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between">
               Distrik / Wilayah
-              <span className="text-[9px] text-[#ef4444] normal-case tracking-normal italic">*Opsional (Level Kabupaten)</span>
+              <span className="text-[9px] text-[#ef4444] normal-case tracking-normal italic">*Opsional (Level Kab)</span>
             </label>
             <select
               name="district_id"

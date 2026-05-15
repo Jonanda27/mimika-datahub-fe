@@ -115,14 +115,14 @@ function ThemeCard({
         />
       </div>
 
-      <div className="p-6 flex flex-col flex-grow text-black">
+      <div className="p-6 flex flex-col grow text-black">
         <div className="mb-3">
           <h3 className="text-[#002244] font-black text-[15px] uppercase tracking-tight line-clamp-2 leading-snug">
             {title}
           </h3>
         </div>
 
-        <div className="mb-4 flex-grow">
+        <div className="mb-4 grow">
           <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-3">
             {description || "Tidak ada deskripsi spesifik."}
           </p>
@@ -236,7 +236,7 @@ export default function LandingPage() {
 
       {/* --- DYNAMIC NAVIGATION --- */}
       <nav
-        className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled
+        className={`fixed top-0 w-full z-100 transition-all duration-500 ${scrolled
           ? "bg-white border-b border-gray-200 py-2 shadow-md"
           : "bg-transparent py-5"
           }`}
@@ -274,7 +274,7 @@ export default function LandingPage() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                  <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-60">
                     <div className="p-2">
                       <Link
                         href="/public-data-pemerintah"
@@ -335,7 +335,7 @@ export default function LandingPage() {
       </nav>
 
       {/* --- MINIMALIST HERO SECTION WITH BG-MIMIKA.JPG --- */}
-      <header className="relative min-h-[90vh] flex items-center justify-center z-[60]">
+      <header className="relative min-h-[90vh] flex items-center justify-center z-60">
 
         {/* Background Layer */}
         <div className="absolute inset-0 z-0 overflow-hidden">
@@ -347,7 +347,7 @@ export default function LandingPage() {
             priority
           />
           <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#f4f7f9] via-transparent to-slate-950/50"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-[#f4f7f9] via-transparent to-slate-950/50"></div>
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center w-full mt-10">
@@ -355,18 +355,18 @@ export default function LandingPage() {
 
             <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
               Akses Data Terpadu <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">Kabupaten Mimika</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-cyan-300 to-emerald-400">Kabupaten Mimika</span>
             </h1>
 
-            <div className="max-w-4xl mx-auto mt-8 relative z-[70] text-left" ref={searchContainerRef}>
+            <div className="max-w-4xl mx-auto mt-8 relative z-70 text-left" ref={searchContainerRef}>
 
               <div className="relative w-full flex flex-col items-center">
 
                 {/* 1. Box Search Input */}
                 <div className="w-full relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+                  <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
                   <div className="relative flex items-center bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-2 transition-all border border-white/50">
-                    <div className="flex-grow flex items-center px-4">
+                    <div className="grow flex items-center px-4">
                       <Search className={`mr-3 transition-colors text-[#0071bc]`} size={24} />
                       <input
                         type="text"
@@ -427,7 +427,7 @@ export default function LandingPage() {
                 {/* 3. Dropdown Dataset */}
                 {selectedCategory && (
                   <div className="absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden text-left border border-white/50 animate-in fade-in slide-in-from-top-2 z-50">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-emerald-50 border-b border-gray-100 flex justify-between items-center">
+                    <div className="p-4 bg-linear-to-r from-blue-50 to-emerald-50 border-b border-gray-100 flex justify-between items-center">
                       <span className="text-sm font-semibold text-gray-700">
                         Hasil untuk <span className="font-bold text-[#002244]">"{searchQuery}"</span> di <span className="font-bold text-emerald-600">{selectedCategory.name}</span>
                       </span>
@@ -510,7 +510,7 @@ export default function LandingPage() {
       {/* --- TEMATIK DATAHUB SECTION --- */}
       <section id="tematik" className="py-20 bg-white relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
-          <div className="border-b-[4px] border-[#0071bc] pb-6 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
+          <div className="border-b-4 border-[#0071bc] pb-6 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Fokus Tematik</h2>
               <p className="mt-4 text-gray-700 text-lg max-w-4xl font-light">
@@ -546,8 +546,8 @@ export default function LandingPage() {
       {/* --- GIS PETA SECTION --- */}
       <section id="gis" className="py-20 bg-[#f4f7f9]">
         {/* 1. Kontainer Header Teks */}
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-black mb-10">
-          <div className="border-b-[4px] border-[#0071bc] pb-6">
+        <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 text-black mb-10">
+          <div className="border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-[#002244] uppercase tracking-tight">Sistem Informasi Geospasial</h2>
             <p className="mt-4 text-gray-600 text-lg max-w-4xl font-light">
               Visualisasi sebaran aset, infrastruktur, dan indikator sosial ekonomi Kabupaten Mimika melalui antarmuka peta interaktif profesional.
@@ -556,13 +556,13 @@ export default function LandingPage() {
         </div>
 
         {/* 2. Kontainer Peta yang Diperbesar (Lebar & Tinggi) */}
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
           {/* Penjelasan Kelas Tailwind yang ditambahkan:
             - h-[75vh]: Tinggi peta akan mengambil 75% dari tinggi layar perangkat yang membukanya.
-            - min-h-[600px]: Jika dibuka di layar kecil/HP, tingginya tidak akan kurang dari 600 pixel.
-            - max-h-[900px]: Agar di layar TV/Monitor raksasa tidak terlalu molor ke bawah.
+            - min-h-150: Jika dibuka di layar kecil/HP, tingginya tidak akan kurang dari 600 pixel.
+            - max-h-225: Agar di layar TV/Monitor raksasa tidak terlalu molor ke bawah.
           */}
-          <div className="relative w-full h-[75vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100">
+          <div className="relative w-full h-[75vh] min-h-150 max-h-225 rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100">
             <MapWrapper />
           </div>
         </div>
@@ -571,7 +571,7 @@ export default function LandingPage() {
       {/* --- NEWS & STORIES SECTION --- */}
       <section className="py-20 bg-[#f8fafc] border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-10 border-b-[4px] border-[#0071bc] pb-6">
+          <div className="flex justify-between items-end mb-10 border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Berita & Publikasi</h2>
             <a
               href="https://beritamimika.com"
@@ -590,7 +590,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="lg:col-span-2 group flex flex-col"
             >
-              <div className="relative w-full h-72 md:h-[450px] rounded-2xl overflow-hidden mb-6">
+              <div className="relative w-full h-72 md:h-112.5 rounded-2xl overflow-hidden mb-6">
                 <Image
                   src={NEWS_DATA.featured.image}
                   alt={NEWS_DATA.featured.title}
@@ -605,7 +605,7 @@ export default function LandingPage() {
               <h3 className="text-2xl md:text-3xl font-black text-[#002244] mb-4 hover:text-[#0071bc] transition-colors leading-tight">
                 {NEWS_DATA.featured.title}
               </h3>
-              <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
+              <p className="text-gray-600 text-base leading-relaxed mb-6 grow">
                 {NEWS_DATA.featured.excerpt}
               </p>
               <span className="text-[#0071bc] font-bold text-sm uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all">
@@ -648,7 +648,7 @@ export default function LandingPage() {
       {/* --- DATA SEKTORAL SECTION --- */}
       <section id="fitur" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 text-black">
-          <div className="border-b-[4px] border-[#0071bc] pb-6">
+          <div className="border-b-4 border-[#0071bc] pb-6">
             <h2 className="text-3xl font-bold text-[#002244] uppercase tracking-tight">Transparansi Data Sektoral</h2>
           </div>
 
@@ -731,7 +731,7 @@ export default function LandingPage() {
             <FooterColumn title="BANTUAN" links={["Panduan Pengguna", "Dokumentasi API", "FAQ", "Lapor Bug"]} />
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-400 gap-6 uppercase tracking-[0.1em]">
+          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-400 gap-6 uppercase tracking-widest">
             <p>© 2026 PEMERINTAH KABUPATEN MIMIKA. ALL RIGHTS RESERVED.</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Kebijakan Privasi</a>

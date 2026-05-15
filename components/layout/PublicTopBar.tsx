@@ -10,7 +10,8 @@ import {
   Info,
   Menu, 
   X,
-  ChevronDown
+  ChevronDown,
+  Globe2
 } from "lucide-react";
 
 export default function PublicTopBar() {
@@ -139,7 +140,7 @@ export default function PublicTopBar() {
               ${pathname === "/atlas" ? "bg-[#005a96] border-b-2 border-white shadow-inner" : "hover:bg-[#005a96] border-b-2 border-transparent"}
             `}
           >
-            <Globe size={14} className={pathname === "/publik-survey" ? "text-white" : "text-blue-200"} /> SURVEY
+            <Globe2 size={14} className={pathname === "/publik-survey" ? "text-white" : "text-blue-200"} /> SURVEY
           </Link>
 
           {/* ABOUT */}

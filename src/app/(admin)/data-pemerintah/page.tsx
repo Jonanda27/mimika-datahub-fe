@@ -93,7 +93,7 @@ function DataPemerintahContent() {
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-6 md:pt-10 pb-20 animate-in fade-in duration-500">
-      <div className="max-w-375 w-full mx-auto px-4 md:px-6 lg:px-8">
+      <div className="max-w-375 w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
 
         {/* Header & Search Area */}
         <div className="flex flex-col space-y-6 mb-8">
@@ -111,7 +111,7 @@ function DataPemerintahContent() {
             </button>
           </div>
 
-          <div className="relative w-full">
+          <div className="relative w-full md:max-w-none">
             <input
               type="text"
               placeholder="Search data..."
@@ -127,7 +127,7 @@ function DataPemerintahContent() {
 
         <div className="flex flex-col lg:flex-row gap-8 items-start relative">
 
-          {/* ASIDE / FILTER: Responsive Drawer with Spasial Reset Logic */}
+          {/* ASIDE / FILTER: Responsive Drawer with Spasial Reset Logic for Mobile */}
           <aside className={`
             fixed inset-y-0 left-0 z-110 w-70 bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
             lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
@@ -154,7 +154,7 @@ function DataPemerintahContent() {
                   const resetObj = { category_id: null, source_id: null, source_type_id: null, year: null, district_id: null };
                   setSearchTerm("");
                   handleFilterChange(resetObj);
-                  // Hapus parameter URL secara halus
+                  // Menghapus parameter dari URL secara halus tanpa reload
                   window.history.replaceState(null, '', window.location.pathname);
                 }}
                 onExport={(fmt) => downloadDatasetList('pemerintah', fmt)}
@@ -231,7 +231,7 @@ function DataPemerintahContent() {
 export default function DataPemerintahPage() {
   return (
     <Suspense fallback={
-      <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
+      <div className="bg-[#f0f4f8] min-h-screen font-sans text-black flex items-center justify-center p-6 pt-8">
         <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
       </div>
     }>

@@ -1,8 +1,24 @@
 // src/app/types/dataset.ts
 
+/**
+ * Abstraksi entitas Item dasar untuk digunakan di berbagai komponen UI (seperti dropdown form)
+ * dan manajemen state. Dipisahkan dari Presentation Layer untuk mematuhi prinsip 
+ * Separation of Concerns dan Low Coupling.
+ */
+export interface Item {
+  id: string | number;
+  name: string;
+}
+
 export interface Dataset {
   id: number;
   title: string;
+  // Injeksi Spasial (GIS)
+  district_id?: number | null;
+  district?: {
+    id: number;
+    name: string;
+  } | null;
   source_id: number;
   category_id: number;
   source_type_id: number;
@@ -14,12 +30,6 @@ export interface Dataset {
   total_rows: number;
   quality_score: number;
   created_at: string;
-  // Injeksi Spasial (GIS)
-  district_id?: number | null;
-  district?: {
-    id: number;
-    name: string;
-  } | null;
   image_url?: string;
 }
 
@@ -81,10 +91,10 @@ export interface DatasetByCategoryItem {
   image_url: string | null;
   source_name: string;
   created_at: string;
-  description?: string; 
-   source_type_id: number; 
-  year: number; 
-   source_id: number; 
+  description?: string;
+  source_type_id: number;
+  year: number;
+  source_id: number;
 }
 
 export interface CategoryGroup {

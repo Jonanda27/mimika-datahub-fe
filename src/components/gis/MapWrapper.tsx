@@ -2,26 +2,37 @@
 "use client";
 
 import dynamic from 'next/dynamic';
+import React from 'react';
+
+interface MapWrapperProps {
+    isAtlasMode?: boolean;
+}
 
 /**
- * Wrapper Komponen Peta menggunakan Dynamic Import.
- * Mematikan Server-Side Rendering (ssr: false) karena Leaflet berinteraksi langsung dengan DOM.
+ * Import dinamis MimikaMap dengan bypass SSR.
+ * Dibuat sebagai 'any' untuk sementara guna menghindari mismatch type pada dynamic import Next.js
  */
-const MapWrapper = dynamic(
+const DynamicMimikaMap = dynamic(
     () => import('./MimikaMap'),
     {
         ssr: false,
         loading: () => (
-            // PERUBAHAN: Mengganti h-112.5 menjadi h-full agar mengisi penuh kontainer parent-nya
-            <div className="h-full w-full flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-100">
+            <div className="w-full h-full flex items-center justify-center bg-slate-50 rounded-3xl border border-gray-100">
                 <div className="text-center">
+                    <div className="w-10 h-10 border-4 border-[#0071bc] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest animate-pulse">
-                        Menyiapkan Engine Pemetaan...
+                        Menyiapkan Geospasial...
                     </p>
                 </div>
             </div>
         )
     }
-);
+) as any;
 
-export default MapWrapper;
+export default function MapWrapper({ isAtlasMode = false }: MapWrapperProps) {
+    return (
+        <div className="w-full h-full relative z-0">
+            <DynamicMimikaMap isAtlasMode={isAtlasMode} />
+        </div>
+    );
+}

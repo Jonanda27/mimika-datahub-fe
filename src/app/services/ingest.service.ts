@@ -6,7 +6,7 @@ export const ingestService = {
   async uploadProcess(data: UploadRequest): Promise<UploadResponse> {
     const formData = new FormData();
 
-    // Data Text
+    // Data Text Mandatory
     formData.append("title", data.title);
     formData.append("dataset_type", data.dataset_type);
     formData.append("source_id", data.source_id.toString());
@@ -15,32 +15,34 @@ export const ingestService = {
     formData.append("year", data.year.toString());
     formData.append("period", data.period);
 
-    // ==========================================
-    // INTERVENSI GIS: Injeksi district_id
-    // ==========================================
-    if (data.district_id) {
-      formData.append("district_id", data.district_id.toString());
-    }
-
+    // Data Text Opsional: Deskripsi
     if (data.description) {
       formData.append("description", data.description);
     }
 
-    // Data Files
-    formData.append("file", data.file);      // File Excel/CSV
-    formData.append("image", data.image);    // [UPDATE] File Gambar Cover dari Branch Teman
+    // Data Opsional: INTERVENSI GIS (Injeksi district_id dengan strict null check)
+    if (data.district_id !== undefined && data.district_id !== null) {
+      formData.append("district_id", data.district_id.toString());
+    }
 
-    const token = localStorage.getItem("auth_token");
+    // Data Files (Dataset & Gambar Cover)
+    formData.append("file", data.file);
+    formData.append("image", data.image);
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+
     const response = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {
       method: "POST",
       body: formData,
       headers: {
         "Authorization": `Bearer ${token}`
+        // Catatan: Jangan set Content-Type ke multipart/form-data secara manual, 
+        // biarkan browser yang menanganinya agar boundary boundary file di-generate dengan benar.
       }
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || "Gagal memproses upload data");
     }
 

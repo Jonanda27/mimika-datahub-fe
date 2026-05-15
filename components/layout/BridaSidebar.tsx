@@ -10,10 +10,9 @@ import {
   Menu, 
   X,
   LogOut,
-  Search,
-  User as UserIcon,
   ChevronDown,
-  Globe
+  Globe,
+  Globe2
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -25,9 +24,13 @@ export default function BridaNavbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false); // Profile dropdown state
   const dropdownRef = useRef<HTMLDivElement>(null);
   
+  // State untuk menghindari Hydration Error
+  const [isMounted, setIsMounted] = useState(false);
+  
   const { profile, fetchProfile, logout, isLoading } = useAuthStore();
 
   useEffect(() => {
+    setIsMounted(true);
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
 
@@ -46,8 +49,8 @@ export default function BridaNavbar() {
     { name: "Dashboard", href: "/brida-dashboard", icon: LayoutDashboard },
     { name: "Data Pemerintah", href: "/brida-user-data-pemerintah", icon: Upload },
     { name: "Data Non-Pemerintah", href: "/brida-user-data-non-pemerintah", icon: Upload },
-    { name: "Data Survey", href: "/survey", icon: Globe },
-    { name: "Data Upload", href: "/brida-upload-data", icon: Upload },
+    { name: "Data Survey", href: "/survey", icon: Globe2 },
+    { name: "Unggah Data", href: "/brida-upload-data", icon: Upload },
   ];
 
   const getInitials = (name: string) => {
@@ -67,8 +70,16 @@ export default function BridaNavbar() {
     }
   };
 
+  // Skeleton UI: Dirender di Server untuk menghindari Mismatch sebelum isMounted true
+  if (!isMounted) {
+    return (
+      <header className="w-full h-[116px] z-[60] sticky top-0 shadow-md bg-white border-b border-gray-200"></header>
+    );
+  }
+
   return (
-    <header className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
+    // suppressHydrationWarning ditambahkan untuk mengabaikan injeksi dari Ekstensi Browser
+    <header suppressHydrationWarning className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200 text-black">
         
@@ -86,6 +97,7 @@ export default function BridaNavbar() {
           {/* Profil Section with Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button 
+              suppressHydrationWarning
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className={`flex items-center gap-2.5 p-1 pr-3 rounded-full bg-white border-2 transition-all focus:outline-none 
                 ${isProfileOpen ? 'border-[#0071bc] shadow-md ring-4 ring-[#0071bc]/10' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
@@ -119,6 +131,7 @@ export default function BridaNavbar() {
                 {/* Body Dropdown */}
                 <div className="p-2 space-y-1">
                   <button 
+                    suppressHydrationWarning
                     onClick={handleLogout}
                     disabled={isLoading}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors font-bold group"
@@ -135,6 +148,7 @@ export default function BridaNavbar() {
 
           {/* Tombol Hamburger (Mobile) */}
           <button 
+            suppressHydrationWarning
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden text-[#004b87] p-2 rounded-lg hover:bg-gray-100 border border-transparent active:border-gray-200 transition-colors"
           >

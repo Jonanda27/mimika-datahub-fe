@@ -3,24 +3,27 @@
 export interface IngestStats {
   inserted: number;
   duplicates: number;
-  empty: number;
+  empty_rows: number; // Update sesuai backend
+  empty_cells: number; // Baru
   total: number;
   quality_score: number;
 }
 
 export interface UploadRequest {
   title: string;
-  dataset_type: string; // Baru
+  dataset_type: string;
   source_id: number;
   category_id: number;
-  source_type_id: number; // Baru
+  source_type_id: number;
   year: number;
   period: string;
   description?: string;
+
+  // Injeksi Spasial (GIS) - Opsional sesuai backend Form(None)
+  district_id?: number | null;
+
   file: File;
   image: File;
-  // Injeksi Spasial (GIS)
-  district_id?: number | null;
 }
 
 export interface UploadResponse {
@@ -28,5 +31,5 @@ export interface UploadResponse {
   dataset_id: number;
   headers_found: string[];
   message: string;
-  stats: IngestStats; // Struktur berubah menjadi nested object
+  stats: IngestStats;
 }
