@@ -1,3 +1,4 @@
+// src/app/(user)/upload-data/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -39,7 +40,7 @@ export interface Item {
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null); // [NEW] State Gambar
+  const [selectedImage, setSelectedImage] = useState<File | null>(null); // [NEW] State Gambar dari Branch Teman
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
@@ -48,6 +49,8 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+
+  // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
 
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -61,8 +64,8 @@ export default function UploadDataPage() {
       setIsLoading(true);
       try {
         await Promise.all([
-          fetchSources(), 
-          fetchCategories(), 
+          fetchSources(),
+          fetchCategories(),
           fetchSourceTypes(),
           fetchMyDatasets()
         ]);
@@ -91,19 +94,19 @@ export default function UploadDataPage() {
 
   const handleFileChange = (file: File) => {
     // [UPDATE] Menambahkan .xls ke dalam daftar format yang didukung
-    const validTypes = [".xlsx", ".xls", ".csv", ".json"];
+    const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
-    
+
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan .xlsx, .xls, .csv, atau .json", "danger");
+      showAlert("Format file tidak didukung. Gunakan Excel, CSV, JSON, atau Dokumen (PDF/Word)", "danger");
       return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
       showAlert("Ukuran file maksimal 10MB", "danger");
       return;
     }
-    
+
     setSelectedFile(file);
     showAlert(`File "${file.name}" berhasil dipilih`, "success");
   };
@@ -113,15 +116,16 @@ export default function UploadDataPage() {
     setIsLoading(true);
     try {
       if (showSourceModal) {
-        await addSource({ name: newItemName, type: "opd", icon: "fa-database" }); 
+        await addSource({ name: newItemName, type: "opd", icon: "fa-database" });
         showAlert(`Sumber "${newItemName}" berhasil ditambahkan`, "success");
       } else if (showCategoryModal) {
-        await addCategory({ name: newItemName }); 
+        await addCategory({ name: newItemName });
         showAlert(`Kategori "${newItemName}" berhasil ditambahkan`, "success");
       } else if (showSourceTypeModal) {
         await addSourceType({ name: newItemName });
         showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
       }
+
       setShowSourceModal(false);
       setShowCategoryModal(false);
       setShowSourceTypeModal(false);
@@ -135,6 +139,7 @@ export default function UploadDataPage() {
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
       return;
@@ -147,15 +152,18 @@ export default function UploadDataPage() {
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
 
-    const title = formData.get("datasetName") as string;
+    // --- AMBIL DATA DENGAN KUNCI YANG BENAR ---
+    const title = formData.get("title") as string;
     const datasetType = formData.get("dataset_type") as string;
-    const sourceId = formData.get("dataSource");
-    const categoryId = formData.get("category");
+    const sourceId = formData.get("source_id");
+    const categoryId = formData.get("category_id");
     const sourceTypeId = formData.get("source_type_id");
     const year = formData.get("year");
     const period = formData.get("period") as string;
+    const districtId = formData.get("district_id"); // Data spasial baru dari Branch Anda
     const description = formData.get("description") as string;
 
+    // Validasi: pastikan field utama tidak kosong
     if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
       showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
       return;
@@ -163,10 +171,10 @@ export default function UploadDataPage() {
 
     setProcessing(true);
     setError(null);
-    showAlert("Sedang memproses, membersihkan data, dan upload gambar...", "info");
+    showAlert("Sedang memproses, membersihkan data, dan upload gambar...", "info"); // Notifikasi tambahan dari teman Anda
 
     try {
-      const result = await ingestService.uploadProcess({ 
+      const result = await ingestService.uploadProcess({
         title,
         dataset_type: datasetType,
         source_id: Number(sourceId),
@@ -176,21 +184,19 @@ export default function UploadDataPage() {
         period,
         description,
         file: selectedFile,
-        image: selectedImage // [NEW] Sertakan image ke service
+        // INTERVENSI: Gabungan Image dan District_id
+        image: selectedImage,
+        district_id: districtId === "" ? null : Number(districtId)
       });
 
       setResult(result);
       showAlert(result.message, "success");
       await fetchMyDatasets();
-      
       setSelectedFile(null);
       setSelectedImage(null);
       formElement.reset();
-
     } catch (err: any) {
-      const msg = err.message || "Gagal mengupload dataset";
-      setError(msg);
-      showAlert(msg, "danger");
+      showAlert(err.message || "Gagal mengupload dataset", "danger");
     } finally {
       setProcessing(false);
     }
@@ -199,7 +205,8 @@ export default function UploadDataPage() {
   if (isLoading && sources.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        {/* Tambahan Wrapper Container (max-w-[1400px]) */}
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
         </div>
@@ -209,38 +216,43 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-        <PageHeader title="Upload Data" subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" />
+      {/* Tambahan Wrapper Container (max-w-[1400px] mx-auto) agar form tidak meregang memenuhi layar */}
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
+
+        <PageHeader
+          title="Upload Data"
+          subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)"
+        />
 
         {alert && (
-          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
-            alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-green-500' : 
-            'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
-          }`}>
+          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' :
+            alert.type === 'danger' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : // FIX: Mengembalikan border ke merah
+              'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
+            }`}>
             <AlertCircle size={20} />
             <span className="text-sm font-medium">{alert.message}</span>
           </div>
         )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-          <FileUploadArea 
-            selectedFile={selectedFile} 
-            isProcessing={isProcessing} 
-            onFileChange={handleFileChange} 
-            onRemoveFile={() => setSelectedFile(null)} 
+          <FileUploadArea
+            selectedFile={selectedFile}
+            isProcessing={isProcessing}
+            onFileChange={handleFileChange}
+            onRemoveFile={() => setSelectedFile(null)}
           />
-          
-          <DatasetForm 
-            sources={sources} 
-            categories={categories} 
+
+          <DatasetForm
+            sources={sources}
+            categories={categories}
             sourceTypes={sourceTypes}
-            isProcessing={isProcessing} 
+            isProcessing={isProcessing}
+            // Props Gambar gabungan
             selectedImage={selectedImage}
-            onImageChange={setSelectedImage} 
-            onSubmit={handleUpload} 
-            onAddSource={() => setShowSourceModal(true)} 
-            onAddCategory={() => setShowCategoryModal(true)} 
+            onImageChange={setSelectedImage}
+            onSubmit={handleUpload}
+            onAddSource={() => setShowSourceModal(true)}
+            onAddCategory={() => setShowCategoryModal(true)}
             onAddSourceType={() => setShowSourceTypeModal(true)}
           />
         </div>
@@ -251,13 +263,13 @@ export default function UploadDataPage() {
           © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika
         </footer>
 
-        <AddItemModal 
+        <AddItemModal
           isOpen={showSourceModal || showCategoryModal || showSourceTypeModal}
-          onClose={() => { 
-              setShowSourceModal(false); 
-              setShowCategoryModal(false); 
-              setShowSourceTypeModal(false);
-              setNewItemName(""); 
+          onClose={() => {
+            setShowSourceModal(false);
+            setShowCategoryModal(false);
+            setShowSourceTypeModal(false);
+            setNewItemName("");
           }}
           onSave={handleSaveNewItem}
           title={showSourceModal ? "Sumber" : showCategoryModal ? "Kategori" : "Tipe Sumber"}

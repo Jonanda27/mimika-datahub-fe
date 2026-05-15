@@ -35,9 +35,12 @@ export interface ExportParams {
 
 export interface DatasetContent {
   title: string;
-  type: string;
+  dataset_type: string;
   headers: string[]; // Contoh: ["nama_distrik", "jumlah_penduduk"]
   rows: Record<string, any>[]; // Array object dinamis sesuai isi konten
+  structure_type: "document" | "tabular";
+  file_url: string | null;
+  view_url: string | null;
 }
 
 export interface DatasetContentParams {
@@ -81,10 +84,10 @@ export interface DatasetByCategoryItem {
   image_url: string | null;
   source_name: string;
   created_at: string;
-  description?: string; 
-   source_type_id: number; 
-  year: number; 
-   source_id: number; 
+  description?: string;
+  source_type_id: number;
+  year: number;
+  source_id: number;
 }
 
 export interface CategoryGroup {
