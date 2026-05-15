@@ -100,29 +100,6 @@ export default function LayerControl() {
                 </div>
             </div>
 
-            {/* SECTION 3: VISIBILITY TOGGLES */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 text-white/40 px-1">
-                    <Palette size={14} />
-                    <h4 className="text-[10px] font-black uppercase tracking-widest">Elemen Visual</h4>
-                </div>
-
-                <div className="space-y-2">
-                    <button
-                        onClick={() => setShowLabels(!showLabels)}
-                        className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group"
-                    >
-                        <div className="flex items-center gap-3">
-                            {showLabels ? <Eye className="text-blue-400" size={18} /> : <EyeOff className="text-white/20" size={18} />}
-                            <span className={`text-sm font-medium ${showLabels ? 'text-white' : 'text-white/40'}`}>Label Nama Distrik</span>
-                        </div>
-                        <div className={`w-8 h-4 rounded-full p-1 transition-colors ${showLabels ? 'bg-blue-600' : 'bg-white/10'}`}>
-                            <div className={`w-2 h-2 bg-white rounded-full transition-transform ${showLabels ? 'translate-x-4' : 'translate-x-0'}`} />
-                        </div>
-                    </button>
-                </div>
-            </div>
-
             {/* SECTION 4: KETERANGAN LEGENDA (Dynamic Simulation) */}
             <div className="p-5 glass-morphism border-blue-500/20 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2 text-blue-400">
