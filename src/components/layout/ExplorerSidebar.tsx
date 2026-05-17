@@ -12,12 +12,12 @@ import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
 /**
- * ExplorerSidebar - The Slim Anchor (Frameless Edition)
- * Desain: Ultra-Thin Ribbon dengan lebar w-16, menempel di tepi viewport.
- * Interaksi visual menggunakan border penanda alih-alih shadow atau rounded background.
+ * ExplorerSidebar - The Slim Anchor (Docking Point)
+ * Tempat laci kontrol utama (activeDrawer) melekat.
  */
 export default function ExplorerSidebar() {
-    const { openPanel, activePanels, closePanelsToTheRight } = useExplorerStore();
+    // Mengekstrak activeDrawer alih-alih activePanels array
+    const { openPanel, activeDrawer, closePanelsToTheRight } = useExplorerStore();
 
     const navigationItems = [
         {
@@ -40,13 +40,15 @@ export default function ExplorerSidebar() {
         }
     ];
 
+    // Logika evaluasi panel aktif disederhanakan
     const isPanelActive = (type: ExplorerPanelType) => {
-        return activePanels.some(p => p.type === type);
+        return activeDrawer?.type === type;
     };
 
     const handleNavClick = (item: typeof navigationItems[0]) => {
         if (item.type) {
-            closePanelsToTheRight(-1);
+            // Karena tidak ada lagi tumpukan bertingkat, kita cukup mengirimkan perintah openPanel.
+            // Logika Store akan mendeteksi klik ganda (toggle-to-close).
             openPanel(item.type, item.title);
         }
     };
@@ -65,7 +67,7 @@ export default function ExplorerSidebar() {
                                 onClick={() => handleNavClick(item)}
                                 className={`w-full h-16 flex flex-col items-center justify-center gap-1 transition-colors relative active:bg-slate-100 rounded-none
                                     ${isActive
-                                        ? "bg-teal-50 text-teal-700 md:border-l-[3px] border-b-[3px] md:border-b-0 border-teal-600"
+                                        ? "bg-teal-50 text-teal-700 md:border-l-[3px] border-b-[3px] md:border-b-0 border-teal-700"
                                         : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-[3px] border-transparent"
                                     }`}
                             >
@@ -80,7 +82,6 @@ export default function ExplorerSidebar() {
                             {/* Tooltip Label (Desktop Only - Sharp Edges) */}
                             <div className="hidden md:block absolute top-1/2 left-full -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                                 {item.title}
-                                {/* Panah Tooltip yang lebih tajam */}
                                 <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 rounded-none" />
                             </div>
                         </div>
@@ -94,13 +95,14 @@ export default function ExplorerSidebar() {
 
                 <div className="relative group w-full flex justify-center">
                     <button
-                        onClick={() => {
-                            closePanelsToTheRight(-1);
-                            openPanel("tentang", "Tentang Mimika DataHub");
-                        }}
-                        className="w-full h-16 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors active:bg-slate-100 rounded-none border-l-[3px] border-transparent"
+                        onClick={() => openPanel("tentang", "Tentang Mimika DataHub")}
+                        className={`w-full h-16 flex items-center justify-center transition-colors active:bg-slate-100 rounded-none border-l-[3px]
+                            ${isPanelActive("tentang")
+                                ? "bg-teal-50 text-teal-700 border-teal-700"
+                                : "text-slate-400 hover:text-slate-800 hover:bg-slate-50 border-transparent"
+                            }`}
                     >
-                        <Info size={20} />
+                        <Info size={20} strokeWidth={isPanelActive("tentang") ? 2.5 : 2} />
                     </button>
                     {/* Tooltip Info - Sharp Edges */}
                     <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800 text-white text-[10px] font-bold rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">

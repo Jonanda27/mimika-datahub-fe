@@ -9,12 +9,10 @@ import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 
-// Mengimpor mesin warna murni (Pure Fabrication) dari utils agar aman untuk SSR
 import { getSemanticColor } from '@/src/app/lib/gisUtils';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
-// Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
 const DISTRICT_MAP: Record<string, number> = {
     "mimikabaru": 1, "kualakencana": 2, "tembagapura": 3, "wania": 4, "iwaka": 5,
     "kwamkinarama": 6, "mimikatimur": 7, "mimikatengah": 8, "mimikabarat": 9,
@@ -22,7 +20,6 @@ const DISTRICT_MAP: Record<string, number> = {
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
 
-// Titik Pusat Default Kabupaten Mimika
 const DEFAULT_CENTER: LatLngExpression = [-4.5421, 136.8945];
 const DEFAULT_ZOOM = 8;
 
@@ -31,9 +28,6 @@ interface MimikaMapProps {
     isPreviewMode?: boolean;
 }
 
-// ============================================================================
-// Event Handler Zoom & External Controller (Indirection Pattern)
-// ============================================================================
 function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
     useMapEvents({
         zoomend: (e) => onZoomChange(e.target.getZoom()),
@@ -41,7 +35,6 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
-// Listener eksternal murni Leaflet Engine (Zero Delay)
 function ExternalMapController() {
     const map = useMap();
     useEffect(() => {
@@ -142,9 +135,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return () => { isMounted = false; };
     }, [activeIndicator]);
 
-    // ============================================================================
-    // Logika Konstruksi Inverted Polygon Masking
-    // ============================================================================
     const maskingPositions = useMemo(() => {
         if (!geoData) return [];
         const worldBounds: [number, number][] = [[90, -360], [90, 360], [-90, 360], [-90, -360]];
@@ -163,9 +153,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return [worldBounds, ...holes];
     }, [geoData]);
 
-    // ============================================================================
-    // REAKTIVITAS GAYA (STYLING): Pengaturan Warna dan Opacity Poligon
-    // ============================================================================
     const districtStyle = (feature: any): PathOptions => {
         const isZoomedIn = zoomLevel >= 14;
         const districtName = feature.properties?.district_name || "";
@@ -199,7 +186,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        // Tooltip Frameless & Sharp
         layer.bindTooltip(
             `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
             { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
@@ -249,8 +235,12 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 const map: LeafletMap = target._map;
                 const distId = DISTRICT_MAP[key] || 0;
 
+                // KALIBRASI VIEWPORT PETA:
+                // Memberikan ruang kosong di kiri (384px untuk Drawer+Sidebar) dan kanan (380px untuk Detail)
+                // Agar poligon mendarat persis di area tengah peta yang terlihat oleh user.
                 map.flyToBounds(target.getBounds(), {
-                    padding: [100, 100],
+                    paddingTopLeft: [384, 50],
+                    paddingBottomRight: [380, 50],
                     duration: 1.5
                 });
 
@@ -272,9 +262,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         });
     };
 
-    // ============================================================================
-    // GOOGLE BASEMAP INJECTION
-    // ============================================================================
     const getTileLayerUrl = () => {
         switch (activeBaseMap) {
             case 'dark':
@@ -340,7 +327,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     return (
-        // Menghapus rounded-3xl dan shadow-sm agar frameless
         <div className={`h-full w-full relative z-10 bg-slate-50 border-none`}>
             <SafeMapContainer
                 key={mapKey}

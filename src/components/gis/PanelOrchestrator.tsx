@@ -14,11 +14,11 @@ import AboutPanel from "./panels/AboutPanel";
 import { getSemanticColor } from "@/src/app/lib/gisUtils";
 
 /**
- * PanelOrchestrator - The Stacking Drawer (Frameless Paradigm)
- * Merender tumpukan panel bersudut siku dengan border tipis (Sharp UI).
+ * PanelOrchestrator - Dual Docked Architecture (GFW Style)
+ * Mengelola dua area terpisah: Left Dock (Drawer) dan Right Dock (Detail Context).
  */
 export default function PanelOrchestrator() {
-    const { activePanels, closePanel, closePanelsToTheRight, activeIndicator } = useExplorerStore();
+    const { activeDrawer, activeDetail, closePanel, activeIndicator } = useExplorerStore();
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -28,68 +28,91 @@ export default function PanelOrchestrator() {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const PANEL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 32 : 320) : 320;
-    const PANEL_GAP = 12;
+    // Konstanta Lebar Panel
+    const DRAWER_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth : 320) : 320;
+    const DETAIL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth : 360) : 360;
 
     return (
-        <div className="relative h-full w-full flex items-start pointer-events-none">
+        <div className="relative h-full w-full pointer-events-none overflow-hidden">
 
             {/* =====================================================================
-                1. SISTEM SHIFTING PANEL (FRAMELESS STACK)
+                ENTITAS 1: LEFT DOCKED DRAWER (Panel Kontrol Sektor/Layer/Search)
             ====================================================================== */}
-            {activePanels.map((panel, index) => {
-                const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
-
-                return (
-                    <div
-                        key={panel.id}
-                        className="absolute top-4 bottom-4 left-4 pointer-events-auto panel-transition"
-                        style={{
-                            width: `${PANEL_WIDTH}px`,
-                            maxWidth: 'calc(100vw - 32px)',
-                            transform: `translateX(${xOffset}px)`,
-                            zIndex: 40 - index,
-                        }}
-                    >
-                        {/* CONTAINER PANEL: Flat, Frameless, Sharp Edges */}
-                        <div className="bg-white/95 backdrop-blur-md h-full w-full rounded-none flex flex-col overflow-hidden border border-slate-300 shadow-none">
-
-                            {/* HEADER PANEL */}
-                            <div className="px-4 py-3.5 border-b border-slate-300 flex justify-between items-center bg-slate-50">
-                                <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-teal-700 uppercase tracking-[0.2em] leading-none">
-                                        {panel.type.replace("-", " ")}
-                                    </span>
-                                    <h3 className="text-xs font-black text-slate-800 truncate max-w-50 tracking-tight mt-1">
-                                        {panel.title}
-                                    </h3>
-                                </div>
-
-                                <button
-                                    onClick={() => closePanel(panel.id)}
-                                    className="p-1.5 rounded-none bg-transparent hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors active:scale-95"
-                                >
-                                    <X size={14} strokeWidth={2.5} />
-                                </button>
+            {activeDrawer && (
+                <div
+                    key={activeDrawer.id}
+                    className="absolute top-0 bottom-16 md:bottom-0 left-0 md:left-16 pointer-events-auto transition-transform duration-300 ease-out z-40 bg-white border-r border-slate-300 shadow-[10px_0_30px_rgba(0,0,0,0.03)]"
+                    style={{ width: `${DRAWER_WIDTH}px`, maxWidth: '100vw' }}
+                >
+                    <div className="h-full w-full flex flex-col overflow-hidden">
+                        {/* HEADER DRAWER */}
+                        <div className="px-4 py-3.5 border-b border-slate-300 flex justify-between items-center bg-slate-50">
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-teal-700 uppercase tracking-[0.2em] leading-none">
+                                    {activeDrawer.type.replace("-", " ")}
+                                </span>
+                                <h3 className="text-xs font-black text-slate-800 truncate max-w-50 tracking-tight mt-1">
+                                    {activeDrawer.title}
+                                </h3>
                             </div>
 
-                            {/* BODY PANEL: Frameless layout container */}
-                            <div
-                                className="flex-1 overflow-y-auto custom-scrollbar"
-                                onClick={() => closePanelsToTheRight(index)}
+                            <button
+                                onClick={() => closePanel(activeDrawer.id)}
+                                className="p-1.5 rounded-none bg-transparent hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors active:scale-95"
                             >
-                                {renderPanelContent(panel.type, panel.data)}
-                            </div>
+                                <X size={14} strokeWidth={2.5} />
+                            </button>
+                        </div>
 
+                        {/* BODY DRAWER */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {renderPanelContent(activeDrawer.type, activeDrawer.data)}
                         </div>
                     </div>
-                );
-            })}
+                </div>
+            )}
 
             {/* =====================================================================
-                2. LEGENDA DINAMIS PETA (FRAMELESS)
+                ENTITAS 2: RIGHT CONTEXTUAL CARD (Profil Distrik)
             ====================================================================== */}
-            {activeIndicator && <MapLegend indicatorKey={activeIndicator} />}
+            {activeDetail && (
+                <div
+                    key={activeDetail.id}
+                    className="absolute top-0 bottom-16 md:bottom-0 right-0 pointer-events-auto z-40 bg-white border-l border-slate-300 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] transition-transform duration-300 ease-out"
+                    style={{ width: `${DETAIL_WIDTH}px`, maxWidth: '100vw' }}
+                >
+                    <div className="h-full w-full flex flex-col overflow-hidden">
+                        {/* HEADER DETAIL PANEL */}
+                        <div className="px-4 py-3.5 border-b border-slate-300 flex justify-between items-center bg-slate-50">
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">
+                                    Profil Kewilayahan
+                                </span>
+                                <h3 className="text-xs font-black text-slate-900 truncate max-w-50 tracking-tight mt-1 uppercase">
+                                    {activeDetail.title}
+                                </h3>
+                            </div>
+
+                            <button
+                                onClick={() => closePanel(activeDetail.id)}
+                                className="p-1.5 rounded-none bg-transparent hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors active:scale-95"
+                            >
+                                <X size={14} strokeWidth={3} />
+                            </button>
+                        </div>
+
+                        {/* BODY DETAIL PANEL */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+                            <DetailPanel districtId={activeDetail.data?.id || 0} districtName={activeDetail.data?.name || "Unknown"} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* =====================================================================
+                3. LEGENDA DINAMIS PETA (SINKRONISASI MUTLAK)
+            ====================================================================== */}
+            {activeIndicator && <MapLegend indicatorKey={activeIndicator} isDetailOpen={!!activeDetail} detailWidth={DETAIL_WIDTH} />}
 
         </div>
     );
@@ -98,7 +121,6 @@ export default function PanelOrchestrator() {
 function renderPanelContent(type: ExplorerPanelType, data: any) {
     switch (type) {
         case "seleksi-kategori": return <CategoryPanel />;
-        case "detil-distrik": return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} />;
         case "konfigurasi": return <LayerControl />;
         case "tentang": return <AboutPanel />;
         case "hasil-pencarian":
@@ -116,7 +138,7 @@ function renderPanelContent(type: ExplorerPanelType, data: any) {
     }
 }
 
-function MapLegend({ indicatorKey }: { indicatorKey: string }) {
+function MapLegend({ indicatorKey, isDetailOpen, detailWidth }: { indicatorKey: string, isDetailOpen: boolean, detailWidth: number }) {
     const formattedTitle = indicatorKey
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -133,21 +155,25 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
     const MAX_VALUE = 100;
 
     return (
-        <div className="fixed bottom-8 right-24 md:right-32 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-4 rounded-none shadow-none w-56 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex items-center gap-2 mb-3 border-b border-slate-300 pb-2">
-                <MapIcon size={14} className="text-teal-700" />
-                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-widest truncate">
+        <div
+            className="fixed bottom-20 md:bottom-8 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-3 rounded-none shadow-none w-52 transition-all duration-300 ease-out"
+            // Logika responsif: Jika right dock terbuka, geser legenda agar tidak tertimpa
+            style={{ right: isDetailOpen ? `${detailWidth + 16}px` : '1.5rem' }}
+        >
+            <div className="flex items-center gap-2 mb-2.5 border-b border-slate-300 pb-1.5">
+                <MapIcon size={12} className="text-teal-700" />
+                <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-widest truncate">
                     {formattedTitle}
                 </h4>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
                 {scaleBins.map((bin, idx) => {
                     const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
                     return (
-                        <div key={idx} className="flex items-center gap-3 group cursor-default">
+                        <div key={idx} className="flex items-center gap-2.5 group cursor-default">
                             <div
-                                className="w-3.5 h-3.5 rounded-none border border-slate-300"
+                                className="w-3 h-3 rounded-none border border-slate-300"
                                 style={{ backgroundColor: boxColor }}
                             />
                             <span className="text-[9px] font-bold text-slate-600 group-hover:text-slate-900 transition-colors">

@@ -7,10 +7,11 @@ export type DetailTabType = "umum" | "analisis";
 
 interface ExplorerState {
     // ==========================================
-    // 1. STATE: Manajemen Panel (UI Layout)
+    // 1. STATE: Manajemen Panel (UI Layout Terpisah)
     // ==========================================
-    activePanels: ExplorerPanel[];
-    activeDetailTab: DetailTabType; // Manajemen state untuk tab panel detail
+    activeDrawer: ExplorerPanel | null; // Entitas 1: Laci kiri yang menempel (Sektor, Layer, Search)
+    activeDetail: ExplorerPanel | null; // Entitas 2: Panel informasi di kanan (Profil Distrik)
+    activeDetailTab: DetailTabType;     // Manajemen state untuk tab pada panel detail
 
     // ==========================================
     // 2. STATE: Konteks Eksplorasi Spasial (Reaktivitas Peta)
@@ -23,9 +24,8 @@ interface ExplorerState {
     // ACTIONS: Manajemen Panel
     // ==========================================
     /**
-     * Membuka panel baru. 
-     * Jika panel dengan tipe yang sama sudah ada, maka akan di-update datanya.
-     * Jika belum ada, akan ditambahkan ke tumpukan (stack) paling kanan.
+     * Membuka panel dengan logika perutean (Routing Logic) berdasarkan tipe.
+     * Tipe 'detil-distrik' akan diarahkan ke kanan, sisanya ke laci kiri.
      */
     openPanel: (type: ExplorerPanelType, title: string, data?: any) => void;
 
@@ -35,13 +35,13 @@ interface ExplorerState {
     closePanel: (id: string) => void;
 
     /**
-     * Menutup seluruh panel dan mereset explorer ke keadaan awal.
+     * Menutup seluruh panel dan mereset layout ke keadaan awal.
      */
     clearPanels: () => void;
 
     /**
-     * Logika khusus GFW: Jika panel di "level" tertentu diklik, 
-     * tutup semua panel yang ada di sebelah kanannya.
+     * Fungsi legacy (GFW stacking). Dipertahankan sementara untuk backward compatibility 
+     * sebelum komponen Orchestrator diperbarui. Akan mereset panel sekunder.
      */
     closePanelsToTheRight: (index: number) => void;
 
@@ -53,24 +53,14 @@ interface ExplorerState {
     // ==========================================
     // ACTIONS: Konteks Eksplorasi
     // ==========================================
-    /**
-     * Mengatur indikator aktif untuk memicu perubahan data Choropleth di peta.
-     */
     setActiveIndicator: (indicatorKey: string | null) => void;
-
-    /**
-     * Mengatur transparansi poligon (layer data) di atas peta.
-     */
     setMapOpacity: (opacity: number) => void;
-
-    /**
-     * Mengubah tile layer dasar peta.
-     */
     setActiveBaseMap: (baseMapId: string) => void;
 
     /**
      * Me-reset eksplorasi peta ke kondisi awal (Blank Canvas).
-     * Menghapus indikator aktif dan menutup panel detail wilayah.
+     * Menghapus indikator aktif dan menutup HANYA panel detail wilayah, 
+     * laci kontrol kiri dibiarkan tetap seperti semula.
      */
     resetMapData: () => void;
 }
@@ -79,11 +69,12 @@ export const useExplorerStore = create<ExplorerState>()(
     devtools(
         (set) => ({
             // Inisialisasi State Default
-            activePanels: [],
-            activeDetailTab: "umum", // Tab default saat panel detail dibuka
+            activeDrawer: null,
+            activeDetail: null,
+            activeDetailTab: "umum",
             activeIndicator: null,
-            mapOpacity: 70, // Default 70%
-            activeBaseMap: "satellite", // Default basemap
+            mapOpacity: 70,
+            activeBaseMap: "satellite",
 
             // Mutator: Konteks Eksplorasi
             setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
@@ -96,73 +87,64 @@ export const useExplorerStore = create<ExplorerState>()(
             // Mutator: Reset Data Peta (Jalan Keluar Analisis)
             resetMapData: () =>
                 set((state) => ({
-                    activeIndicator: null, // Peta akan merespons ini dengan mengembalikan warna ke default
-                    // Tutup panel detail wilayah jika sedang terbuka, biarkan panel kategori/layer tetap ada
-                    activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik"),
-                    // Kembalikan tab ke default saat reset
-                    activeDetailTab: "umum",
+                    activeIndicator: null,
+                    activeDetail: null, // Hanya mematikan detail
+                    activeDetailTab: "umum", // Kembalikan ke tab dasar
                 })),
 
-            // Mutator: Manajemen Panel
+            // Mutator: Manajemen Panel (Delegation Logic)
             openPanel: (type, title, data = null) =>
                 set((state) => {
-                    // Cari apakah panel dengan tipe yang sama sudah terbuka
-                    const existingIndex = state.activePanels.findIndex((p) => p.type === type);
-
-                    if (existingIndex !== -1) {
-                        // Jika sudah ada, update datanya tapi jangan duplikasi di stack
-                        const updatedPanels = [...state.activePanels];
-                        updatedPanels[existingIndex] = {
-                            ...updatedPanels[existingIndex],
-                            title,
-                            data,
-                            isVisible: true,
-                        };
-
-                        // Jika panel yang diupdate adalah detil distrik, otomatis reset ke tab 'umum' (opsional, memberikan UX yang konsisten)
-                        const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
-
-                        return { activePanels: updatedPanels, ...resetTabObj };
-                    }
-
-                    // Jika panel baru, buat objek panel baru
                     const newPanel: ExplorerPanel = {
-                        id: `${type}-${Date.now()}`, // Unique ID untuk list rendering
+                        id: `${type}-${Date.now()}`,
                         type,
                         title,
                         isVisible: true,
                         data,
                     };
 
-                    const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
-
-                    return { activePanels: [...state.activePanels, newPanel], ...resetTabObj };
+                    // Delegasi objek: Pisahkan mana yang masuk drawer, mana yang masuk detail
+                    if (type === "detil-distrik") {
+                        return {
+                            activeDetail: newPanel,
+                            activeDetailTab: "umum" // Auto-reset tab
+                        };
+                    } else {
+                        // Jika panel drawer yang sama diklik lagi (toggle), tutup laci
+                        if (state.activeDrawer?.type === type) {
+                            return { activeDrawer: null };
+                        }
+                        // Ganti isi laci kiri
+                        return { activeDrawer: newPanel };
+                    }
                 }),
 
             closePanel: (id) =>
                 set((state) => {
-                    const filteredPanels = state.activePanels.filter((p) => p.id !== id);
-                    // Jika panel yang ditutup adalah panel detail, reset tab ke umum
-                    const isDetailClosed = !filteredPanels.some(p => p.type === "detil-distrik");
+                    const isDrawer = state.activeDrawer?.id === id;
+                    const isDetail = state.activeDetail?.id === id;
 
                     return {
-                        activePanels: filteredPanels,
-                        ...(isDetailClosed && { activeDetailTab: "umum" })
+                        ...(isDrawer && { activeDrawer: null }),
+                        ...(isDetail && { activeDetail: null, activeDetailTab: "umum" })
                     };
                 }),
 
             closePanelsToTheRight: (index) =>
                 set((state) => {
-                    const slicedPanels = state.activePanels.slice(0, index + 1);
-                    const isDetailStillOpen = slicedPanels.some(p => p.type === "detil-distrik");
-
-                    return {
-                        activePanels: slicedPanels,
-                        ...(!isDetailStillOpen && { activeDetailTab: "umum" })
-                    };
+                    // Penyesuaian backward-compatible: 
+                    // Menutup tumpukan kini ekuivalen dengan mereset detail context
+                    if (index === -1) {
+                        return { activeDrawer: null, activeDetail: null, activeDetailTab: "umum" };
+                    }
+                    return { activeDetail: null, activeDetailTab: "umum" };
                 }),
 
-            clearPanels: () => set({ activePanels: [], activeDetailTab: "umum" }),
+            clearPanels: () => set({
+                activeDrawer: null,
+                activeDetail: null,
+                activeDetailTab: "umum"
+            }),
         }),
         { name: "ExplorerStore" }
     )
