@@ -265,7 +265,7 @@ export default function LandingPage() {
               <a href="#tematik" className="hover:text-[#0071bc] transition-colors">Tema</a>
 
               <Link
-                href="/explorer"
+                href="/(public)/explorer"
                 className="hover:text-[#0071bc] transition-colors font-bold flex items-center gap-2"
               >
                 <span className="relative">
@@ -588,10 +588,7 @@ export default function LandingPage() {
                   <Globe size={32} className="relative z-10" />
                 </div>
 
-                <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">Mimika Immersive Explorer</h3>
-                <p className="text-white/80 text-sm font-medium mb-8 leading-relaxed px-4">
-                  Masuk ke ruang kerja khusus untuk menganalisa metrik kewilayahan, distribusi sektoral, dan indikator pembangunan antar distrik secara interaktif.
-                </p>
+                <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">Mimika Eksplorasi Spasial</h3>
 
                 <Link
                   href="/explorer"

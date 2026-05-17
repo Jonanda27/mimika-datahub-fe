@@ -12,6 +12,7 @@ import ExplorerSidebar from "@/src/components/layout/ExplorerSidebar";
 import PanelOrchestrator from "@/src/components/gis/PanelOrchestrator";
 import MapHUD from "@/src/components/gis/MapHUD";
 import LoadingState from "@/components/ui/LoadingState";
+import AnalysisOverlay from "@/src/components/gis/AnalysisOverlay";
 
 // Import MapWrapper secara dinamis (Bypass SSR)
 const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
@@ -73,6 +74,10 @@ export default function ExplorerPage() {
             ====================================================================== */}
             <div className="absolute top-20 bottom-4 left-22 z-30 pointer-events-none">
                 <PanelOrchestrator />
+            </div>
+
+            <div className="absolute top-18 right-6 z-40 pointer-events-none">
+                <AnalysisOverlay />
             </div>
 
             {/* =====================================================================

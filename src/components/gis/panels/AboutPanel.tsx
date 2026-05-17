@@ -39,7 +39,7 @@ export default function AboutPanel() {
                         Mimika <span className="text-teal-600">DataHub</span>
                     </h2>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                        v1.0.0-beta Spatial Explorer
+                        v1.0.0-beta Eksplorasi Spasial
                     </p>
                 </div>
             </div>
