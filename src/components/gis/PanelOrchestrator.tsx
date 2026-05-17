@@ -14,8 +14,9 @@ import AboutPanel from "./panels/AboutPanel";
 import { getSemanticColor } from "@/src/app/lib/gisUtils";
 
 /**
- * PanelOrchestrator - Dual Docked Architecture (GFW Style)
- * Mengelola dua area terpisah: Left Dock (Drawer) dan Right Dock (Detail Context).
+ * PanelOrchestrator - Hybrid UI Architecture
+ * Left: Docked Drawer (Menempel mati dengan sidebar).
+ * Right: Floating Contextual Card (Melayang di atas peta).
  */
 export default function PanelOrchestrator() {
     const { activeDrawer, activeDetail, closePanel, activeIndicator } = useExplorerStore();
@@ -30,13 +31,14 @@ export default function PanelOrchestrator() {
 
     // Konstanta Lebar Panel
     const DRAWER_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth : 320) : 320;
-    const DETAIL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth : 360) : 360;
+    const DETAIL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 32 : 360) : 360;
 
     return (
         <div className="relative h-full w-full pointer-events-none overflow-hidden">
 
             {/* =====================================================================
                 ENTITAS 1: LEFT DOCKED DRAWER (Panel Kontrol Sektor/Layer/Search)
+                Sifat: Menempel solid di sisi kanan sidebar
             ====================================================================== */}
             {activeDrawer && (
                 <div
@@ -45,7 +47,6 @@ export default function PanelOrchestrator() {
                     style={{ width: `${DRAWER_WIDTH}px`, maxWidth: '100vw' }}
                 >
                     <div className="h-full w-full flex flex-col overflow-hidden">
-                        {/* HEADER DRAWER */}
                         <div className="px-4 py-3.5 border-b border-slate-300 flex justify-between items-center bg-slate-50">
                             <div className="flex flex-col">
                                 <span className="text-[8px] font-black text-teal-700 uppercase tracking-[0.2em] leading-none">
@@ -55,7 +56,6 @@ export default function PanelOrchestrator() {
                                     {activeDrawer.title}
                                 </h3>
                             </div>
-
                             <button
                                 onClick={() => closePanel(activeDrawer.id)}
                                 className="p-1.5 rounded-none bg-transparent hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors active:scale-95"
@@ -64,7 +64,6 @@ export default function PanelOrchestrator() {
                             </button>
                         </div>
 
-                        {/* BODY DRAWER */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {renderPanelContent(activeDrawer.type, activeDrawer.data)}
                         </div>
@@ -74,16 +73,22 @@ export default function PanelOrchestrator() {
 
             {/* =====================================================================
                 ENTITAS 2: RIGHT CONTEXTUAL CARD (Profil Distrik)
+                Sifat: Floating Card, Melayang dengan bayangan tegas (GFW Style)
             ====================================================================== */}
             {activeDetail && (
                 <div
                     key={activeDetail.id}
-                    className="absolute top-0 bottom-16 md:bottom-0 right-0 pointer-events-auto z-40 bg-white border-l border-slate-300 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] transition-transform duration-300 ease-out"
-                    style={{ width: `${DETAIL_WIDTH}px`, maxWidth: '100vw' }}
+                    // Koordinat diatur agar melayang (top-20, right-4/8) dengan batas tinggi maksimum agar bisa di-scroll
+                    className="absolute top-4 bottom-20 md:top-20 md:bottom-auto right-4 md:right-8 pointer-events-auto z-40 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out flex flex-col"
+                    style={{
+                        width: `${DETAIL_WIDTH}px`,
+                        maxWidth: 'calc(100vw - 2rem)',
+                        maxHeight: 'calc(100vh - 6rem)' // Memberi ruang pernapasan di bagian bawah layar
+                    }}
                 >
-                    <div className="h-full w-full flex flex-col overflow-hidden">
-                        {/* HEADER DETAIL PANEL */}
-                        <div className="px-4 py-3.5 border-b border-slate-300 flex justify-between items-center bg-slate-50">
+                    <div className="flex flex-col h-full overflow-hidden bg-white">
+                        {/* HEADER FLOATING CARD */}
+                        <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                             <div className="flex flex-col">
                                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">
                                     Profil Kewilayahan
@@ -101,8 +106,8 @@ export default function PanelOrchestrator() {
                             </button>
                         </div>
 
-                        {/* BODY DETAIL PANEL */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+                        {/* BODY FLOATING CARD: Scrollable content */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
                             <DetailPanel districtId={activeDetail.data?.id || 0} districtName={activeDetail.data?.name || "Unknown"} />
                         </div>
                     </div>
@@ -110,7 +115,7 @@ export default function PanelOrchestrator() {
             )}
 
             {/* =====================================================================
-                3. LEGENDA DINAMIS PETA (SINKRONISASI MUTLAK)
+                3. LEGENDA DINAMIS PETA
             ====================================================================== */}
             {activeIndicator && <MapLegend indicatorKey={activeIndicator} isDetailOpen={!!activeDetail} detailWidth={DETAIL_WIDTH} />}
 
@@ -156,9 +161,9 @@ function MapLegend({ indicatorKey, isDetailOpen, detailWidth }: { indicatorKey: 
 
     return (
         <div
-            className="fixed bottom-20 md:bottom-8 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-3 rounded-none shadow-none w-52 transition-all duration-300 ease-out"
-            // Logika responsif: Jika right dock terbuka, geser legenda agar tidak tertimpa
-            style={{ right: isDetailOpen ? `${detailWidth + 16}px` : '1.5rem' }}
+            className="fixed bottom-20 md:bottom-8 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-3 rounded-none shadow-sm w-52 transition-all duration-300 ease-out"
+            // Menggeser legenda sedikit lebih jauh jika Floating Card terbuka
+            style={{ right: isDetailOpen ? `calc(${detailWidth}px + 3rem)` : '2rem' }}
         >
             <div className="flex items-center gap-2 mb-2.5 border-b border-slate-300 pb-1.5">
                 <MapIcon size={12} className="text-teal-700" />

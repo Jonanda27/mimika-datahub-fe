@@ -9,10 +9,12 @@ import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 
+// Mengimpor mesin warna murni (Pure Fabrication) dari utils agar aman untuk SSR
 import { getSemanticColor } from '@/src/app/lib/gisUtils';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
+// Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
 const DISTRICT_MAP: Record<string, number> = {
     "mimikabaru": 1, "kualakencana": 2, "tembagapura": 3, "wania": 4, "iwaka": 5,
     "kwamkinarama": 6, "mimikatimur": 7, "mimikatengah": 8, "mimikabarat": 9,
@@ -20,6 +22,7 @@ const DISTRICT_MAP: Record<string, number> = {
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
 
+// Titik Pusat Default Kabupaten Mimika
 const DEFAULT_CENTER: LatLngExpression = [-4.5421, 136.8945];
 const DEFAULT_ZOOM = 8;
 
@@ -28,6 +31,9 @@ interface MimikaMapProps {
     isPreviewMode?: boolean;
 }
 
+// ============================================================================
+// Event Handler Zoom & External Controller (Indirection Pattern)
+// ============================================================================
 function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
     useMapEvents({
         zoomend: (e) => onZoomChange(e.target.getZoom()),
@@ -35,6 +41,7 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
+// Listener eksternal murni Leaflet Engine (Zero Delay)
 function ExternalMapController() {
     const map = useMap();
     useEffect(() => {
@@ -235,12 +242,15 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 const map: LeafletMap = target._map;
                 const distId = DISTRICT_MAP[key] || 0;
 
-                // KALIBRASI VIEWPORT PETA:
-                // Memberikan ruang kosong di kiri (384px untuk Drawer+Sidebar) dan kanan (380px untuk Detail)
-                // Agar poligon mendarat persis di area tengah peta yang terlihat oleh user.
+                // ============================================================================
+                // KALIBRASI VIEWPORT PETA (Optical Center Adjustment)
+                // Kiri: Sidebar (64px) + Docked Drawer (320px) = 384px.
+                // Kanan: Floating Card (~360px) + Margin Kanan (~32px) = 392px -> dibulatkan 400px aman.
+                // Menyesuaikan titik tengah optikal agar pendaratan poligon akurat di area kosong.
+                // ============================================================================
                 map.flyToBounds(target.getBounds(), {
-                    paddingTopLeft: [384, 50],
-                    paddingBottomRight: [380, 50],
+                    paddingTopLeft: [384, 80],
+                    paddingBottomRight: [400, 80],
                     duration: 1.5
                 });
 

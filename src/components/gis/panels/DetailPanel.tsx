@@ -79,7 +79,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
     if (loading) {
         return (
-            <div className="space-y-4 animate-pulse p-4">
+            <div className="space-y-4 animate-pulse p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg">
                 <div className="h-6 w-full bg-slate-200" />
                 <div className="h-3 w-3/4 bg-slate-200" />
                 <div className="h-3 w-full bg-slate-200" />
@@ -89,7 +89,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center py-10 text-center p-4">
+            <div className="flex flex-col items-center justify-center py-10 text-center p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg">
                 <AlertCircle className="text-rose-600 mb-3" size={28} />
                 <p className="text-xs font-bold text-slate-700">{error}</p>
             </div>
@@ -97,7 +97,9 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
     }
 
     return (
-        <div className="flex flex-col w-full h-full">
+        // INJEKSI TARGET: Drop-shadow, border, rounded corners, dan background
+        <div className="flex flex-col w-full h-full bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg overflow-hidden">
+
             {/* HEADER TABS - FLAT & SHARP */}
             <div className="flex border-b border-slate-300 bg-white sticky top-0 z-10 shrink-0">
                 <button
