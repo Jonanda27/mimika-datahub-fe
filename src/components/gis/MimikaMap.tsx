@@ -32,7 +32,7 @@ interface MimikaMapProps {
 }
 
 // ============================================================================
-// FASE 4: Event Handler Zoom & External Controller (Indirection Pattern)
+// Event Handler Zoom & External Controller (Indirection Pattern)
 // ============================================================================
 function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
     useMapEvents({
@@ -41,13 +41,12 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
-// TUGAS 3: Listener eksternal murni Leaflet Engine (Zero Delay)
+// Listener eksternal murni Leaflet Engine (Zero Delay)
 function ExternalMapController() {
     const map = useMap();
     useEffect(() => {
         const handleZoomIn = () => map.zoomIn();
         const handleZoomOut = () => map.zoomOut();
-        // Menambahkan perintah kembalikan ke pusat peta untuk tombol Reset Peta
         const handleResetView = () => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true });
 
         window.addEventListener('map-zoom-in', handleZoomIn);
@@ -73,17 +72,14 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         activeBaseMap
     } = useExplorerStore();
 
-    // State Spasial & Render Peta
     const [geoData, setGeoData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
     const [mapKey, setMapKey] = useState(Date.now());
 
-    // Local State untuk Choropleth (Gradasi Warna)
     const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
     const [maxValue, setMaxValue] = useState<number>(100);
 
-    // Local State untuk Pop-up Profil Wilayah (Mode Standar)
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
@@ -93,7 +89,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return () => setMapKey(Date.now());
     }, []);
 
-    // 1. Fetching Resource Peta (GeoJSON)
     useEffect(() => {
         const loadMapResources = async () => {
             setLoading(true);
@@ -109,7 +104,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         loadMapResources();
     }, []);
 
-    // 2. Fetching Data Profil (Mode Standar)
     useEffect(() => {
         if (!isAtlasMode && !isPreviewMode && popupInfo && popupInfo.id > 0) {
             let isMounted = true;
@@ -124,7 +118,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         }
     }, [popupInfo, isAtlasMode, isPreviewMode]);
 
-    // 3. Fetching Data Choropleth saat Indicator Berubah
     useEffect(() => {
         let isMounted = true;
 
@@ -178,32 +171,26 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const districtName = feature.properties?.district_name || "";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        // TUGAS 1: BLANK CANVAS (Default State)
-        // Logika ini berjalan saat belum ada Indikator Sektoral yang dipilih
         if (!activeIndicator || !indicatorValues || indicatorValues[key] === undefined) {
-
-            // --- IMPLEMENTASI LOGIKA WARNA KHUSUS BASEMAP GELAP ---
             const isDarkMode = activeBaseMap === 'dark';
 
             return {
-                // Jika basemap Dark, gunakan warna putih (opacity 0.05). Jika tidak, gunakan hitam (opacity 0.1)
                 fillColor: isDarkMode ? '#ffffff' : '#000000',
-                color: isDarkMode ? '#ffffff' : '#000000',     // Garis batas (outline)
-                weight: isZoomedIn ? 0 : 1, // Ketebalan outline 1
-                fillOpacity: isZoomedIn ? 0 : (isDarkMode ? 0. : 0),
-                dashArray: '2' // Batas putus-putus halus
+                color: isDarkMode ? '#ffffff' : '#000000',
+                weight: isZoomedIn ? 0 : 1,
+                fillOpacity: isZoomedIn ? 0 : (isDarkMode ? 0.1 : 0),
+                dashArray: '2'
             };
         }
 
-        // TUGAS 2: PANGGIL SEMANTIC CHOROPLETH JIKA ADA INDIKATOR AKTIF
         const choroplethColor = getSemanticColor(indicatorValues[key], maxValue, activeIndicator);
         const opacityRatio = mapOpacity / 100;
 
         return {
             fillColor: choroplethColor,
             weight: isZoomedIn ? 0 : 1,
-            color: activeBaseMap === 'dark' ? '#000000' : '#ffffff', // Garis putih tipis (hitam jika basemap gelap) agar warna choropleth pop-out
-            dashArray: undefined, // Garis solid
+            color: activeBaseMap === 'dark' ? '#000000' : '#ffffff',
+            dashArray: undefined,
             fillOpacity: isZoomedIn ? 0 : opacityRatio,
         };
     };
@@ -212,10 +199,10 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        // Tooltip menyesuaikan tema terang benderang
+        // Tooltip Frameless & Sharp
         layer.bindTooltip(
             `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
-            { sticky: true, direction: 'top', className: 'rounded-lg shadow-lg border border-slate-200 px-3 py-1.5 bg-white' }
+            { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
         );
 
         layer.on({
@@ -224,14 +211,12 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     const target = e.target;
 
                     if (activeIndicator) {
-                        // Highlight untuk mode Analisis (Lebih tebal dan solid)
                         target.setStyle({
                             weight: 2.5,
                             color: '#ffffff',
                             fillOpacity: Math.min((mapOpacity / 100) + 0.15, 1)
                         });
                     } else {
-                        // Highlight untuk mode Default / Blank Canvas
                         const isDarkMode = activeBaseMap === 'dark';
                         target.setStyle({
                             weight: 2,
@@ -288,17 +273,17 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     // ============================================================================
-    // FASE 4: GOOGLE BASEMAP INJECTION
+    // GOOGLE BASEMAP INJECTION
     // ============================================================================
     const getTileLayerUrl = () => {
         switch (activeBaseMap) {
             case 'dark':
                 return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
             case 'street':
-                return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"; // Google Roadmap
+                return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
             case 'satellite':
             default:
-                return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"; // Google Satellite High-Res
+                return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
         }
     };
 
@@ -308,7 +293,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     if (loading) return null;
 
-    // Bypass Tipe Khusus React 19 / Next.js 15
     const SafeMapContainer = MapContainer as any;
     const SafeTileLayer = TileLayer as any;
     const SafeGeoJSON = GeoJSON as any;
@@ -319,28 +303,28 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         if (loadingProfile) {
             return (
                 <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-none animate-spin"></div>
                 </div>
             );
         }
-        if (popupInfo?.id === 0) return <p className="text-xs text-orange-500 py-4 text-center font-medium">Data belum terdaftar.</p>;
-        if (!profileData) return <p className="text-xs text-red-500 py-4 text-center font-medium">Koneksi terputus.</p>;
+        if (popupInfo?.id === 0) return <p className="text-xs text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
+        if (!profileData) return <p className="text-xs text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
 
         const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
         const isLongText = deskripsi.length > 150;
 
         return (
             <div className="space-y-4">
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-slate-700 space-y-1">
                     <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
                         <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>{deskripsi}</p>
                     </div>
                     {isLongText && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsTextExpanded(!isTextExpanded); }}
-                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors mt-1 inline-block"
+                            className="text-[10px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
                         >
-                            {isTextExpanded ? "Tutup selengkapnya" : "Baca selengkapnya..."}
+                            {isTextExpanded ? "Tutup" : "Selengkapnya"}
                         </button>
                     )}
                 </div>
@@ -348,21 +332,16 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         );
     };
 
-    // Helper untuk menghitung opasitas wilayah di luar Mimika (Masking)
     const getMaskingOpacity = () => {
         if (zoomLevel >= 14) return 0;
-
-        if (activeBaseMap === 'dark') {
-            return 0.7; // Lebih pekat untuk basemap gelap
-        } else if (activeBaseMap === 'street') {
-            return 0.4; // Lebih terang untuk basemap roadmap/jalanan
-        } else {
-            return 0.5; // Sedang untuk basemap satelit
-        }
+        if (activeBaseMap === 'dark') return 0.7;
+        if (activeBaseMap === 'street') return 0.4;
+        return 0.5;
     };
 
     return (
-        <div className={`h-full w-full relative z-10 ${(isAtlasMode || isPreviewMode) ? 'bg-slate-100' : 'bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-sm'}`}>
+        // Menghapus rounded-3xl dan shadow-sm agar frameless
+        <div className={`h-full w-full relative z-10 bg-slate-50 border-none`}>
             <SafeMapContainer
                 key={mapKey}
                 center={DEFAULT_CENTER}
@@ -371,34 +350,30 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 scrollWheelZoom={!isPreviewMode}
                 dragging={!isPreviewMode}
                 doubleClickZoom={!isPreviewMode}
-                zoomControl={false} // MATIKAN ZOOM DEFAULT LEAFLET
+                zoomControl={false}
                 attributionControl={!(isAtlasMode || isPreviewMode)}
                 className="h-full w-full z-0 outline-none"
             >
                 <MapEventsHandler onZoomChange={setZoomLevel} />
                 <ExternalMapController />
 
-                {/* Google Basemap Provider */}
                 <SafeTileLayer
                     attribution='&copy; Mimika DataHub | Map data &copy; Google'
                     url={getTileLayerUrl()}
                     maxZoom={getTileMaxZoom()}
                 />
 
-                {/* Layer 1: Inverted Masking (Gelap Halus agar Area Mimika Menonjol) */}
                 {maskingPositions.length > 0 && (
                     <SafePolygon
                         positions={maskingPositions}
                         pathOptions={{
                             fillColor: '#000000',
-                            // --- TUNING OPACITY DI LUAR MIMIKA ADA DI SINI ---
                             fillOpacity: getMaskingOpacity(),
                             stroke: false
                         }}
                     />
                 )}
 
-                {/* Layer 2: Poligon Batas Distrik (Semantic Choropleth / Blank Canvas) */}
                 {geoData && (
                     <SafeGeoJSON
                         data={geoData}
@@ -409,9 +384,9 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
                 {!isAtlasMode && !isPreviewMode && popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
-                        <div className="w-72 p-1 font-sans">
-                            <h3 className="text-lg font-extrabold text-slate-800 border-b border-gray-200 pb-2 mb-3">
-                                Distrik {popupInfo.name}
+                        <div className="w-72 p-2 font-sans rounded-none">
+                            <h3 className="text-[13px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
+                                {popupInfo.name}
                             </h3>
                             {renderPopupContent()}
                         </div>

@@ -7,8 +7,27 @@
  */
 
 /**
+ * Konfigurasi Eksternal Tile Server (Basemap Gallery).
+ * Memisahkan definisi URL dari komponen UI untuk mematuhi prinsip High Cohesion & Low Coupling.
+ */
+export const BASEMAP_URLS: Record<string, string> = {
+    satellite: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", // Google Satellite High-Res
+    street: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",    // Google Roadmap
+    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" // Carto Dark Matter
+};
+
+/**
+ * Mengambil URL Tile Server berdasarkan ID aktif.
+ * @param baseMapId ID dari basemap (contoh: "satellite", "dark")
+ * @returns String URL Endpoint dari Tile Provider
+ */
+export const getBasemapUrl = (baseMapId: string): string => {
+    return BASEMAP_URLS[baseMapId] || BASEMAP_URLS.satellite;
+};
+
+/**
  * Mengkalkulasi kode warna (Hex) untuk peta choropleth berdasarkan nilai data dan kategori indikator.
- * * @param value Nilai aktual dari distrik/poligon.
+ * @param value Nilai aktual dari distrik/poligon.
  * @param max Nilai maksimum dari seluruh dataset indikator saat ini.
  * @param indicatorKey Kata kunci indikator untuk menentukan skema warna (Semantic Color).
  * @returns String kode warna Hexadecimal.

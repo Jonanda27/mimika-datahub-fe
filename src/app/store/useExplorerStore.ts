@@ -3,11 +3,14 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { ExplorerPanel, ExplorerPanelType } from "../types/gis";
 
+export type DetailTabType = "umum" | "analisis";
+
 interface ExplorerState {
     // ==========================================
     // 1. STATE: Manajemen Panel (UI Layout)
     // ==========================================
     activePanels: ExplorerPanel[];
+    activeDetailTab: DetailTabType; // Manajemen state untuk tab panel detail
 
     // ==========================================
     // 2. STATE: Konteks Eksplorasi Spasial (Reaktivitas Peta)
@@ -42,6 +45,11 @@ interface ExplorerState {
      */
     closePanelsToTheRight: (index: number) => void;
 
+    /**
+     * Mengatur tab yang sedang aktif pada panel detail wilayah.
+     */
+    setActiveDetailTab: (tab: DetailTabType) => void;
+
     // ==========================================
     // ACTIONS: Konteks Eksplorasi
     // ==========================================
@@ -72,6 +80,7 @@ export const useExplorerStore = create<ExplorerState>()(
         (set) => ({
             // Inisialisasi State Default
             activePanels: [],
+            activeDetailTab: "umum", // Tab default saat panel detail dibuka
             activeIndicator: null,
             mapOpacity: 70, // Default 70%
             activeBaseMap: "satellite", // Default basemap
@@ -81,12 +90,17 @@ export const useExplorerStore = create<ExplorerState>()(
             setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
             setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
 
+            // Mutator: Manajemen Panel Tab Detail
+            setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
+
             // Mutator: Reset Data Peta (Jalan Keluar Analisis)
             resetMapData: () =>
                 set((state) => ({
                     activeIndicator: null, // Peta akan merespons ini dengan mengembalikan warna ke default
                     // Tutup panel detail wilayah jika sedang terbuka, biarkan panel kategori/layer tetap ada
                     activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik"),
+                    // Kembalikan tab ke default saat reset
+                    activeDetailTab: "umum",
                 })),
 
             // Mutator: Manajemen Panel
@@ -104,7 +118,11 @@ export const useExplorerStore = create<ExplorerState>()(
                             data,
                             isVisible: true,
                         };
-                        return { activePanels: updatedPanels };
+
+                        // Jika panel yang diupdate adalah detil distrik, otomatis reset ke tab 'umum' (opsional, memberikan UX yang konsisten)
+                        const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
+
+                        return { activePanels: updatedPanels, ...resetTabObj };
                     }
 
                     // Jika panel baru, buat objek panel baru
@@ -116,20 +134,35 @@ export const useExplorerStore = create<ExplorerState>()(
                         data,
                     };
 
-                    return { activePanels: [...state.activePanels, newPanel] };
+                    const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
+
+                    return { activePanels: [...state.activePanels, newPanel], ...resetTabObj };
                 }),
 
             closePanel: (id) =>
-                set((state) => ({
-                    activePanels: state.activePanels.filter((p) => p.id !== id),
-                })),
+                set((state) => {
+                    const filteredPanels = state.activePanels.filter((p) => p.id !== id);
+                    // Jika panel yang ditutup adalah panel detail, reset tab ke umum
+                    const isDetailClosed = !filteredPanels.some(p => p.type === "detil-distrik");
+
+                    return {
+                        activePanels: filteredPanels,
+                        ...(isDetailClosed && { activeDetailTab: "umum" })
+                    };
+                }),
 
             closePanelsToTheRight: (index) =>
-                set((state) => ({
-                    activePanels: state.activePanels.slice(0, index + 1),
-                })),
+                set((state) => {
+                    const slicedPanels = state.activePanels.slice(0, index + 1);
+                    const isDetailStillOpen = slicedPanels.some(p => p.type === "detil-distrik");
 
-            clearPanels: () => set({ activePanels: [] }),
+                    return {
+                        activePanels: slicedPanels,
+                        ...(!isDetailStillOpen && { activeDetailTab: "umum" })
+                    };
+                }),
+
+            clearPanels: () => set({ activePanels: [], activeDetailTab: "umum" }),
         }),
         { name: "ExplorerStore" }
     )

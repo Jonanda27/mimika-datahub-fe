@@ -3,11 +3,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-roboto-sans);
+  --font-mono: var(--font-roboto-mono);
 
-  /* Daftarkan shadow kustom di sini agar bisa digunakan via @apply shadow-glass */
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  /* MEMAKSA FRAMELESS: Menetralkan semua utility rounded bawaan tailwind */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  /* Radius full dipertahankan khusus untuk elemen bulat sempurna seperti radio button/avatar */
+  --radius-full: 9999px;
+
+  /* Menghilangkan shadow glass yang tebal */
+  --shadow-glass: none;
 }
 
 :root {
@@ -35,15 +45,15 @@ body {
 
 @layer utilities {
 
-  /* 1. GLASSMORPHISM ENGINE */
+  /* 1. GLASSMORPHISM ENGINE (Frameless & Flat) */
   .glass-morphism {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
-    /* Gunakan properti CSS standar untuk shadow yang kompleks agar tidak error */
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    @apply bg-white/10 backdrop-blur-md border border-slate-200/50;
+    box-shadow: none;
   }
 
   .glass-morphism-dark {
-    @apply bg-slate-950/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-slate-950/60 backdrop-blur-xl border border-slate-800;
+    box-shadow: none;
   }
 
   /* 2. SCROLLBAR HIDER */
@@ -56,17 +66,18 @@ body {
     display: none;
   }
 
-  /* 3. SLEEK CUSTOM SCROLLBAR */
+  /* 3. SLEEK CUSTOM SCROLLBAR (Sharp Edges) */
   .custom-scrollbar::-webkit-scrollbar {
     @apply w-1.5;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    @apply bg-transparent border-l border-slate-100;
   }
 
+  /* Rounded dihapus agar selaras dengan tema frameless */
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-white/20 rounded-full hover:bg-white/30 transition-colors;
+    @apply bg-slate-300 hover:bg-slate-400 transition-colors rounded-none;
   }
 
   /* 4. ANIMASI SHIFTING PANELS */
