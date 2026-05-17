@@ -10,7 +10,7 @@ interface ExplorerState {
     // 1. STATE: Manajemen Panel (UI Layout Terpisah)
     // ==========================================
     activeDrawer: ExplorerPanel | null; // Entitas 1: Laci kiri yang menempel (Sektor, Layer, Search)
-    activeDetail: ExplorerPanel | null; // Entitas 2: Panel informasi di kanan (Profil Distrik)
+    activeDetail: ExplorerPanel | null; // Entitas 2: Panel informasi floating di kanan (Profil Distrik)
     activeDetailTab: DetailTabType;     // Manajemen state untuk tab pada panel detail
 
     // ==========================================
@@ -88,7 +88,7 @@ export const useExplorerStore = create<ExplorerState>()(
             resetMapData: () =>
                 set((state) => ({
                     activeIndicator: null,
-                    activeDetail: null, // Hanya mematikan detail
+                    activeDetail: null, // Hanya mematikan detail konteks wilayah
                     activeDetailTab: "umum", // Kembalikan ke tab dasar
                 })),
 
@@ -107,10 +107,10 @@ export const useExplorerStore = create<ExplorerState>()(
                     if (type === "detil-distrik") {
                         return {
                             activeDetail: newPanel,
-                            activeDetailTab: "umum" // Auto-reset tab
+                            activeDetailTab: "umum" // Auto-reset tab ke informasi umum saat wilayah baru dipilih
                         };
                     } else {
-                        // Jika panel drawer yang sama diklik lagi (toggle), tutup laci
+                        // Jika panel drawer yang sama diklik lagi (toggle), tutup laci kontrol
                         if (state.activeDrawer?.type === type) {
                             return { activeDrawer: null };
                         }
@@ -132,8 +132,7 @@ export const useExplorerStore = create<ExplorerState>()(
 
             closePanelsToTheRight: (index) =>
                 set((state) => {
-                    // Penyesuaian backward-compatible: 
-                    // Menutup tumpukan kini ekuivalen dengan mereset detail context
+                    // Penyesuaian backward-compatible untuk menangani interaksi tumpukan legacy
                     if (index === -1) {
                         return { activeDrawer: null, activeDetail: null, activeDetailTab: "umum" };
                     }

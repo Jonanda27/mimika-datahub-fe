@@ -22,8 +22,8 @@ interface DetailPanelProps {
 
 /**
  * DetailPanel - Ultra-Dense Information Dashboard (GFW Paradigm)
- * Tanpa margin berlebih, berfokus pada kepadatan informasi.
- * Menggunakan Global Store untuk sinkronisasi state Tab.
+ * Interior: Frameless, padat, tanpa margin berlebih.
+ * Eksterior: Memiliki drop-shadow & border radius untuk efek Floating Card.
  */
 export default function DetailPanel({ districtId, districtName }: DetailPanelProps) {
     const { activeDetailTab, setActiveDetailTab } = useExplorerStore();
@@ -79,17 +79,17 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
     if (loading) {
         return (
-            <div className="space-y-4 animate-pulse p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg">
-                <div className="h-6 w-full bg-slate-200" />
-                <div className="h-3 w-3/4 bg-slate-200" />
-                <div className="h-3 w-full bg-slate-200" />
+            <div className="space-y-4 animate-pulse p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-xl h-full">
+                <div className="h-6 w-full bg-slate-200 rounded-md" />
+                <div className="h-3 w-3/4 bg-slate-200 rounded-md" />
+                <div className="h-3 w-full bg-slate-200 rounded-md" />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center py-10 text-center p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg">
+            <div className="flex flex-col items-center justify-center py-10 text-center p-4 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-xl h-full">
                 <AlertCircle className="text-rose-600 mb-3" size={28} />
                 <p className="text-xs font-bold text-slate-700">{error}</p>
             </div>
@@ -97,8 +97,8 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
     }
 
     return (
-        // INJEKSI TARGET: Drop-shadow, border, rounded corners, dan background
-        <div className="flex flex-col w-full h-full bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-lg overflow-hidden">
+        // INJEKSI TARGET: Drop-shadow luar, border halus, dan rounded-xl
+        <div className="flex flex-col w-full h-full bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-xl overflow-hidden pointer-events-auto">
 
             {/* HEADER TABS - FLAT & SHARP */}
             <div className="flex border-b border-slate-300 bg-white sticky top-0 z-10 shrink-0">
@@ -124,7 +124,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
             {/* TAB CONTENT: DATA UMUM */}
             {activeDetailTab === "umum" && (
-                <div className="flex flex-col pb-4">
+                <div className="flex flex-col pb-4 overflow-y-auto custom-scrollbar">
                     {/* STATISTIK DASAR (Dense Layout) */}
                     <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-3 bg-slate-50/50">
                         <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
 
             {/* TAB CONTENT: DATA ANALISIS */}
             {activeDetailTab === "analisis" && (
-                <div className="flex flex-col pb-4">
+                <div className="flex flex-col pb-4 overflow-y-auto custom-scrollbar">
                     {/* SUMMARY HEADER */}
                     <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 py-3 px-4">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Densitas Dataset</span>
@@ -233,7 +233,7 @@ export default function DetailPanel({ districtId, districtName }: DetailPanelPro
             )}
 
             {/* FOOTER METADATA - ALL TABS (Selalu menempel di paling bawah) */}
-            <div className="py-3 px-4 text-slate-400 flex items-center justify-between border-t border-slate-300 mt-auto bg-white shrink-0">
+            <div className="py-3 px-4 text-slate-400 flex items-center justify-between border-t border-slate-300 mt-auto bg-slate-50 shrink-0">
                 <div className="flex items-center gap-1.5">
                     <History size={12} strokeWidth={2.5} />
                     <span className="text-[8px] font-black uppercase tracking-widest">Pembaruan Sinkronisasi</span>

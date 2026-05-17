@@ -18,6 +18,7 @@ import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
 /**
  * CategoryPanel - Flat & Dense Indicator List
  * Tema terang yang terkompaksi tanpa margin pembatas luar (GFW Style).
+ * Menempel solid ke drawer.
  */
 export default function CategoryPanel() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +54,7 @@ export default function CategoryPanel() {
         <div className="flex flex-col h-full bg-white">
 
             {/* SECTION 1: SEARCH & FILTER (Flat Design) */}
-            <div className="relative group border-b border-slate-200">
+            <div className="relative group border-b border-slate-200 shrink-0">
                 <Search
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-700 transition-colors"
                     size={16}
@@ -64,7 +65,7 @@ export default function CategoryPanel() {
                     placeholder="Cari indikator sektoral..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border-none rounded-none py-4 pl-11 pr-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 focus:bg-white transition-all shadow-none"
+                    className="w-full bg-white border-none rounded-none py-4 pl-11 pr-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 focus:bg-slate-50 transition-all shadow-none"
                 />
             </div>
 

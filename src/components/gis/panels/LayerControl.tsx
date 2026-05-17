@@ -14,6 +14,7 @@ import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
 /**
  * LayerControl - Flat Instrument Panel
+ * Diratakan tanpa bayangan atau margin eksterior (Docked style).
  */
 export default function LayerControl() {
     const {
@@ -92,7 +93,7 @@ export default function LayerControl() {
             </div>
 
             {/* SECTION 3: LAYER CONTEXT INFO */}
-            <div className="px-4 py-4 bg-slate-50 space-y-2">
+            <div className="px-4 py-4 bg-slate-50 space-y-2 border-b-0">
                 <div className="flex items-center gap-2 text-slate-700">
                     <Info size={14} strokeWidth={2.5} />
                     <h4 className="text-[9px] font-black uppercase tracking-widest">Feature Layer Info</h4>

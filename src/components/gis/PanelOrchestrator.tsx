@@ -79,7 +79,7 @@ export default function PanelOrchestrator() {
                 <div
                     key={activeDetail.id}
                     // Koordinat diatur agar melayang (top-20, right-4/8) dengan batas tinggi maksimum agar bisa di-scroll
-                    className="absolute top-4 bottom-20 md:top-20 md:bottom-auto right-4 md:right-8 pointer-events-auto z-40 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out flex flex-col"
+                    className="absolute top-4 bottom-20 md:top-20 md:bottom-auto right-4 md:right-8 pointer-events-auto z-40 bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out flex flex-col rounded-lg overflow-hidden"
                     style={{
                         width: `${DETAIL_WIDTH}px`,
                         maxWidth: 'calc(100vw - 2rem)',

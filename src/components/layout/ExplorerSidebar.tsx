@@ -16,8 +16,8 @@ import { ExplorerPanelType } from "@/src/app/types/gis";
  * Tempat laci kontrol utama (activeDrawer) melekat.
  */
 export default function ExplorerSidebar() {
-    // Mengekstrak activeDrawer alih-alih activePanels array
-    const { openPanel, activeDrawer, closePanelsToTheRight } = useExplorerStore();
+    // Mengekstrak activeDrawer dan openPanel dari global store
+    const { openPanel, activeDrawer } = useExplorerStore();
 
     const navigationItems = [
         {
@@ -40,15 +40,16 @@ export default function ExplorerSidebar() {
         }
     ];
 
-    // Logika evaluasi panel aktif disederhanakan
+    // Logika evaluasi panel aktif membaca dari state laci (drawer)
     const isPanelActive = (type: ExplorerPanelType) => {
         return activeDrawer?.type === type;
     };
 
     const handleNavClick = (item: typeof navigationItems[0]) => {
         if (item.type) {
-            // Karena tidak ada lagi tumpukan bertingkat, kita cukup mengirimkan perintah openPanel.
-            // Logika Store akan mendeteksi klik ganda (toggle-to-close).
+            // Mengirimkan perintah openPanel.
+            // Logika Store otomatis akan mendeteksi klik ganda (toggle-to-close)
+            // tanpa mengganggu panel profil di sebelah kanan.
             openPanel(item.type, item.title);
         }
     };
