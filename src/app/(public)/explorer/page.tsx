@@ -72,7 +72,7 @@ export default function ExplorerPage() {
                 Diberikan margin atas (top-20) agar tidak menempel keras ke Navbar.
                 Berada di sebelah kanan Sidebar (left-[88px]).
             ====================================================================== */}
-            <div className="absolute top-20 bottom-4 left-22 z-30 pointer-events-none">
+            <div className="absolute top-20 bottom-4 left-14 z-30 pointer-events-none">
                 <PanelOrchestrator />
             </div>
 

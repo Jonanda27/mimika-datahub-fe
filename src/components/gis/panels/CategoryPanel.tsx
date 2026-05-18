@@ -10,15 +10,15 @@ import {
     BarChart4,
     Users,
     Info,
-    CheckCircle2
+    Check
 } from "lucide-react";
 import { MOCK_ATLAS_CATEGORIES } from "@/src/app/lib/mockExplorerData";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
 
 /**
- * CategoryPanel - Komponen untuk memilih kategori dan indikator data.
- * Tema Terang (Light Mode) untuk pembacaan analitik yang maksimal.
+ * CategoryPanel - Edge-to-Edge / Frameless Paradigm
+ * Menggunakan arsitektur Flush List tanpa margin kontainer internal.
  */
 export default function CategoryPanel() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -51,44 +51,45 @@ export default function CategoryPanel() {
     };
 
     return (
-        <div className="flex flex-col h-full space-y-6">
+        // Menghapus p-4 agar layout melebar penuh ke tepi (edge-to-edge)
+        <div className="flex flex-col h-full bg-white pb-10">
 
-            {/* SECTION 1: SEARCH & FILTER */}
-            <div className="relative group">
-                <Search
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
-                    size={16}
-                />
-                <input
-                    type="text"
-                    placeholder="Cari indikator (mis: Stunting)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:bg-white transition-all shadow-sm"
-                />
+            {/* SECTION 1: SEARCH & FILTER (Full Width Container) */}
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
+                        size={14}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Cari indikator spasial..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-none py-2.5 pl-9 pr-4 text-[11px] font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-none"
+                    />
+                </div>
             </div>
 
-            {/* SECTION 2: CATEGORY LIST */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8">
+            {/* SECTION 2: CATEGORY LIST (Flush List) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
                 {filteredCategories.length > 0 ? (
                     filteredCategories.map((category) => {
                         const Icon = categoryIcons[category.category_id] || Info;
 
                         return (
-                            <div key={category.category_id} className="space-y-4">
-                                {/* Category Header */}
-                                <div className="flex items-center gap-3 px-1">
-                                    <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100 shadow-sm">
-                                        <Icon size={18} strokeWidth={2.5} />
-                                    </div>
-                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                            <div key={category.category_id} className="flex flex-col">
+
+                                {/* Category Header - Edge to Edge */}
+                                <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-slate-500">
+                                    <Icon size={14} className="text-teal-700" />
+                                    <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
                                         {category.category_name}
                                     </h4>
-                                    <div className="flex-1 h-px bg-slate-200 ml-2" />
                                 </div>
 
-                                {/* Indicators List */}
-                                <div className="grid gap-2">
+                                {/* Indicators List - Flush Items (Lebar penuh, dibatasi border-b) */}
+                                <div className="flex flex-col">
                                     {category.indicators.map((indicator) => {
                                         const isActive = activeIndicator === indicator.key;
 
@@ -96,28 +97,30 @@ export default function CategoryPanel() {
                                             <button
                                                 key={indicator.key}
                                                 onClick={() => handleIndicatorClick(indicator)}
-                                                className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all text-left active:scale-[0.98] ${isActive
-                                                    ? 'bg-teal-50 border-teal-400 shadow-sm'
-                                                    : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
+                                                className={`group flex items-center justify-between px-4 py-3.5 border-b border-slate-200 transition-colors text-left w-full
+                                                    ${isActive
+                                                        ? 'bg-teal-50/30'
+                                                        : 'bg-transparent hover:bg-slate-50 active:bg-slate-100'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-2 h-2 rounded-full transition-all ${isActive
-                                                        ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]'
-                                                        : 'bg-slate-300 group-hover:bg-slate-400'
-                                                        }`} />
-                                                    <span className={`text-sm transition-colors ${isActive
+                                                    <span className={`text-[11px] uppercase tracking-wide transition-colors ${isActive
                                                         ? 'text-teal-800 font-black'
-                                                        : 'text-slate-600 font-bold group-hover:text-slate-800'
+                                                        : 'text-slate-600 font-bold group-hover:text-slate-900'
                                                         }`}>
                                                         {indicator.title}
                                                     </span>
                                                 </div>
-                                                <ChevronRight
-                                                    size={16}
-                                                    className={`transition-all ${isActive ? 'text-teal-600 translate-x-1' : 'text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1'
-                                                        }`}
-                                                />
+
+                                                {/* Indikator Status: Checkmark (Aktif) atau Chevron (Inaktif) */}
+                                                {isActive ? (
+                                                    <Check size={14} strokeWidth={3} className="text-teal-600" />
+                                                ) : (
+                                                    <ChevronRight
+                                                        size={14}
+                                                        className="text-slate-300 group-hover:text-teal-600 group-hover:translate-x-1 transition-all"
+                                                    />
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -126,14 +129,14 @@ export default function CategoryPanel() {
                         );
                     })
                 ) : (
-                    /* Empty State */
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                            <Search size={32} />
+                    /* Empty State - Dipertahankan di tengah tapi mengikuti grid */
+                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 px-4">
+                        <div className="w-14 h-14 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200 shadow-none">
+                            <Search size={24} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-black text-slate-700">Indikator tidak ditemukan</p>
-                            <p className="text-xs text-slate-500 font-medium">Coba gunakan kata kunci yang lebih umum.</p>
+                            <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Tidak Ditemukan</p>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Coba kata kunci lain</p>
                         </div>
                     </div>
                 )}

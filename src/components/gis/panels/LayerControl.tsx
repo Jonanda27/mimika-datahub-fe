@@ -1,20 +1,21 @@
 // src/components/gis/panels/LayerControl.tsx
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
     Layers,
     Settings2,
     Map as MapIcon,
     Sun,
     Moon,
-    Info
+    Info,
+    Check
 } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
 /**
- * LayerControl - Pengaturan Lapisan & Legenda Visual (Frameless/Sharp UI)
- * Menggunakan terminologi GIS standar.
+ * LayerControl - Edge-to-Edge / Frameless Paradigm
+ * Desain tanpa card internal (Flush List). Lebar penuh, dipisahkan oleh hairline.
  */
 export default function LayerControl() {
     const {
@@ -31,38 +32,49 @@ export default function LayerControl() {
     ];
 
     return (
-        <div className="flex flex-col h-full space-y-8 pb-10">
+        // Container utama membuang p-4 agar elemen di dalamnya bisa menyentuh tepi (edge-to-edge)
+        <div className="flex flex-col h-full pb-10 bg-white">
 
             {/* SECTION 1: BASEMAP GALLERY */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 text-slate-500 px-1">
-                    <Layers size={16} className="text-teal-700" />
+            <div className="flex flex-col">
+                {/* Header Section - Edge to Edge */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <Layers size={14} className="text-teal-700" />
                     <h4 className="text-[10px] font-black uppercase tracking-widest">Basemap Gallery</h4>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                {/* List Items - Tanpa Card, Lebar Penuh */}
+                <div className="flex flex-col">
                     {baseMaps.map((map) => {
                         const isActive = activeBaseMap === map.id;
                         return (
                             <button
                                 key={map.id}
                                 onClick={() => setActiveBaseMap(map.id)}
-                                className={`flex items-center gap-4 p-3 rounded-none border transition-all text-left shadow-none
+                                className={`group flex items-center justify-between px-4 py-3.5 border-b border-slate-200 transition-colors text-left w-full
                                     ${isActive
-                                        ? "bg-slate-50 border-teal-700"
-                                        : "bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50"
+                                        ? "bg-teal-50/30"
+                                        : "bg-transparent hover:bg-slate-50 active:bg-slate-100"
                                     }`}
                             >
-                                <div className={`w-10 h-10 rounded-none flex items-center justify-center transition-colors shadow-none
-                                    ${isActive ? "bg-teal-700 text-white border-none" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
-                                    <map.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                                <div className="flex items-center gap-3.5">
+                                    {/* Icon Indicator (Tanpa Kotak) */}
+                                    <div className={`transition-colors ${isActive ? "text-teal-700" : "text-slate-400 group-hover:text-slate-600"}`}>
+                                        <map.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                                    </div>
+
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className={`text-[12px] font-bold tracking-tight ${isActive ? 'text-teal-900' : 'text-slate-800 group-hover:text-slate-900'}`}>
+                                            {map.label}
+                                        </span>
+                                        <span className="text-[10px] font-medium text-slate-500">{map.desc}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-black ${isActive ? 'text-teal-800' : 'text-slate-800'}`}>
-                                        {map.label}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-slate-500">{map.desc}</span>
-                                </div>
+
+                                {/* Active Checkmark (Menggantikan Border Tebal) */}
+                                {isActive && (
+                                    <Check size={16} strokeWidth={3} className="text-teal-600" />
+                                )}
                             </button>
                         );
                     })}
@@ -70,39 +82,41 @@ export default function LayerControl() {
             </div>
 
             {/* SECTION 2: OPACITY CONTROL */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
+            <div className="flex flex-col mt-4">
+                {/* Header Section - Edge to Edge */}
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-y border-slate-200">
                     <div className="flex items-center gap-2 text-slate-500">
-                        <Settings2 size={16} className="text-teal-700" />
+                        <Settings2 size={14} className="text-teal-700" />
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Opacity Control</h4>
                     </div>
-                    <span className="text-xs font-black text-slate-800 font-mono bg-slate-100 px-2 py-0.5 rounded-none border border-slate-300">{mapOpacity}%</span>
+                    <span className="text-[10px] font-black text-teal-800 font-mono bg-teal-100 px-1.5 py-0.5">{mapOpacity}%</span>
                 </div>
 
-                <div className="p-5 bg-white border border-slate-300 shadow-none rounded-none space-y-4">
+                {/* Slider Area - Tanpa Box Tambahan */}
+                <div className="px-4 py-5 border-b border-slate-200 bg-white space-y-3">
                     <input
                         type="range"
                         min="0"
                         max="100"
                         value={mapOpacity}
                         onChange={(e) => setMapOpacity(parseInt(e.target.value))}
-                        className="w-full h-1.5 bg-slate-200 rounded-none appearance-none cursor-pointer accent-teal-700 shadow-none"
+                        className="w-full h-1.5 bg-slate-200 rounded-none appearance-none cursor-pointer accent-teal-600"
                     />
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                        <span>0% (Transparan)</span>
-                        <span>100% (Solid)</span>
+                    <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        <span>Transparan</span>
+                        <span>Solid</span>
                     </div>
                 </div>
             </div>
 
             {/* SECTION 3: LAYER CONTEXT INFO */}
-            <div className="p-5 bg-slate-50 border border-slate-300 shadow-none rounded-none space-y-3">
-                <div className="flex items-center gap-2 text-slate-700">
-                    <Info size={16} strokeWidth={2.5} />
+            <div className="flex flex-col px-4 py-5 gap-2 bg-transparent">
+                <div className="flex items-center gap-2 text-slate-400">
+                    <Info size={14} strokeWidth={2.5} />
                     <h4 className="text-[10px] font-black uppercase tracking-widest">Feature Layer Info</h4>
                 </div>
-                <p className="text-[11px] text-slate-600 font-medium leading-relaxed text-justify">
-                    Warna poligon (Choropleth) dan skala legenda akan dikalkulasi secara otomatis berdasarkan <span className="text-slate-900 font-black">Data Layer Sektoral</span> yang aktif pada katalog data.
+                <p className="text-[11px] text-slate-500 font-medium leading-relaxed text-justify">
+                    Warna poligon (Choropleth) dan skala legenda dikalkulasi otomatis berdasarkan <strong className="text-slate-700 font-bold">Data Layer Sektoral</strong> yang aktif pada katalog data.
                 </p>
             </div>
 

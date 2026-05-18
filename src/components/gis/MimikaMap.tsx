@@ -67,6 +67,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const {
         openPanel,
+        // closePanelsToTheRight telah dihapus karena logika side-by-side kini ditangani oleh Zustand Store
         activeIndicator,
         mapOpacity,
         activeBaseMap
@@ -255,6 +256,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 });
 
                 if (isAtlasMode) {
+                    // Pemanggilan closePanelsToTheRight dihilangkan di sini.
+                    // Panel Master (misal layer/category) akan tetap hidup dan dirender di sebelahnya
                     openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
                         id: distId,
                         name: districtName

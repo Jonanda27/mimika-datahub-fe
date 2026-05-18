@@ -1,3 +1,4 @@
+
 // src/components/gis/PanelOrchestrator.tsx
 "use client";
 
@@ -29,20 +30,23 @@ export default function PanelOrchestrator() {
     }, []);
 
     const PANEL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 32 : 320) : 320;
-    const PANEL_GAP = 12;
+
+    // Mengubah PANEL_GAP menjadi 0 agar panel saling menempel secara presisi
+    const PANEL_GAP = 0;
 
     return (
         <div className="relative h-full w-full flex items-start pointer-events-none">
 
             {/* =====================================================================
-                1. SISTEM SHIFTING PANEL (FRAMELESS STACK)
-            ====================================================================== */}
+                1. SISTEM SHIFTING PANEL (FRAMELESS STACK)
+            ====================================================================== */}
             {activePanels.map((panel, index) => {
                 const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
 
                 return (
                     <div
                         key={panel.id}
+                        // Mengubah left-4 menjadi left-0 agar menempel sempurna di sisi kiri kontainer
                         className="absolute top-4 bottom-4 left-4 pointer-events-auto panel-transition"
                         style={{
                             width: `${PANEL_WIDTH}px`,
@@ -87,8 +91,8 @@ export default function PanelOrchestrator() {
             })}
 
             {/* =====================================================================
-                2. LEGENDA DINAMIS PETA (FRAMELESS)
-            ====================================================================== */}
+                2. LEGENDA DINAMIS PETA (FRAMELESS)
+            ====================================================================== */}
             {activeIndicator && <MapLegend indicatorKey={activeIndicator} />}
 
         </div>
@@ -133,19 +137,23 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
     const MAX_VALUE = 100;
 
     return (
-        <div className="fixed bottom-8 right-24 md:right-32 pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-4 rounded-none shadow-none w-56 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex items-center gap-2 mb-3 border-b border-slate-300 pb-2">
+        // Mengubah margin (right-[72px]), width (w-52), dan padding (p-2.5) agar padat dan presisi
+        <div className="fixed bottom-8 right-[78px] pointer-events-auto z-50 bg-white/95 backdrop-blur-md border border-slate-300 p-2.5 rounded-none shadow-none w-52 animate-in fade-in slide-in-from-bottom-4">
+            {/* Merapatkan margin bawah dan padding bawah header (mb-2 pb-1.5) */}
+            <div className="flex items-center gap-2 mb-2 border-b border-slate-300 pb-1.5">
                 <MapIcon size={14} className="text-teal-700" />
                 <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-widest truncate">
                     {formattedTitle}
                 </h4>
             </div>
 
-            <div className="space-y-2.5">
+            {/* Merapatkan jarak vertikal antar indikator warna (space-y-1.5) */}
+            <div className="space-y-1.5">
                 {scaleBins.map((bin, idx) => {
                     const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
                     return (
-                        <div key={idx} className="flex items-center gap-3 group cursor-default">
+                        // Merapatkan gap horizontal (gap-2.5)
+                        <div key={idx} className="flex items-center gap-2.5 group cursor-default">
                             <div
                                 className="w-3.5 h-3.5 rounded-none border border-slate-300"
                                 style={{ backgroundColor: boxColor }}
