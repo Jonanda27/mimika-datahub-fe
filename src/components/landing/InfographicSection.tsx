@@ -19,21 +19,21 @@ const INFOGRAFIK_DATA = [
         title: "Capaian Makro Ekonomi Kabupaten Mimika Kuartal I 2026",
         date: "08 Mei 2026",
         category: "Ekonomi",
-        image: "/infografik/ekonomi-01.jpg",
+        image: "/infografik/ekonomi/ekonomi-01.jpg",
     },
     {
         id: 2,
         title: "Peta Penurunan Angka Stunting per Distrik Tahun 2025",
         date: "22 April 2026",
         category: "Kesehatan",
-        image: "/infografik/stunting-2025.jpg",
+        image: "/infografik/kesehatan/kesehatan-01.jpg",
     },
     {
         id: 3,
         title: "Piramida Penduduk & Ketenagakerjaan Mimika 2026",
         date: "15 Maret 2026",
         category: "Demografi",
-        image: "/infografik/penduduk-2026.jpg",
+        image: "/infografik/sosial/sosial-01.jpg",
     }
 ];
 
@@ -87,7 +87,7 @@ export default function InfographicSection() {
                             className="group cursor-pointer flex flex-col"
                             onClick={() => setSelectedImg(item)}
                         >
-                            <div className="relative aspect-[3/4] w-full bg-gray-100 border border-gray-200 overflow-hidden shadow-sm transition-all duration-500 group-hover:shadow-xl">
+                            <div className="relative aspect-3/4 w-full bg-gray-100 border border-gray-200 overflow-hidden shadow-sm transition-all duration-500 group-hover:shadow-xl">
                                 <Image
                                     src={item.image}
                                     alt={item.title}
@@ -115,7 +115,7 @@ export default function InfographicSection() {
 
             {/* --- MODAL / POP-UP LIGHTBOX DENGAN ZOOM --- */}
             {selectedImg && (
-                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-999 flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
 
                     {/* Backdrop Gelap (Klik di sini untuk tutup) */}
                     <div
@@ -179,7 +179,7 @@ export default function InfographicSection() {
                         <div className="overflow-auto bg-slate-100 p-4 md:p-8 flex justify-center items-start custom-scrollbar h-[70vh] md:h-[80vh]">
                             {/* Wrapper gambar dengan transisi lebar (width) yang mulus */}
                             <div
-                                className="relative transition-all duration-300 ease-out flex-shrink-0 origin-top"
+                                className="relative transition-all duration-300 ease-out shrink-0 origin-top"
                                 style={{
                                     width: `${zoomLevel * 100}%`,
                                     // Membatasi lebar default di 42rem (max-w-2xl), tapi dilepas jika user nge-zoom (>100%)

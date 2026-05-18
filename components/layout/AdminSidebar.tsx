@@ -10,14 +10,14 @@ import {
   Menu,
   X,
   LogOut,
-  Search,
   User as UserIcon,
   ChevronDown,
   Building2,
   Globe,
   Eye,
   BarChart2,
-  MapPin
+  MapPin,
+  Search // Ditambahkan agar komponen Search bar Anda tidak error
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -25,8 +25,8 @@ import { useAuthStore } from "@/src/app/store/useAuthStore";
 export default function AdminNavbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false); // Mobile menu state
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // Profile dropdown state
+  const [isOpen, setIsOpen] = useState(false); // State menu mobile
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // State dropdown profil
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Integrasi Auth Store
@@ -36,7 +36,7 @@ export default function AdminNavbar() {
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
 
-  // Close dropdown when clicking outside
+  // Logika menutup dropdown saat klik di luar area
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -47,6 +47,7 @@ export default function AdminNavbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Daftar menu (Gabungan: 6 Menu Standard + 1 Menu Manajemen Wilayah)
   const menuItems = [
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Data Pemerintah", href: "/data-pemerintah", icon: Building2 },
@@ -75,7 +76,7 @@ export default function AdminNavbar() {
   };
 
   return (
-    <header className="w-full flex flex-col z-[60] sticky top-0 shadow-md font-sans">
+    <header className="w-full flex flex-col z-60 sticky top-0 shadow-md font-sans">
       {/* --- BARIS ATAS (Putih) --- */}
       <div className="bg-white px-4 md:px-8 py-3 flex items-center justify-between border-b border-gray-200 text-black">
 
@@ -90,14 +91,14 @@ export default function AdminNavbar() {
 
         {/* Kanan: Search & Profile Dropdown */}
         <div className="flex items-center gap-4 md:gap-6">
-          {/* Kolom Pencarian (Desktop) */}
+          {/* Kolom Pencarian (Dipertahankan dari branch Anda) */}
           <div className="hidden lg:flex relative items-center border border-gray-300 rounded-lg w-64 xl:w-80 focus-within:ring-2 focus-within:ring-[#0071bc]/20 focus-within:border-[#0071bc] transition-all">
             <input
               type="text"
               placeholder="Cari data..."
               className="w-full px-3 py-1.5 focus:outline-none text-sm text-black bg-transparent"
             />
-            <button className="px-3 text-gray-500">
+            <button className="px-3 text-gray-500 hover:text-[#0071bc] transition-colors">
               <Search size={16} />
             </button>
           </div>
@@ -109,11 +110,12 @@ export default function AdminNavbar() {
               className={`flex items-center gap-2.5 p-1 pr-3 rounded-full bg-white border-2 transition-all focus:outline-none 
                 ${isProfileOpen ? 'border-[#0071bc] shadow-md ring-4 ring-[#0071bc]/10' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
             >
-              <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-[#002244] to-[#0071bc] rounded-full flex items-center justify-center font-bold text-white text-xs shadow-inner">
+              {/* Mempertahankan state isLoading dari branch Anda agar UX lebih baik */}
+              <div className="w-8 h-8 md:w-9 md:h-9 bg-linear-to-br from-[#002244] to-[#0071bc] rounded-full flex items-center justify-center font-bold text-white text-xs shadow-inner">
                 {isLoading ? "..." : getInitials(profile?.full_name || "Admin")}
               </div>
               <div className="hidden sm:flex flex-col items-start leading-none">
-                <span className="text-[12px] font-bold text-[#002244] truncate max-w-[120px]">
+                <span className="text-[12px] font-bold text-[#002244] truncate max-w-30">
                   {profile?.full_name || "Administrator"}
                 </span>
                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
@@ -126,7 +128,7 @@ export default function AdminNavbar() {
               />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu Floating */}
             {isProfileOpen && (
               <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
                 <div className="bg-gray-50/80 px-5 py-4 border-b border-gray-100">
@@ -160,9 +162,9 @@ export default function AdminNavbar() {
         </div>
       </div>
 
-      {/* --- BARIS BAWAH (Biru - Navigasi) --- */}
+      {/* --- BARIS BAWAH (Navigasi Biru Tua) --- */}
       <div className="bg-[#004b87] text-white hidden md:flex items-center justify-between px-4 md:px-8">
-        <nav className="flex items-center overflow-x-auto no-scrollbar">
+        <nav className="flex items-center overflow-x-auto hide-scrollbar">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -198,9 +200,11 @@ export default function AdminNavbar() {
                 {item.name}
               </Link>
             ))}
+
+            {/* Tombol Logout Mobile (Dipertahankan dari branch Anda) */}
             <button
               onClick={handleLogout}
-              className="px-6 py-4 text-sm font-bold text-red-200 flex items-center gap-3 hover:bg-[#005a96]"
+              className="px-6 py-4 text-sm font-bold text-red-200 flex items-center gap-3 hover:bg-[#005a96] transition-colors"
             >
               <LogOut size={18} />
               Logout Sistem

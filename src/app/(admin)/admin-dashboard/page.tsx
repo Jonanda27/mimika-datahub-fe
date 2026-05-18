@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import {
   Database, Building, Star, Clock,
   Flame, TrendingUp, Activity, AlertTriangle, Building2, Users,
-  Map, ChevronRight
+  Map
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -54,7 +54,8 @@ export default function ManagerDashboardPage() {
   if (isLoading || !dashboardData) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        {/* PERBAIKAN: Normalisasi max-width */}
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
           <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
         </div>
@@ -70,7 +71,7 @@ export default function ManagerDashboardPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
+      <div className="max-w-350uto p-4 md:p-6 lg:p-8 overflow-x-hidden">
 
         {/* 1. HEADER BANNER */}
         <PageHeader
@@ -84,39 +85,43 @@ export default function ManagerDashboardPage() {
           <StatCard
             label="Total Dataset"
             value={dashboardData.cards.total_dataset}
-            icon={<Database className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
+            /* PERBAIKAN: Normalisasi width/height tailwind */
+            icon={<Database className="w-4 h-4 md:w-5.5 md:h-5.5" />}
             iconBg="bg-[#7e57c2]"
           />
           <StatCard
             label="Sumber Data"
             value={dashboardData.cards.total_sumber}
-            icon={<Building className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
+            icon={<Building className="w-4 h-4 md:w-5.5 md:h-5.5" />}
             iconBg="bg-[#29b6f6]"
           />
           <StatCard
             label="User Aktif"
             value={dashboardData.cards.user_aktif}
-            icon={<Users className="w-5 h-5 md:w-[22px] md:h-[22px]" />}
+            icon={<Users className="w-4 h-4 md:w-5.5 md:h-5.5" />}
             iconBg="bg-[#ec407a]"
           />
           <StatCard
             label="Rata-rata Kualitas"
             value={dashboardData.cards.rata_rata_kualitas}
-            icon={<Star className="w-5 h-5 md:w-[22px] md:h-[22px]" fill="currentColor" />}
+            icon={<Star className="w-4 h-4 md:w-5.5 md:h-5.5" fill="currentColor" />}
             iconBg="bg-[#66bb6a]"
             valueColor="text-[#66bb6a]"
           />
         </div>
 
         {/* 3. INTERVENSI GIS: PETA SPASIAL */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-6 md:mb-8 relative z-10">
-          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+        {/* PERBAIKAN: Memberikan tinggi eksplisit pada kontainer, dan menggunakan flex-1 untuk MapWrapper */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7 mb-6 md:mb-8 relative z-10 flex flex-col h-112.5 md:h-137.5">
+          <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-4 shrink-0">
             <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
               <Map size={18} className="text-[#1e61d0]" /> Sebaran Dataset Geospasial
             </h3>
             <span className="text-[10px] text-gray-400 font-medium italic hidden sm:block">Data Agregasi O(1)</span>
           </div>
-          <MapWrapper />
+          <div className="flex-1 w-full relative rounded-2xl overflow-hidden border border-gray-100">
+            <MapWrapper />
+          </div>
         </div>
 
         {/* 4. DATA LISTS (RECENT & POPULAR) */}
@@ -136,7 +141,7 @@ export default function ManagerDashboardPage() {
                     <h4 className="text-xs md:text-sm font-bold text-gray-800 group-hover:text-[#1e61d0] transition-colors truncate">{item.title}</h4>
                     <p className="text-[10px] md:text-[11px] text-gray-500 mt-1 font-medium">Tahun {item.year} • {new Date(item.created_at).toLocaleDateString('id-ID')}</p>
                   </div>
-                  <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-md shadow-red-100 shrink-0">Baru</span>
+                  <span className="bg-[#ef4444] text-white text-[9px] font-black px-3 py-1 rounded-full uppercase shadow-md shrink-0">Baru</span>
                 </div>
               ))}
             </div>
@@ -176,19 +181,31 @@ export default function ManagerDashboardPage() {
                 <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skor Kualitas (%)</span>
               </div>
             </div>
-            <div className="h-[250px] md:h-[280px] w-full">
+            {/* PERBAIKAN: Normalisasi penempatan grafik mobile */}
+            <div className="h-62.5 md:h-70 w-full -ml-4 sm:ml-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formattedTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="score" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                    formatter={(v) => [`${v}%`, "Skor"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#ef4444"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
+                    activeDot={{ r: 6, stroke: '#fca5a5', strokeWidth: 2 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
+          {/* Notifikasi Kualitas */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-7">
             <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
               <h3 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
@@ -229,7 +246,7 @@ export default function ManagerDashboardPage() {
           </div>
         </div>
 
-        <footer className="mt-8 text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase pb-10">
+        <footer className="mt-8 text-center text-gray-400 text-[9px] md:text-[10px] font-medium tracking-widest uppercase pb-8">
           © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
         </footer>
       </div>

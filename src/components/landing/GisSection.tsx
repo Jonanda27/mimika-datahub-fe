@@ -91,7 +91,7 @@ export default function GisSection() {
                             </div>
 
                             {/* Area Peta */}
-                            <div className="relative h-[450px] w-full group cursor-pointer">
+                            <div className="relative h-112.5 w-full group cursor-pointer">
 
                                 {/* Pointer events none agar tidak nyangkut saat scroll halaman */}
                                 <div className="w-full h-full pointer-events-none grayscale-[0.1] opacity-90 transition-all duration-700 group-hover:grayscale-0 group-hover:opacity-100">

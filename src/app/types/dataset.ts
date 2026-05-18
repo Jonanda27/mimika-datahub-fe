@@ -13,12 +13,6 @@ export interface Item {
 export interface Dataset {
   id: number;
   title: string;
-  // Injeksi Spasial (GIS)
-  district_id?: number | null;
-  district?: {
-    id: number;
-    name: string;
-  } | null;
   source_id: number;
   category_id: number;
   source_type_id: number;
@@ -30,6 +24,12 @@ export interface Dataset {
   total_rows: number;
   quality_score: number;
   created_at: string;
+  // Injeksi Spasial (GIS)
+  district_id?: number | null;
+  district?: {
+    id: number;
+    name: string;
+  } | null;
   image_url?: string;
 }
 
@@ -45,9 +45,12 @@ export interface ExportParams {
 
 export interface DatasetContent {
   title: string;
-  type: string;
+  dataset_type: string;
   headers: string[]; // Contoh: ["nama_distrik", "jumlah_penduduk"]
   rows: Record<string, any>[]; // Array object dinamis sesuai isi konten
+  structure_type: "document" | "tabular";
+  file_url: string | null;
+  view_url: string | null;
 }
 
 export interface DatasetContentParams {

@@ -79,7 +79,7 @@ export default function PanelOrchestrator() {
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
                                             {panel.type.replace("-", " ")}
                                         </span>
-                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-[200px] tracking-tight mt-0.5">
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-50 tracking-tight mt-0.5">
                                             {panel.title}
                                         </h3>
                                     </div>
@@ -157,7 +157,7 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
 
     return (
         // Lebar kontainer dirampingkan menjadi w-[170px]
-        <div className="fixed bottom-8 right-[78px] pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-[170px] rounded-none animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-42.5 rounded-none animate-in fade-in slide-in-from-bottom-4">
 
             {/* Header Legenda - Spasi Ultra Rapat */}
             <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">

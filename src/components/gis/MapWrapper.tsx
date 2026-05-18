@@ -13,13 +13,15 @@ interface MapWrapperProps {
 /**
  * Import dinamis MimikaMap dengan bypass SSR.
  * Loading state disesuaikan dengan tema "Papuan Midnight & Neon" 
- * agar transisi visual lebih halus pada halaman Explorer.
+ * agar transisi visual lebih halus pada halaman Explorer dan Dashboard.
  */
 const DynamicMimikaMap = dynamic(
     () => import('./MimikaMap'),
     {
         ssr: false,
         loading: () => (
+            // RESOLUSI: Menggunakan w-full h-full agar mengisi penuh parent (seperti instruksi rekan Anda),
+            // tetapi mempertahankan warna gelap agar teks putih & neon spinner tetap terbaca.
             <div className="w-full h-full flex items-center justify-center bg-[#0A192F]">
                 <div className="text-center">
                     {/* Menggunakan spinner Electric Cyan khas identitas baru */}

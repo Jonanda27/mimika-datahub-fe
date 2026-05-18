@@ -5,7 +5,7 @@ import { UploadRequest, UploadResponse } from "../types/ingest";
 export const ingestService = {
   async uploadProcess(data: UploadRequest): Promise<UploadResponse> {
     const formData = new FormData();
-    
+
     // Data Text
     formData.append("title", data.title);
     formData.append("dataset_type", data.dataset_type);
@@ -15,28 +15,20 @@ export const ingestService = {
     formData.append("year", data.year.toString());
     formData.append("period", data.period);
 
-    // ==========================================
-    // INTERVENSI GIS: Injeksi district_id
-    // ==========================================
-    if (data.district_id) {
-      formData.append("district_id", data.district_id.toString());
-    }
-
     if (data.description) {
       formData.append("description", data.description);
     }
 
-    
-    if (data.description) formData.append("description", data.description);
-    
-    // Baru: Append district_id jika tersedia
+    // ==========================================
+    // INTERVENSI GIS: Injeksi district_id
+    // ==========================================
     if (data.district_id !== undefined && data.district_id !== null) {
       formData.append("district_id", data.district_id.toString());
     }
 
     // Data Files
-    formData.append("file", data.file);
-    formData.append("image", data.image);
+    formData.append("file", data.file);      // File Excel/CSV/PDF/Doc
+    formData.append("image", data.image);    // File Gambar Cover Dataset
 
     const token = localStorage.getItem("auth_token");
     const response = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {

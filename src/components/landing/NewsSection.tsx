@@ -72,7 +72,7 @@ export default function NewsSection() {
                         rel="noopener noreferrer"
                         className="lg:col-span-2 group flex flex-col"
                     >
-                        <div className="relative w-full h-72 md:h-[450px] rounded-2xl overflow-hidden mb-6 shadow-sm">
+                        <div className="relative w-full h-72 md:h-112.5 rounded-2xl overflow-hidden mb-6 shadow-sm">
                             <Image
                                 src={NEWS_DATA.featured.image}
                                 alt={NEWS_DATA.featured.title}

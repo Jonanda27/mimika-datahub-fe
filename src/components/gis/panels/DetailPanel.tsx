@@ -152,8 +152,8 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
                     <button
                         onClick={() => setActiveTab("umum")}
                         className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${activeTab === "umum"
-                            ? "border-b-[2px] border-teal-700 text-teal-800 bg-teal-50/30"
-                            : "border-b-[2px] border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                            ? "border-b-2 border-teal-700 text-teal-800 bg-teal-50/30"
+                            : "border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                             }`}
                     >
                         Data Umum
@@ -161,8 +161,8 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
                     <button
                         onClick={() => setActiveTab("analisis")}
                         className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${activeTab === "analisis"
-                            ? "border-b-[2px] border-teal-700 text-teal-800 bg-teal-50/30"
-                            : "border-b-[2px] border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                            ? "border-b-2 border-teal-700 text-teal-800 bg-teal-50/30"
+                            : "border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                             }`}
                     >
                         Analitik Data

@@ -67,7 +67,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const {
         openPanel,
-        // closePanelsToTheRight telah dihapus karena logika side-by-side kini ditangani oleh Zustand Store
         activeIndicator,
         mapOpacity,
         activeBaseMap
@@ -76,20 +75,28 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     const [geoData, setGeoData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
+
+    // State Kunci Re-mount (Solusi Map Reuse Leaflet)
     const [mapKey, setMapKey] = useState(Date.now());
 
     const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
     const [maxValue, setMaxValue] = useState<number>(100);
 
+    // Local State untuk Pop-up Profil Wilayah
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [isTextExpanded, setIsTextExpanded] = useState(false);
 
+    // Membersihkan instansi map sebelum unmount
     useEffect(() => {
-        return () => setMapKey(Date.now());
+        return () => {
+            // Ketika komponen mati, paksa reset key di memori agar instance Leaflet terputus
+            setMapKey(Date.now());
+        };
     }, []);
 
+    // 1. Fetching Resource Peta (Hanya GeoJSON)
     useEffect(() => {
         const loadMapResources = async () => {
             setLoading(true);
@@ -256,8 +263,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 });
 
                 if (isAtlasMode) {
-                    // Pemanggilan closePanelsToTheRight dihilangkan di sini.
-                    // Panel Master (misal layer/category) akan tetap hidup dan dirender di sebelahnya
                     openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
                         id: distId,
                         name: districtName
@@ -294,6 +299,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return activeBaseMap === 'satellite' ? 22 : 20;
     };
 
+    // Saat proses load data internal (GeoJSON), jangan render MapContainer 
+    // agar loading diserahkan ke fallback di MapWrapper (yang bertema gelap & neon)
     if (loading) return null;
 
     const SafeMapContainer = MapContainer as any;
@@ -343,10 +350,11 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     return (
-        // Menghapus rounded-3xl dan shadow-sm agar frameless
-        <div className={`h-full w-full relative z-10 bg-slate-50 border-none`}>
+        // Menghapus rounded-3xl dan shadow-sm agar frameless (sesuai arahan layout GFW/Atlas)
+        // Dan pastikan overflow-hidden dari branch rekan diintegrasikan jika perlu.
+        <div className={`h-full w-full overflow-hidden relative z-10 bg-slate-50 border-none`}>
             <SafeMapContainer
-                key={mapKey}
+                key={mapKey} // INJEKSI KUNCI: Mencegah Reuse Container oleh Leaflet
                 center={DEFAULT_CENTER}
                 zoom={DEFAULT_ZOOM}
                 minZoom={7}

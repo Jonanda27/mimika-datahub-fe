@@ -90,7 +90,7 @@ export default function HeroSection() {
 
                     {/* DROPDOWN HASIL PENCARIAN */}
                     {selectedCategory && (
-                        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-200 shadow-2xl rounded-md overflow-hidden z-[100]">
+                        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-200 shadow-2xl rounded-md overflow-hidden z-100">
                             <div className="max-h-60 overflow-y-auto divide-y divide-gray-50">
                                 {isSearching ? (
                                     <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-[#0071bc]" /></div>

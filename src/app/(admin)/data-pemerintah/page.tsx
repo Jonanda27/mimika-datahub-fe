@@ -1,4 +1,4 @@
-// src/app/(user)/user-data-pemerintah/page.tsx
+// src/app/(admin)/data-pemerintah/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -21,7 +21,7 @@ import { Dataset, DatasetFilterParams } from "@/src/app/types/dataset";
 function DataPemerintahContent() {
   const searchParams = useSearchParams();
 
-  // Tangkap parameter Drill-down dari Peta (URL)
+  // Tangkap parameter Drill-down dari Peta (URL) - Kontribusi Branch Spasial
   const urlDistrictId = searchParams.get('district_id');
   const urlCategoryId = searchParams.get('category_id');
 
@@ -39,7 +39,7 @@ function DataPemerintahContent() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // State untuk mobile filter
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // State mobile filter dari main
 
   // Inisialisasi state filter secara dinamis dari URL (URL-Driven State)
   const [filters, setFilters] = useState<DatasetFilterParams & { district_id?: number | null }>({
@@ -73,6 +73,7 @@ function DataPemerintahContent() {
   }, []);
 
   const handleFilterChange = (newFilters: DatasetFilterParams) => {
+    // Merge new filters dengan mempertahankan district_id yang aktif
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
     fetchPublicDatasets('pemerintah', updatedFilters);
@@ -92,7 +93,7 @@ function DataPemerintahContent() {
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen font-sans animate-in fade-in duration-500 text-black pt-6 md:pt-10 pb-20">
-      <div className="max-w-[1500px] w-full mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-375ll mx-auto px-4 md:px-6 lg:px-8 overflow-x-hidden">
 
         {/* Header & Search */}
         <div className="flex flex-col space-y-6 mb-8">
@@ -126,9 +127,9 @@ function DataPemerintahContent() {
 
         <div className="flex flex-col lg:flex-row gap-8 items-start relative">
 
-          {/* ASIDE / FILTER: Responsive Drawer for Mobile */}
+          {/* ASIDE / FILTER: Responsive Drawer with Spasial Reset Logic */}
           <aside className={`
-            fixed inset-y-0 left-0 z-[110] w-[280px] bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
+            fixed inset-y-0 left-0 z-110 w-70 bg-white transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
             lg:relative lg:translate-x-0 lg:z-0 lg:bg-transparent lg:w-[320px] shrink-0
             ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}
           `}>
@@ -153,7 +154,7 @@ function DataPemerintahContent() {
                   const resetObj = { category_id: null, source_id: null, source_type_id: null, year: null, district_id: null };
                   setSearchTerm("");
                   handleFilterChange(resetObj);
-                  // Menghapus parameter dari URL secara halus (Feature HEAD)
+                  // Menghapus parameter dari URL secara halus (Feature HEAD Spasial)
                   window.history.replaceState(null, '', window.location.pathname);
                 }}
                 onExport={(fmt) => downloadDatasetList('pemerintah', fmt)}
@@ -164,12 +165,12 @@ function DataPemerintahContent() {
           {/* Overlay Mobile */}
           {isFilterOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-[100] lg:hidden backdrop-blur-sm"
+              className="fixed inset-0 bg-black/50 z-100 lg:hidden backdrop-blur-sm"
               onClick={() => setIsFilterOpen(false)}
             />
           )}
 
-          {/* MAIN CONTENT */}
+          {/* MAIN CONTENT AREA */}
           <main className="flex-1 min-w-0 w-full bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center gap-6 px-6 pt-2 border-b border-gray-200 overflow-x-auto w-full hide-scrollbar">
               <button className="py-4 text-sm font-bold text-[#0071bc] border-b-[3px] border-[#0071bc] whitespace-nowrap">
@@ -226,11 +227,11 @@ function DataPemerintahContent() {
   );
 }
 
-// Default export dengan Suspense
+// Default export yang dibungkus dengan Suspense sesuai best practice
 export default function DataPemerintahPage() {
   return (
     <Suspense fallback={
-      <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8 flex items-center justify-center">
+      <div className="bg-[#f0f4f8] min-h-screen font-sans text-black pt-8 flex items-center justify-center p-6">
         <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
       </div>
     }>

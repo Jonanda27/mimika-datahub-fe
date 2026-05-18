@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { useState, useEffect } from "react";
 // Integrasi Store
 import { useDatasetStore } from "@/src/app/store/useDatasetStore";
 
-// --- IMPORT KOMPONEN LANDING ---
+// --- IMPORT KOMPONEN LANDING (Arsitektur Modular) ---
 import Navbar from "@/src/components/landing/Navbar";
 import HeroSection from "@/src/components/landing/HeroSection";
 import QuickLinks from "@/src/components/landing/QuickLinks";
@@ -31,10 +32,11 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-800 selection:bg-[#0071bc] selection:text-white overflow-x-hidden">
 
+      {/* Komponen Navigasi Utama */}
       <Navbar />
 
       <main>
-        {/* HeroSection sekarang mengelola state pencarian & dropdown secara internal */}
+        {/* HeroSection mengelola state pencarian & dropdown secara internal */}
         <HeroSection />
 
         <QuickLinks />
@@ -50,6 +52,7 @@ export default function LandingPage() {
         <SectoralData />
       </main>
 
+      {/* Komponen Footer */}
       <Footer />
 
     </div>
