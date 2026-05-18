@@ -12,7 +12,6 @@ import ExplorerSidebar from "@/src/components/layout/ExplorerSidebar";
 import PanelOrchestrator from "@/src/components/gis/PanelOrchestrator";
 import MapHUD from "@/src/components/gis/MapHUD";
 import LoadingState from "@/components/ui/LoadingState";
-import AnalysisOverlay from "@/src/components/gis/AnalysisOverlay";
 
 // Import MapWrapper secara dinamis (Bypass SSR)
 const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
@@ -68,16 +67,12 @@ export default function ExplorerPage() {
 
             {/* =====================================================================
                 LAYER 3: THE STACKING DRAWERS (PANEL ANALISIS)
-                Panel akan menumpuk bergeser ke kanan.
-                Diberikan margin atas (top-20) agar tidak menempel keras ke Navbar.
-                Berada di sebelah kanan Sidebar (left-[88px]).
+                Mengadopsi pola Docking & Zero Gap (Flush).
+                Panel menempel sempurna di bawah Navbar (top-16), mentok ke dasar 
+                layar (bottom-0), dan berhimpit di sisi kanan Sidebar (left-16).
             ====================================================================== */}
-            <div className="absolute top-20 bottom-4 left-14 z-30 pointer-events-none">
+            <div className="absolute top-16 bottom-0 left-16 z-30 pointer-events-none">
                 <PanelOrchestrator />
-            </div>
-
-            <div className="absolute top-18 right-6 z-40 pointer-events-none">
-                <AnalysisOverlay />
             </div>
 
             {/* =====================================================================
