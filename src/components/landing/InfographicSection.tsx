@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Maximize2, ChevronRight, X, Download } from "lucide-react";
+import {
+    Maximize2,
+    ChevronRight,
+    X,
+    Download,
+    ZoomIn,
+    ZoomOut,
+    RotateCcw
+} from "lucide-react";
 
 const INFOGRAFIK_DATA = [
     {
@@ -30,8 +38,9 @@ const INFOGRAFIK_DATA = [
 ];
 
 export default function InfographicSection() {
-    // State untuk menyimpan data gambar yang sedang dibuka di pop-up
     const [selectedImg, setSelectedImg] = useState<typeof INFOGRAFIK_DATA[0] | null>(null);
+    // State baru untuk mengatur level zoom (1 = 100%, 2 = 200%, dst)
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     // Mencegah scroll pada body saat pop-up terbuka
     useEffect(() => {
@@ -41,6 +50,17 @@ export default function InfographicSection() {
             document.body.style.overflow = "unset";
         }
     }, [selectedImg]);
+
+    // Fungsi tutup modal dan reset zoom kembali ke 100%
+    const handleCloseModal = () => {
+        setSelectedImg(null);
+        setTimeout(() => setZoomLevel(1), 300); // Reset zoom setelah animasi modal tertutup
+    };
+
+    // Fungsi Zoom (Batas min 50%, max 300%)
+    const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.25, 3));
+    const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
+    const handleResetZoom = () => setZoomLevel(1);
 
     return (
         <section className="py-16 md:py-20 bg-white relative z-10 border-b border-gray-100">
@@ -65,7 +85,7 @@ export default function InfographicSection() {
                         <div
                             key={item.id}
                             className="group cursor-pointer flex flex-col"
-                            onClick={() => setSelectedImg(item)} // KLIK UNTUK BUKA POP-UP
+                            onClick={() => setSelectedImg(item)}
                         >
                             <div className="relative aspect-[3/4] w-full bg-gray-100 border border-gray-200 overflow-hidden shadow-sm transition-all duration-500 group-hover:shadow-xl">
                                 <Image
@@ -93,51 +113,84 @@ export default function InfographicSection() {
                 </div>
             </div>
 
-            {/* --- MODAL / POP-UP LIGHTBOX --- */}
+            {/* --- MODAL / POP-UP LIGHTBOX DENGAN ZOOM --- */}
             {selectedImg && (
-                <div
-                    className="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
-                >
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+
                     {/* Backdrop Gelap (Klik di sini untuk tutup) */}
                     <div
                         className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm"
-                        onClick={() => setSelectedImg(null)}
+                        onClick={handleCloseModal}
                     ></div>
 
                     {/* Container Modal */}
-                    <div className="relative w-full max-w-4xl max-h-full bg-white shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                    <div className="relative w-full max-w-5xl max-h-full bg-white shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 rounded-lg">
 
-                        {/* Toolbar Modal */}
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
-                            <div className="flex flex-col">
+                        {/* TOOLBAR MODAL */}
+                        <div className="p-3 md:p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white shrink-0 gap-4">
+
+                            {/* Info Teks */}
+                            <div className="flex flex-col pr-4">
                                 <h4 className="text-sm font-bold text-[#002244] line-clamp-1">{selectedImg.title}</h4>
                                 <p className="text-[10px] text-gray-500 uppercase font-bold">{selectedImg.date} • {selectedImg.category}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <a
-                                    href={selectedImg.image}
-                                    download
-                                    className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
-                                    title="Download Infografik"
-                                >
-                                    <Download size={20} />
-                                </a>
-                                <button
-                                    onClick={() => setSelectedImg(null)}
-                                    className="p-2 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
+
+                            {/* Action Buttons (Zoom & Actions) */}
+                            <div className="flex items-center gap-4 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
+
+                                {/* Controller Zoom */}
+                                <div className="flex items-center bg-gray-100 rounded-md border border-gray-200 p-1">
+                                    <button onClick={handleZoomOut} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600 transition-all" title="Zoom Out">
+                                        <ZoomOut size={16} />
+                                    </button>
+                                    <span className="text-[11px] font-bold text-[#002244] w-12 text-center tracking-wider">
+                                        {Math.round(zoomLevel * 100)}%
+                                    </span>
+                                    <button onClick={handleZoomIn} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600 transition-all" title="Zoom In">
+                                        <ZoomIn size={16} />
+                                    </button>
+                                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                                    <button onClick={handleResetZoom} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600 transition-all" title="Reset Zoom">
+                                        <RotateCcw size={14} />
+                                    </button>
+                                </div>
+
+                                {/* Divider & Global Actions */}
+                                <div className="flex items-center gap-1 pl-2 border-l border-gray-200">
+                                    <a
+                                        href={selectedImg.image}
+                                        download
+                                        className="p-2 hover:bg-gray-100 rounded-full text-[#0071bc] transition-colors"
+                                        title="Download Infografik"
+                                    >
+                                        <Download size={20} />
+                                    </a>
+                                    <button
+                                        onClick={handleCloseModal}
+                                        className="p-2 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Area Gambar (Bisa Scroll jika Portrait panjang) */}
-                        <div className="overflow-y-auto bg-gray-50 p-4 md:p-8 flex justify-center custom-scrollbar">
-                            <div className="relative w-full max-w-2xl h-auto">
+                        {/* AREA GAMBAR BISA DI-ZOOM & SCROLL */}
+                        <div className="overflow-auto bg-slate-100 p-4 md:p-8 flex justify-center items-start custom-scrollbar h-[70vh] md:h-[80vh]">
+                            {/* Wrapper gambar dengan transisi lebar (width) yang mulus */}
+                            <div
+                                className="relative transition-all duration-300 ease-out flex-shrink-0 origin-top"
+                                style={{
+                                    width: `${zoomLevel * 100}%`,
+                                    // Membatasi lebar default di 42rem (max-w-2xl), tapi dilepas jika user nge-zoom (>100%)
+                                    maxWidth: zoomLevel <= 1 ? '42rem' : 'none'
+                                }}
+                            >
                                 <img
                                     src={selectedImg.image}
                                     alt={selectedImg.title}
-                                    className="w-full h-auto shadow-xl border border-gray-200"
+                                    className="w-full h-auto shadow-2xl border border-gray-300"
+                                    draggable={false} // Supaya kursor tidak jadi 'grab' bawaan browser yang mengganggu
                                 />
                             </div>
                         </div>
