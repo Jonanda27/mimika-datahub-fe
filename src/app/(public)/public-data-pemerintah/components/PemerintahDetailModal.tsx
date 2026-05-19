@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Info, Layers, Calendar, Building2, Boxes, Tag, Table as TableIcon, FileDown } from "lucide-react";
+import { X, Info, Layers, Calendar, FileText, Building2, Boxes, Tag, Table as TableIcon, FileDown } from "lucide-react";
 import { Dataset, DatasetContent } from "@/src/app/types/dataset";
 import { Source } from "@/src/app/types/source";
 import { SourceType } from "@/src/app/types/source-type";
@@ -16,15 +16,15 @@ interface DetailModalProps {
   onDownload: (dataset: Dataset) => void;
 }
 
-export default function PemerintahDetailModal({ 
-  dataset, content, sources, sourceTypes, categories, onClose, onDownload 
+export default function PemerintahDetailModal({
+  dataset, content, sources, sourceTypes, categories, onClose, onDownload
 }: DetailModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-black">
       <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <Info size={20} className="text-[#1e61d0]" /> 
+            <Info size={20} className="text-[#1e61d0]" />
             Detail & Preview Dataset
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
@@ -39,11 +39,26 @@ export default function PemerintahDetailModal({
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">Nama Dataset</p>
                 <h4 className="text-xl font-bold text-gray-900 leading-tight">{dataset.title}</h4>
               </div>
+
+              {/* --- BLOK DESKRIPSI DATASET --- */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={12} className="text-[#1e61d0]" /> Deskripsi Dataset
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {dataset.description ? (
+                    dataset.description
+                  ) : (
+                    <span className="italic text-gray-400">Tidak ada deskripsi yang ditambahkan untuk dataset ini.</span>
+                  )}
+                </p>
+              </div>
+                
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <DetailInfoBox label="Sumber (OPD)" value={sources.find(s => s.id === dataset.source_id)?.name || "N/A"} icon={<Building2 size={12}/>} />
-                <DetailInfoBox label="Tipe Sumber" value={sourceTypes.find(st => st.id === dataset.source_type_id)?.name || "N/A"} icon={<Boxes size={12}/>} />
-                <DetailInfoBox label="Kategori" value={categories.find(c => c.id === dataset.category_id)?.name || "N/A"} icon={<Tag size={12}/>} />
-                <DetailInfoBox label="Tahun Data" value={dataset.year} icon={<Calendar size={12}/>} />
+                <DetailInfoBox label="Sumber (OPD)" value={sources.find(s => s.id === dataset.source_id)?.name || "N/A"} icon={<Building2 size={12} />} />
+                <DetailInfoBox label="Tipe Sumber" value={sourceTypes.find(st => st.id === dataset.source_type_id)?.name || "N/A"} icon={<Boxes size={12} />} />
+                <DetailInfoBox label="Kategori" value={categories.find(c => c.id === dataset.category_id)?.name || "N/A"} icon={<Tag size={12} />} />
+                <DetailInfoBox label="Tahun Data" value={dataset.year} icon={<Calendar size={12} />} />
                 <DetailInfoBox label="Periode" value={dataset.period} />
                 <DetailInfoBox label="Status" value={dataset.status} color="text-emerald-600" />
               </div>

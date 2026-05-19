@@ -49,6 +49,20 @@ export default function NonPemerintahDetailModal({
                 <h4 className="text-xl font-bold text-gray-900 leading-tight">{dataset.title}</h4>
               </div>
 
+              {/* --- BLOK DESKRIPSI DATASET --- */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={12} className="text-[#1e61d0]" /> Deskripsi Dataset
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {dataset.description ? (
+                    dataset.description
+                  ) : (
+                    <span className="italic text-gray-400">Tidak ada deskripsi yang ditambahkan untuk dataset ini.</span>
+                  )}
+                </p>
+              </div>
+
               {/* Info Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <DetailInfoBox

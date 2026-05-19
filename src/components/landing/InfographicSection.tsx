@@ -34,6 +34,20 @@ const INFOGRAFIK_DATA = [
         date: "15 Maret 2026",
         category: "Demografi",
         image: "/infografik/sosial/sosial-04.jpg",
+    },
+    {
+        id: 4,
+        title: "Perkembangan Infrastruktur Dasar Kabupaten Mimika",
+        date: "10 Februari 2026",
+        category: "Infrastruktur",
+        image: "/infografik/ekonomi/ekonomi-02.jpg",
+    },
+    {
+        id: 5,
+        title: "Distribusi Fasilitas Pendidikan per Distrik",
+        date: "28 Januari 2026",
+        category: "Pendidikan",
+        image: "/infografik/sosial/sosial-01.jpg",
     }
 ];
 
@@ -79,8 +93,8 @@ export default function InfographicSection() {
                     </Link>
                 </div>
 
-                {/* GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+                {/* GRID: Menggunakan pendekatan multi-breakpoint untuk responsivitas maksimal (1, 2, 4, lalu 5 kolom) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                     {INFOGRAFIK_DATA.map((item) => (
                         <div
                             key={item.id}
@@ -92,19 +106,20 @@ export default function InfographicSection() {
                                     src={item.image}
                                     alt={item.title}
                                     fill
-                                    sizes="(max-width: 768px) 100vw, 33vw"
+                                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                                     className="object-cover object-top transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-[#002244]/0 group-hover:bg-[#002244]/70 transition-all duration-300 flex items-center justify-center">
-                                    <div className="bg-[#0071bc] text-white p-4 rounded-full opacity-0 group-hover:opacity-100 transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
-                                        <Maximize2 size={28} />
+                                    <div className="bg-[#0071bc] text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
+                                        <Maximize2 size={20} />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-5 text-left">
-                                <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-1.5">{item.date}</p>
-                                <h3 className="text-[#002244] font-bold text-base md:text-lg leading-tight group-hover:text-[#0071bc] transition-colors line-clamp-2">
+                            {/* Tipografi diturunkan skalanya agar tetap rapi pada kolom yang menyempit */}
+                            <div className="mt-4 text-left">
+                                <p className="text-gray-400 text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-1">{item.date}</p>
+                                <h3 className="text-[#002244] font-bold text-sm md:text-base leading-snug group-hover:text-[#0071bc] transition-colors line-clamp-2 title-min-height">
                                     {item.title}
                                 </h3>
                             </div>
