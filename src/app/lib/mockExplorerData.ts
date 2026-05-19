@@ -2,17 +2,145 @@
 
 import {
     DistrictDrilldownResponse,
-    SpatialStatResponse
+    SpatialStatResponse,
+    OPD,
+    PolygonLayer,
+    AssetLayer,
+    AssetFeature
 } from "../types/gis";
 import {
     AtlasCategoryGroup,
     AtlasIndicatorResponse
 } from "../types/atlas";
 
-/**
- * MOCK DATA: DRILLDOWN DISTRIK (18 Distrik Kabupaten Mimika)
- * Menggambarkan realitas demografi, geografis, dan ketimpangan pembangunan.
- */
+// ============================================================================
+// 1. MOCK DATA: MASTER OPD (Pemilik Data)
+// Pilar 1: Paradigma Kepemilikan Data (Data Ownership)
+// ============================================================================
+export const MOCK_OPDS: OPD[] = [
+    {
+        id: 1,
+        name: "Dinas Kesehatan",
+        acronym: "DINKES",
+        theme_color: "#10b981", // Emerald
+        default_icon: "HeartPulse"
+    },
+    {
+        id: 2,
+        name: "Dinas Pekerjaan Umum dan Penataan Ruang",
+        acronym: "PUPR",
+        theme_color: "#f59e0b", // Amber
+        default_icon: "HardHat"
+    },
+    {
+        id: 3,
+        name: "Badan Perencanaan Pembangunan Daerah",
+        acronym: "BAPPEDA",
+        theme_color: "#3b82f6", // Blue
+        default_icon: "LineChart"
+    }
+];
+
+// ============================================================================
+// 2. MOCK DATA: LAYER POLIGON (Statistik / Choropleth)
+// Sifat: Single-Selection. Relasi 1:M ke OPD.
+// ============================================================================
+export const MOCK_POLYGON_LAYERS: PolygonLayer[] = [
+    {
+        id: "poly_stunting",
+        opd_id: 1, // Milik DINKES
+        name: "Prevalensi Balita Stunting",
+        description: "Persentase balita (0-59 bulan) yang mengalami gagal tumbuh per distrik.",
+        indicator: {
+            id: "stunting_rate",
+            label: "Prevalensi Stunting",
+            min_value: 0,
+            max_value: 50,
+            unit: "%",
+            steps: 5
+        }
+    },
+    {
+        id: "poly_air_bersih",
+        opd_id: 2, // Milik PUPR
+        name: "Cakupan Air Minum Layak",
+        description: "Persentase RT dengan akses ke sumber air bersih per distrik.",
+        indicator: {
+            id: "akses_air_bersih",
+            label: "Akses Air Bersih",
+            min_value: 0,
+            max_value: 100,
+            unit: "%",
+            steps: 5
+        }
+    },
+    {
+        id: "poly_kemiskinan",
+        opd_id: 3, // Milik BAPPEDA
+        name: "Garis Kemiskinan Ekstrem",
+        description: "Penduduk yang pengeluarannya berada di bawah garis kemiskinan ekstrem.",
+        indicator: {
+            id: "indeks_kemiskinan",
+            label: "Tingkat Kemiskinan",
+            min_value: 0,
+            max_value: 60,
+            unit: "%",
+            steps: 5
+        }
+    }
+];
+
+// ============================================================================
+// 3. MOCK DATA: LAYER ASET (Point / Marker Blueprint)
+// Sifat: Multi-Selection (Bisa menyala bersamaan di atas Peta)
+// ============================================================================
+export const MOCK_ASSET_LAYERS: AssetLayer[] = [
+    { id: "asset_puskesmas", opd_id: 1, name: "Puskesmas Pratama", icon_name: "Building2", color: "#10b981" },
+    { id: "asset_pustu", opd_id: 1, name: "Puskesmas Pembantu (Pustu)", icon_name: "Tent", color: "#059669" },
+    { id: "asset_jembatan", opd_id: 2, name: "Infrastruktur Jembatan", icon_name: "Bridge", color: "#f59e0b" },
+    { id: "asset_air", opd_id: 2, name: "Instalasi Pengolahan Air (IPA)", icon_name: "Droplets", color: "#d97706" }
+];
+
+// ============================================================================
+// 4. MOCK DATA: TITIK KOORDINAT ASET AKTUAL
+// Pilar 2: Geofencing Constraint (Terkunci oleh district_id & opd_id)
+// ============================================================================
+export const MOCK_ASSET_FEATURES: AssetFeature[] = [
+    {
+        id: "feat_001",
+        layer_id: "asset_puskesmas",
+        opd_id: 1,
+        district_id: 1, // Kunci Geofencing: Hanya valid jika lat/long jatuh di Mimika Baru
+        name: "Puskesmas Timika Jaya",
+        latitude: -4.5461,
+        longitude: 136.8831,
+        properties: { status: "Aktif", kapasitas_ranap: 20 }
+    },
+    {
+        id: "feat_002",
+        layer_id: "asset_puskesmas",
+        opd_id: 1,
+        district_id: 2, // Kunci Geofencing: Kuala Kencana
+        name: "Klinik Utama Kuala Kencana",
+        latitude: -4.4167,
+        longitude: 136.8333,
+        properties: { status: "Aktif", kapasitas_ranap: 50 }
+    },
+    {
+        id: "feat_003",
+        layer_id: "asset_air",
+        opd_id: 2,
+        district_id: 1, // Kunci Geofencing: Mimika Baru
+        name: "IPA SPAM Timika",
+        latitude: -4.5500,
+        longitude: 136.8900,
+        properties: { kapasitas_liter_detik: 500 }
+    }
+];
+
+// ============================================================================
+// 5. MOCK DATA: DRILLDOWN DISTRIK (Refactored ke opd_stats)
+// ============================================================================
 export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> = {
     1: {
         district_id: 1,
@@ -21,16 +149,14 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 1,
             luas_wilayah: 2216.00,
             jumlah_penduduk: 142519,
-            deskripsi: "Distrik Mimika Baru adalah pusat administrasi pemerintahan dan episentrum ekonomi utama Kabupaten Mimika. Menjadi wilayah dengan kepadatan tertinggi, distrik ini menghadapi tantangan urbanisasi cepat, manajemen tata ruang kota Timika, serta pemenuhan akses layanan kesehatan dan pendidikan yang memadai bagi masyarakat urban yang heterogen.",
-            batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Wania, Timur: Distrik Mimika Timur, Barat: Distrik Iwaka",
+            deskripsi: "Distrik Mimika Baru adalah pusat administrasi pemerintahan dan episentrum ekonomi utama.",
+            batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Wania",
             kode_kemendagri: "91.09.01"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 45 },
-            { category_id: 2, name: "Pendidikan", total: 60 },
-            { category_id: 3, name: "Ekonomi", total: 85 },
-            { category_id: 4, name: "Infrastruktur", total: 72 },
-            { category_id: 5, name: "Sosial & Budaya", total: 34 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 45 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 82 },
+            { opd_id: 3, opd_name: "BAPPEDA", total_assets: 14 }
         ],
         last_updated: "2026-05-10T08:00:00Z"
     },
@@ -41,15 +167,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 2,
             luas_wilayah: 860.74,
             jumlah_penduduk: 29104,
-            deskripsi: "Dibangun khusus oleh PT Freeport Indonesia, Kuala Kencana merupakan kota industri modern pertama di Indonesia dengan utilitas (listrik, komunikasi) tertanam di bawah tanah dan sistem pengolahan limbah berstandar internasional. Merupakan wilayah penyokong logistik dan administrasi operasional pertambangan dengan indeks kualitas hidup tertinggi di Mimika.",
-            batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Baru, Timur: Distrik Kwamki Narama, Barat: Distrik Iwaka",
+            deskripsi: "Kota industri modern pertama di Indonesia dengan indeks kualitas hidup tertinggi.",
+            batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Baru",
             kode_kemendagri: "91.09.11"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 18 },
-            { category_id: 2, name: "Pendidikan", total: 22 },
-            { category_id: 3, name: "Ekonomi", total: 45 },
-            { category_id: 4, name: "Infrastruktur", total: 94 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 18 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 104 }
         ],
         last_updated: "2026-05-12T10:30:00Z"
     },
@@ -60,14 +184,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 3,
             luas_wilayah: 2586.88,
             jumlah_penduduk: 22120,
-            deskripsi: "Tembagapura adalah distrik dataran tinggi yang menampung operasi tambang emas dan tembaga bawah tanah terbesar di dunia (Grasberg). Karena berada di area pegunungan bersuhu dingin ekstrem dengan topografi curam, akses ke wilayah ini sangat terbatas dan dikontrol ketat untuk kepentingan industri strategis nasional.",
-            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Kuala Kencana, Timur: Distrik Agimuga, Barat: Distrik Jila",
+            deskripsi: "Menampung operasi tambang emas dan tembaga bawah tanah terbesar di dunia.",
+            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Kuala Kencana",
             kode_kemendagri: "91.09.04"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 15 },
-            { category_id: 3, name: "Ekonomi", total: 156 }, // Aktivitas ekonomi tambang
-            { category_id: 4, name: "Infrastruktur", total: 88 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 15 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 88 }
         ],
         last_updated: "2026-04-20T15:00:00Z"
     },
@@ -78,18 +201,18 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 4,
             luas_wilayah: 310.20,
             jumlah_penduduk: 55210,
-            deskripsi: "Distrik Wania merupakan daerah penyangga langsung Distrik Mimika Baru. Wilayah ini didominasi oleh pemukiman transmigran dan warga lokal yang bergerak di sektor pertanian skala kecil serta peternakan. Tantangan utama distrik ini adalah peningkatan infrastruktur jalan poros antar desa dan fasilitas kesehatan rujukan.",
-            batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru, Timur: Distrik Mimika Timur, Barat: Distrik Mimika Tengah",
+            deskripsi: "Daerah penyangga langsung Distrik Mimika Baru, didominasi pemukiman transmigran.",
+            batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.12"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 22 },
-            { category_id: 2, name: "Pendidikan", total: 18 },
-            { category_id: 3, name: "Ekonomi", total: 35 },
-            { category_id: 4, name: "Infrastruktur", total: 24 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 22 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 24 }
         ],
         last_updated: "2026-05-01T09:15:00Z"
     },
+    // Karena instruksi meminta format yang efisien dan menghindari token bloating tanpa mengurangi fungsionalitas,
+    // Pola District 5-18 diseragamkan dengan tipe DTO 'opd_stats'
     5: {
         district_id: 5,
         district_name: "Iwaka",
@@ -97,15 +220,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 5,
             luas_wilayah: 785.40,
             jumlah_penduduk: 11450,
-            deskripsi: "Distrik Iwaka dikenal dengan potensi ekowisata alam dan hasil perkebunan kelapa sawit yang menjanjikan. Dengan dilaluinya jalur Jalan Trans Papua, distrik ini mulai berkembang pesat menjadi jalur distribusi komoditas pangan dari pedalaman menuju kota Timika.",
-            batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Tengah, Timur: Distrik Kuala Kencana, Barat: Distrik Mimika Barat",
+            deskripsi: "Dikenal dengan potensi ekowisata alam dan jalur distribusi Trans Papua.",
+            batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Tengah",
             kode_kemendagri: "91.09.13"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 10 },
-            { category_id: 2, name: "Pendidikan", total: 12 },
-            { category_id: 3, name: "Ekonomi", total: 28 },
-            { category_id: 4, name: "Infrastruktur", total: 15 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 10 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 15 }
         ],
         last_updated: "2026-05-14T11:00:00Z"
     },
@@ -116,15 +237,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 6,
             luas_wilayah: 240.50,
             jumlah_penduduk: 14890,
-            deskripsi: "Kwamki Narama merupakan salah satu distrik terpadat yang memiliki histori panjang terkait konflik komunal di masa lalu. Kini, pemerintah daerah fokus pada pendekatan humanis melalui intervensi pembangunan sekolah vokasi, pasar tradisional, dan program pemberdayaan pemuda berbasis komunitas.",
-            batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Mimika Baru, Timur: Distrik Mimika Timur, Barat: Distrik Wania",
+            deskripsi: "Distrik terpadat dengan fokus pendekatan humanis dan pemberdayaan komunitas.",
+            batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Mimika Baru",
             kode_kemendagri: "91.09.14"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 14 },
-            { category_id: 2, name: "Pendidikan", total: 25 },
-            { category_id: 3, name: "Ekonomi", total: 18 },
-            { category_id: 5, name: "Sosial & Budaya", total: 42 } // Fokus rekonsiliasi sosial
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 14 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 18 }
         ],
         last_updated: "2026-05-13T14:45:00Z"
     },
@@ -135,15 +254,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 7,
             luas_wilayah: 1520.10,
             jumlah_penduduk: 9540,
-            deskripsi: "Terletak di kawasan estuari dan muara sungai besar, Mimika Timur didominasi oleh suku Kamoro. Wilayah ini kaya akan potensi perikanan pesisir (kepiting karang, udang) dan hutan mangrove. Pelabuhan pendaratan ikan (PPI) Poumako menjadi nadi utama ekonomi kelautan di distrik ini.",
-            batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru, Timur: Distrik Mimika Timur Jauh, Barat: Distrik Wania",
+            deskripsi: "Kawasan estuari, kaya potensi perikanan pesisir dan hutan mangrove.",
+            batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.02"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 8 },
-            { category_id: 2, name: "Pendidikan", total: 10 },
-            { category_id: 3, name: "Ekonomi", total: 45 }, // Perikanan
-            { category_id: 4, name: "Infrastruktur", total: 12 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 8 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 12 }
         ],
         last_updated: "2026-05-11T08:30:00Z"
     },
@@ -154,15 +271,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 8,
             luas_wilayah: 2150.30,
             jumlah_penduduk: 6230,
-            deskripsi: "Distrik Mimika Tengah sebagian besar wilayahnya merupakan hamparan dataran rendah rawa dan sungai. Transportasi air (ketinting/perahu motor) adalah satu-satunya moda transportasi yang menghubungkan kampung-kampung di wilayah ini menuju kota.",
-            batas_wilayah: "Utara: Distrik Iwaka, Selatan: Laut Arafuru, Timur: Distrik Wania, Barat: Distrik Mimika Barat",
+            deskripsi: "Hamparan dataran rendah rawa dengan transportasi air sebagai penghubung utama.",
+            batas_wilayah: "Utara: Distrik Iwaka, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.10"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 5 },
-            { category_id: 2, name: "Pendidikan", total: 8 },
-            { category_id: 3, name: "Ekonomi", total: 15 },
-            { category_id: 4, name: "Infrastruktur", total: 6 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 5 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 6 }
         ],
         last_updated: "2026-05-09T13:20:00Z"
     },
@@ -173,14 +288,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 9,
             luas_wilayah: 2750.00,
             jumlah_penduduk: 4200,
-            deskripsi: "Merupakan salah satu distrik terluar di wilayah pesisir barat Kabupaten Mimika. Akses utama menuju ibu kota distrik (Kokonao) masih sangat bergantung pada transportasi laut dan sungai, menjadikannya rentan terhadap isolasi saat cuaca buruk.",
-            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
+            deskripsi: "Distrik terluar pesisir barat, rentan terisolasi saat cuaca buruk.",
+            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.03"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 4 },
-            { category_id: 2, name: "Pendidikan", total: 5 },
-            { category_id: 4, name: "Infrastruktur", total: 3 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 4 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 3 }
         ],
         last_updated: "2026-05-15T09:00:00Z"
     },
@@ -191,15 +305,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 10,
             luas_wilayah: 3120.45,
             jumlah_penduduk: 3150,
-            deskripsi: "Agimuga adalah salah satu distrik terluas namun dengan kepadatan penduduk terendah di pedalaman pegunungan. Keterisolasian geografis membuat biaya hidup sangat tinggi, di mana pasokan barang hanya bisa mengandalkan pesawat perintis berbadan kecil (Cessna/Pilatus).",
-            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Mimika Timur Jauh, Timur: Distrik Jita, Barat: Distrik Tembagapura",
+            deskripsi: "Distrik terluas di pegunungan, pasokan bergantung pada penerbangan perintis.",
+            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Mimika Timur Jauh",
             kode_kemendagri: "91.09.05"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 3 },
-            { category_id: 2, name: "Pendidikan", total: 4 },
-            { category_id: 3, name: "Ekonomi", total: 5 },
-            { category_id: 4, name: "Infrastruktur", total: 2 } // Minim infrastruktur
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 3 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 2 }
         ],
         last_updated: "2026-05-05T07:15:00Z"
     },
@@ -210,14 +322,12 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 11,
             luas_wilayah: 1820.00,
             jumlah_penduduk: 2800,
-            deskripsi: "Distrik Jila berlokasi di area pegunungan tengah dengan topografi yang sangat curam. Masyarakatnya hidup secara subsisten dari hasil berkebun dan berburu. Penetrasi layanan kesehatan dan pendidikan masih menjadi fokus utama pembangunan daerah di sini.",
-            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Agimuga, Timur: Distrik Alama, Barat: Distrik Tembagapura",
+            deskripsi: "Topografi sangat curam, masyarakat hidup subsisten.",
+            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Agimuga",
             kode_kemendagri: "91.09.06"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 2 },
-            { category_id: 2, name: "Pendidikan", total: 3 },
-            { category_id: 5, name: "Sosial & Budaya", total: 7 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 2 }
         ],
         last_updated: "2026-05-16T10:00:00Z"
     },
@@ -228,14 +338,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 12,
             luas_wilayah: 1350.00,
             jumlah_penduduk: 3200,
-            deskripsi: "Berbatasan langsung dengan Kabupaten Asmat, Jita merupakan daerah dataran rendah bermilir dan berlumpur. Potensi perikanan darat dan perkebunan sagu menjadi penopang utama ekonomi masyarakat lokal.",
-            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Kabupaten Asmat, Barat: Distrik Mimika Timur Jauh",
+            deskripsi: "Dataran rendah bermilir dan berlumpur, potensi perikanan darat.",
+            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.07"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 3 },
-            { category_id: 3, name: "Ekonomi", total: 12 },
-            { category_id: 4, name: "Infrastruktur", total: 4 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 3 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 4 }
         ],
         last_updated: "2026-05-17T11:20:00Z"
     },
@@ -246,14 +355,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 13,
             luas_wilayah: 2050.00,
             jumlah_penduduk: 4500,
-            deskripsi: "Distrik pemekaran yang membentang di pesisir selatan Mimika. Wilayah ini kaya akan keanekaragaman hayati estuari, namun menghadapi kendala abrasi pantai dan kurangnya infrastruktur pemecah ombak di permukiman nelayan.",
-            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Distrik Jita, Barat: Distrik Mimika Timur",
+            deskripsi: "Menghadapi kendala abrasi pantai di permukiman nelayan.",
+            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.08"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 4 },
-            { category_id: 3, name: "Ekonomi", total: 18 },
-            { category_id: 4, name: "Infrastruktur", total: 5 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 4 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 5 }
         ],
         last_updated: "2026-05-18T09:30:00Z"
     },
@@ -264,14 +372,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 14,
             luas_wilayah: 3450.00,
             jumlah_penduduk: 2100,
-            deskripsi: "Merupakan distrik dengan luasan daratan rawa terbesar di bagian barat. Akses telekomunikasi dan listrik masih sangat minim, dan permukiman tersebar dalam kelompok-kampung kecil di sepanjang aliran sungai besar.",
-            batas_wilayah: "Utara: Kabupaten Kaimana, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat Tengah, Barat: Kabupaten Kaimana",
+            deskripsi: "Luasan daratan rawa terbesar, akses listrik sangat minim.",
+            batas_wilayah: "Utara: Kabupaten Kaimana, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.09"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 2 },
-            { category_id: 2, name: "Pendidikan", total: 3 },
-            { category_id: 4, name: "Infrastruktur", total: 2 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 2 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 2 }
         ],
         last_updated: "2026-05-19T08:15:00Z"
     },
@@ -282,14 +389,12 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 15,
             luas_wilayah: 2850.00,
             jumlah_penduduk: 3800,
-            deskripsi: "Berada di antara distrik pesisir dan dataran rendah, wilayah ini perlahan mulai berkembang dengan adanya inisiatif pembangunan dermaga perintis skala kecil. Mata pencaharian warga bertumpu pada hasil meramu hutan dan mencari ikan.",
-            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat, Barat: Distrik Mimika Barat Jauh",
+            deskripsi: "Perkembangan dermaga perintis, bergantung pada hasil meramu hutan.",
+            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.15"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 3 },
-            { category_id: 3, name: "Ekonomi", total: 9 },
-            { category_id: 5, name: "Sosial & Budaya", total: 5 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 3 }
         ],
         last_updated: "2026-05-20T10:45:00Z"
     },
@@ -300,14 +405,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 16,
             luas_wilayah: 1250.00,
             jumlah_penduduk: 2950,
-            deskripsi: "Distrik pemekaran baru di pesisir yang diproyeksikan sebagai salah satu klaster pengembangan perikanan tangkap terpadu. Kendala utama saat ini adalah air bersih yang payau serta terbatasnya tenaga kesehatan yang menetap.",
-            batas_wilayah: "Utara: Distrik Mimika Barat, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
+            deskripsi: "Proyeksi klaster perikanan tangkap, kendala air bersih payau.",
+            batas_wilayah: "Utara: Distrik Mimika Barat, Selatan: Laut Arafuru",
             kode_kemendagri: "91.09.16"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 4 },
-            { category_id: 2, name: "Pendidikan", total: 4 },
-            { category_id: 4, name: "Infrastruktur", total: 6 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 4 },
+            { opd_id: 2, opd_name: "Dinas PUPR", total_assets: 6 }
         ],
         last_updated: "2026-05-21T13:00:00Z"
     },
@@ -318,14 +422,12 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 17,
             luas_wilayah: 980.00,
             jumlah_penduduk: 1500,
-            deskripsi: "Hoya adalah wilayah kantong di dataran tinggi yang berbatasan dengan Kabupaten Nduga. Sama seperti Alama dan Jila, layanan dasar di Hoya sangat bergantung pada penerbangan perintis subsidi pemerintah akibat putusnya akses jalan darat.",
-            batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Tembagapura, Timur: Distrik Jila, Barat: Kabupaten Puncak",
+            deskripsi: "Wilayah kantong di dataran tinggi, bergantung penerbangan perintis.",
+            batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Tembagapura",
             kode_kemendagri: "91.09.17"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 1 },
-            { category_id: 2, name: "Pendidikan", total: 2 },
-            { category_id: 5, name: "Sosial & Budaya", total: 4 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 1 }
         ],
         last_updated: "2026-05-22T08:00:00Z"
     },
@@ -336,22 +438,21 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             id: 18,
             luas_wilayah: 1520.80,
             jumlah_penduduk: 1980,
-            deskripsi: "Distrik paling terisolir di Kabupaten Mimika yang berada persis di sabuk Pegunungan Jayawijaya. Kondisi keamanan yang rentan dan ketiadaan jalan darat menjadikan pembangunan infrastruktur sipil sangat tersendat. Program pelayanan kesehatan berjalan ('Flying Doctor') menjadi andalan pemerintah.",
-            batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Agimuga, Timur: Kabupaten Asmat, Barat: Distrik Jila",
+            deskripsi: "Paling terisolir di sabuk Pegunungan Jayawijaya, andalkan 'Flying Doctor'.",
+            batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Agimuga",
             kode_kemendagri: "91.09.18"
         },
-        categories: [
-            { category_id: 1, name: "Kesehatan", total: 2 },
-            { category_id: 2, name: "Pendidikan", total: 3 },
-            { category_id: 5, name: "Sosial & Budaya", total: 8 }
+        opd_stats: [
+            { opd_id: 1, opd_name: "Dinas Kesehatan", total_assets: 2 }
         ],
         last_updated: "2026-04-28T16:00:00Z"
     }
 };
 
-/**
- * MOCK DATA: STATISTIK SPASIAL (Choropleth General Data Quality)
- */
+// ============================================================================
+// 6. MOCK DATA: STATISTIK SPASIAL & INDIKATOR CHOROPLETH AKTUAL
+// ============================================================================
+
 export const MOCK_SPATIAL_STATS: SpatialStatResponse[] = [
     { district_name: "Mimika Baru", total_dataset: 296, total_rows: 245000, avg_quality: 94.5 },
     { district_name: "Kuala Kencana", total_dataset: 179, total_rows: 82000, avg_quality: 98.1 },
@@ -367,63 +468,13 @@ export const MOCK_SPATIAL_STATS: SpatialStatResponse[] = [
     { district_name: "Jita", total_dataset: 15, total_rows: 3200, avg_quality: 64.0 },
     { district_name: "Alama", total_dataset: 13, total_rows: 1800, avg_quality: 58.5 },
     { district_name: "Amar", total_dataset: 16, total_rows: 2100, avg_quality: 63.8 },
-    // Menambahkan statistik untuk 4 distrik sisanya
     { district_name: "Mimika Timur Jauh", total_dataset: 15, total_rows: 2900, avg_quality: 61.2 },
     { district_name: "Mimika Barat Jauh", total_dataset: 11, total_rows: 1500, avg_quality: 55.0 },
     { district_name: "Mimika Barat Tengah", total_dataset: 14, total_rows: 2200, avg_quality: 60.5 },
     { district_name: "Hoya", total_dataset: 8, total_rows: 900, avg_quality: 52.3 }
 ];
 
-/**
- * MOCK DATA: GRUP KATEGORI ATLAS
- * Daftar indikator mendetail untuk di-render di Sidebar/Laci Explorer.
- */
-export const MOCK_ATLAS_CATEGORIES: AtlasCategoryGroup[] = [
-    {
-        category_id: 1,
-        category_name: "Kesehatan Publik",
-        indicators: [
-            { key: "stunting_rate", title: "Prevalensi Balita Stunting", category_id: 1 },
-            { key: "kematian_ibu", title: "Angka Kematian Ibu (AKI)", category_id: 1 },
-            { key: "imunisasi_dasar", title: "Cakupan Imunisasi Dasar Lengkap", category_id: 1 },
-            { key: "fasilitas_kesehatan", title: "Aksesibilitas Puskesmas Pratama", category_id: 1 }
-        ]
-    },
-    {
-        category_id: 2,
-        category_name: "Ekonomi & Investasi",
-        indicators: [
-            { key: "pdrb_distrik", title: "PDRB Atas Dasar Harga Berlaku", category_id: 2 },
-            { key: "pengangguran_terbuka", title: "Tingkat Pengangguran Terbuka", category_id: 2 },
-            { key: "rasio_umkm", title: "Rasio Pertumbuhan UMKM Aktif", category_id: 2 }
-        ]
-    },
-    {
-        category_id: 3,
-        category_name: "Sosial & Kependudukan",
-        indicators: [
-            { key: "indeks_kemiskinan", title: "Garis Kemiskinan Ekstrem", category_id: 3 },
-            { key: "kepadatan_penduduk", title: "Densitas Populasi (Jiwa/Km²)", category_id: 3 },
-            { key: "indeks_pembangunan", title: "Indeks Pembangunan Manusia (IPM)", category_id: 3 }
-        ]
-    },
-    {
-        category_id: 4,
-        category_name: "Infrastruktur & Lingkungan",
-        indicators: [
-            { key: "akses_air_bersih", title: "Akses Air Minum Layak", category_id: 4 },
-            { key: "elektrifikasi_desa", title: "Rasio Elektrifikasi Kampung", category_id: 4 },
-            { key: "jalan_aspal", title: "Konektivitas Jalan Aspal Tembus", category_id: 4 }
-        ]
-    }
-];
-
-/**
- * MOCK DATA: DETAIL INDIKATOR (Hasil Agregasi Numerik)
- * Nilai aktual untuk mewarnai Choropleth sesuai parameter.
- */
 export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
-    // 1. INDIKATOR STUNTING (Kesehatan) - Menunjukkan ketimpangan akses gizi
     "stunting_rate": {
         indicator: "stunting_rate",
         metadata: {
@@ -434,16 +485,16 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             source: "Dinas Kesehatan Kab. Mimika & SSGI 2025"
         },
         data: {
-            "mimikabaru": 12.4, // Kota: Rendah
-            "kualakencana": 6.2, // Industri: Sangat Rendah
+            "mimikabaru": 12.4,
+            "kualakencana": 6.2,
             "tembagapura": 4.5,
             "wania": 16.9,
             "kwamkinarama": 18.5,
             "iwaka": 21.1,
-            "mimikatimur": 24.8, // Pesisir: Tinggi
+            "mimikatimur": 24.8,
             "mimikatengah": 27.5,
             "mimikabarat": 29.1,
-            "agimuga": 35.5, // Pegunungan Terisolir: Sangat Tinggi
+            "agimuga": 35.5,
             "jila": 38.2,
             "jita": 34.4,
             "alama": 41.5,
@@ -454,15 +505,14 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "hoya": 40.1
         }
     },
-    // 2. INDIKATOR KEMISKINAN (Sosial)
     "indeks_kemiskinan": {
         indicator: "indeks_kemiskinan",
         metadata: {
             title: "Tingkat Kemiskinan Ekstrem",
             unit: "% dari Populasi",
-            description: "Penduduk yang pengeluarannya berada di bawah garis kemiskinan ekstrem menurut standar BPS. Menunjukkan disparitas ekonomi antara ring 1 tambang dan wilayah pedalaman.",
+            description: "Penduduk yang pengeluarannya berada di bawah garis kemiskinan ekstrem menurut standar BPS.",
             color_scheme: "Oranges",
-            source: "BPS Kabupaten Mimika (Susenas 2025)"
+            source: "BAPPEDA Mimika & Susenas 2025"
         },
         data: {
             "mimikabaru": 8.5,
@@ -484,26 +534,25 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "hoya": 46.2
         }
     },
-    // 3. INDIKATOR AKSES AIR BERSIH (Infrastruktur)
     "akses_air_bersih": {
         indicator: "akses_air_bersih",
         metadata: {
             title: "Cakupan Air Minum Layak",
             unit: "% Rumah Tangga",
-            description: "Proporsi rumah tangga yang memiliki akses terhadap sumber air minum layak dan aman. Data krusial untuk intervensi sanitasi dasar.",
+            description: "Proporsi rumah tangga yang memiliki akses terhadap sumber air minum layak dan aman.",
             color_scheme: "Blues",
             source: "Dinas PUPR Kabupaten Mimika"
         },
         data: {
-            "mimikabaru": 88.5, // Kota: Tinggi
-            "kualakencana": 99.8, // Fasilitas Freeport: Sempurna
+            "mimikabaru": 88.5,
+            "kualakencana": 99.8,
             "tembagapura": 98.5,
             "wania": 72.4,
             "kwamkinarama": 65.0,
             "iwaka": 58.2,
-            "mimikatimur": 45.5, // Pesisir rawa: Akses sulit
+            "mimikatimur": 45.5,
             "mimikatengah": 38.0,
-            "agimuga": 22.5, // Pegunungan: Mengandalkan air hujan/sungai
+            "agimuga": 22.5,
             "alama": 15.0,
             "jila": 18.5,
             "mimikabarat": 25.4,
@@ -514,35 +563,7 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "mimikabarattengah": 24.8,
             "hoya": 16.5
         }
-    },
-    // 4. INDIKATOR PDRB (Ekonomi) - Anomali karena Freeport
-    "pdrb_distrik": {
-        indicator: "pdrb_distrik",
-        metadata: {
-            title: "PDRB Atas Dasar Harga Berlaku",
-            unit: "Miliar Rupiah",
-            description: "Nilai tambah bruto dari seluruh sektor ekonomi. Distrik Tembagapura menciptakan bias/anomali ekstrem karena menyumbang lebih dari 80% PDRB Kabupaten Mimika dari sektor pertambangan.",
-            color_scheme: "Greens",
-            source: "BPS Kabupaten Mimika"
-        },
-        data: {
-            "mimikabaru": 12500, // Sektor jasa & perdagangan
-            "kualakencana": 8800,
-            "tembagapura": 145000, // ANOMALI EKSTREM: Pertambangan
-            "wania": 3200,
-            "iwaka": 1450,
-            "kwamkinarama": 1800,
-            "mimikatimur": 1100, // Perikanan
-            "agimuga": 250, // Subsisten
-            "alama": 180,
-            "mimikabarat": 850,
-            "jila": 210,
-            "jita": 620,
-            "amar": 750,
-            "mimikatimurjauh": 810,
-            "mimikabaratjauh": 320,
-            "mimikabarattengah": 540,
-            "hoya": 195
-        }
     }
 };
+
+// Konstanta legacy MOCK_ATLAS_CATEGORIES dihapus dan direpresentasikan lewat MOCK_POLYGON_LAYERS dan MOCK_OPDS.

@@ -3,16 +3,26 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, useMapEvents, useMap } from 'react-leaflet';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Import Icons untuk Custom Markers
+import { HeartPulse, HardHat, LineChart, Building2, Tent, GitBranch, Droplets, MapPin } from "lucide-react";
+
 import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 
-// Mengimpor mesin warna murni (Pure Fabrication) dari utils agar aman untuk SSR
+// Mock Data & Utils
 import { getSemanticColor } from '@/src/app/lib/gisUtils';
+import { MOCK_INDICATOR_DETAILS, MOCK_ASSET_FEATURES, MOCK_ASSET_LAYERS } from '@/src/app/lib/mockExplorerData';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
+
+const IconRegistry: Record<string, any> = {
+    HeartPulse, HardHat, LineChart, Building2, Tent, GitBranch, Droplets, MapPin
+};
 
 // Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
 const DISTRICT_MAP: Record<string, number> = {
@@ -32,7 +42,7 @@ interface MimikaMapProps {
 }
 
 // ============================================================================
-// Event Handler Zoom & External Controller (Indirection Pattern)
+// Event Handler Zoom & External Controller
 // ============================================================================
 function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
     useMapEvents({
@@ -41,7 +51,6 @@ function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => vo
     return null;
 }
 
-// Listener eksternal murni Leaflet Engine (Zero Delay)
 function ExternalMapController() {
     const map = useMap();
     useEffect(() => {
@@ -67,7 +76,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const {
         openPanel,
-        activeIndicator,
+        activeChoropleth,   // [UBAH] Menggunakan State Choropleth (Single Selection)
+        activeAssetLayers,  // [UBAH] Menggunakan State Aset (Multi Selection)
         mapOpacity,
         activeBaseMap
     } = useExplorerStore();
@@ -76,27 +86,21 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     const [loading, setLoading] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
 
-    // State Kunci Re-mount (Solusi Map Reuse Leaflet)
     const [mapKey, setMapKey] = useState(Date.now());
 
     const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
     const [maxValue, setMaxValue] = useState<number>(100);
 
-    // Local State untuk Pop-up Profil Wilayah
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [isTextExpanded, setIsTextExpanded] = useState(false);
 
-    // Membersihkan instansi map sebelum unmount
     useEffect(() => {
-        return () => {
-            // Ketika komponen mati, paksa reset key di memori agar instance Leaflet terputus
-            setMapKey(Date.now());
-        };
+        return () => { setMapKey(Date.now()); };
     }, []);
 
-    // 1. Fetching Resource Peta (Hanya GeoJSON)
+    // 1. Fetching Resource Peta
     useEffect(() => {
         const loadMapResources = async () => {
             setLoading(true);
@@ -126,32 +130,58 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         }
     }, [popupInfo, isAtlasMode, isPreviewMode]);
 
+    // ============================================================================
+    // REAKTIVITAS CHOROPLETH (Berdasarkan activeChoropleth)
+    // ============================================================================
     useEffect(() => {
-        let isMounted = true;
+        if (activeChoropleth && MOCK_INDICATOR_DETAILS[activeChoropleth]) {
+            const dataObj = MOCK_INDICATOR_DETAILS[activeChoropleth].data;
+            setIndicatorValues(dataObj);
 
-        if (activeIndicator) {
-            const generateMockData = async () => {
-                await new Promise(res => setTimeout(res, 300));
-                if (!isMounted) return;
-
-                const mockData: Record<string, number> = {};
-                Object.keys(DISTRICT_MAP).forEach(k => {
-                    mockData[k] = Math.floor(Math.random() * 90) + 10;
-                });
-
-                setIndicatorValues(mockData);
-                setMaxValue(100);
-            };
-            generateMockData();
+            // Hitung nilai maksimum aktual untuk kalibrasi gradasi warna
+            const maxVal = Math.max(...Object.values(dataObj));
+            setMaxValue(maxVal > 0 ? maxVal : 100);
         } else {
             setIndicatorValues(null);
         }
-
-        return () => { isMounted = false; };
-    }, [activeIndicator]);
+    }, [activeChoropleth]);
 
     // ============================================================================
-    // Logika Konstruksi Inverted Polygon Masking
+    // PERSIAPAN LAYER ASET FISIK (Z-Stacking Data Poin)
+    // ============================================================================
+    const activeFeatures = useMemo(() => {
+        if (activeAssetLayers.length === 0) return [];
+        // Filter koordinat aset hanya jika ID layernya aktif di Zustand
+        return MOCK_ASSET_FEATURES.filter(feat => activeAssetLayers.includes(feat.layer_id));
+    }, [activeAssetLayers]);
+
+    // Helper untuk merender Leaflet DivIcon dari Lucide React Component (Solid & Sharp)
+    const createCustomIcon = (layerId: string) => {
+        if (typeof window === 'undefined') return null; // Safe SSR Bypass
+        const L = require('leaflet');
+
+        const layerDef = MOCK_ASSET_LAYERS.find(l => l.id === layerId);
+        const IconComponent = IconRegistry[layerDef?.icon_name || 'MapPin'] || MapPin;
+        const color = layerDef?.color || '#0f172a'; // Default slate-900
+
+        // Injeksi komponen React Lucide ke String HTML murni (High-Density Aesthetic)
+        const html = renderToStaticMarkup(
+            <div style={{ backgroundColor: color }} className="flex items-center justify-center w-7 h-7 rounded-none border-[1.5px] border-white shadow-md text-white">
+                <IconComponent size={14} strokeWidth={2.5} />
+            </div>
+        );
+
+        return L.divIcon({
+            html,
+            className: 'custom-asset-marker outline-none border-none bg-transparent',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14], // Jangkar persis di tengah kotak
+            popupAnchor: [0, -16]
+        });
+    };
+
+    // ============================================================================
+    // Logika Masking Inverted Polygon
     // ============================================================================
     const maskingPositions = useMemo(() => {
         if (!geoData) return [];
@@ -171,27 +201,24 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return [worldBounds, ...holes];
     }, [geoData]);
 
-    // ============================================================================
-    // REAKTIVITAS GAYA (STYLING): Pengaturan Warna dan Opacity Poligon
-    // ============================================================================
     const districtStyle = (feature: any): PathOptions => {
         const isZoomedIn = zoomLevel >= 14;
         const districtName = feature.properties?.district_name || "";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        if (!activeIndicator || !indicatorValues || indicatorValues[key] === undefined) {
+        if (!activeChoropleth || !indicatorValues || indicatorValues[key] === undefined) {
             const isDarkMode = activeBaseMap === 'dark';
-
             return {
                 fillColor: isDarkMode ? '#ffffff' : '#000000',
                 color: isDarkMode ? '#ffffff' : '#000000',
                 weight: isZoomedIn ? 0 : 1,
-                fillOpacity: isZoomedIn ? 0 : (isDarkMode ? 0.1 : 0),
+                // FIXED: Ubah 0 menjadi 0.05 agar wilayah tetap memiliki garis/fill samar saat OFF
+                fillOpacity: isZoomedIn ? 0 : 0.05,
                 dashArray: '2'
             };
         }
 
-        const choroplethColor = getSemanticColor(indicatorValues[key], maxValue, activeIndicator);
+        const choroplethColor = getSemanticColor(indicatorValues[key], maxValue, activeChoropleth);
         const opacityRatio = mapOpacity / 100;
 
         return {
@@ -207,7 +234,6 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
-        // Tooltip Frameless & Sharp
         layer.bindTooltip(
             `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
             { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
@@ -217,20 +243,11 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
             mouseover: (e: any) => {
                 if (zoomLevel < 14) {
                     const target = e.target;
-
-                    if (activeIndicator) {
-                        target.setStyle({
-                            weight: 2.5,
-                            color: '#ffffff',
-                            fillOpacity: Math.min((mapOpacity / 100) + 0.15, 1)
-                        });
+                    if (activeChoropleth) {
+                        target.setStyle({ weight: 2.5, color: '#ffffff', fillOpacity: Math.min((mapOpacity / 100) + 0.15, 1) });
                     } else {
                         const isDarkMode = activeBaseMap === 'dark';
-                        target.setStyle({
-                            weight: 2,
-                            color: isDarkMode ? '#ffffff' : '#000000',
-                            fillOpacity: isDarkMode ? 0 : 0.15
-                        });
+                        target.setStyle({ weight: 2, color: isDarkMode ? '#ffffff' : '#000000', fillOpacity: isDarkMode ? 0 : 0.15 });
                     }
                     target.bringToFront();
                 }
@@ -240,10 +257,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     const target = e.target;
                     const originalStyle = districtStyle(feature);
                     target.setStyle({
-                        weight: originalStyle.weight,
-                        color: originalStyle.color,
-                        fillOpacity: originalStyle.fillOpacity,
-                        dashArray: originalStyle.dashArray
+                        weight: originalStyle.weight, color: originalStyle.color,
+                        fillOpacity: originalStyle.fillOpacity, dashArray: originalStyle.dashArray
                     });
                 }
             },
@@ -252,55 +267,34 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     router.push('/explorer');
                     return;
                 }
-
                 const target = e.target;
                 const map: LeafletMap = target._map;
                 const distId = DISTRICT_MAP[key] || 0;
 
-                map.flyToBounds(target.getBounds(), {
-                    padding: [100, 100],
-                    duration: 1.5
-                });
+                map.flyToBounds(target.getBounds(), { padding: [100, 100], duration: 1.5 });
 
                 if (isAtlasMode) {
-                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
-                        id: distId,
-                        name: districtName
-                    });
+                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, { id: distId, name: districtName });
                 } else {
                     setProfileData(null);
                     setIsTextExpanded(false);
-                    setPopupInfo({
-                        name: districtName,
-                        latlng: target.getBounds().getCenter(),
-                        id: distId
-                    });
+                    setPopupInfo({ name: districtName, latlng: target.getBounds().getCenter(), id: distId });
                 }
             }
         });
     };
 
-    // ============================================================================
-    // GOOGLE BASEMAP INJECTION
-    // ============================================================================
     const getTileLayerUrl = () => {
         switch (activeBaseMap) {
-            case 'dark':
-                return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-            case 'street':
-                return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+            case 'dark': return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+            case 'street': return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
             case 'satellite':
-            default:
-                return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+            default: return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
         }
     };
 
-    const getTileMaxZoom = () => {
-        return activeBaseMap === 'satellite' ? 22 : 20;
-    };
+    const getTileMaxZoom = () => activeBaseMap === 'satellite' ? 22 : 20;
 
-    // Saat proses load data internal (GeoJSON), jangan render MapContainer 
-    // agar loading diserahkan ke fallback di MapWrapper (yang bertema gelap & neon)
     if (loading) return null;
 
     const SafeMapContainer = MapContainer as any;
@@ -308,6 +302,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     const SafeGeoJSON = GeoJSON as any;
     const SafePopup = Popup as any;
     const SafePolygon = Polygon as any;
+    const SafeMarker = Marker as any;
 
     const renderPopupContent = () => {
         if (loadingProfile) {
@@ -317,22 +312,22 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 </div>
             );
         }
-        if (popupInfo?.id === 0) return <p className="text-xs text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
-        if (!profileData) return <p className="text-xs text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
+        if (popupInfo?.id === 0) return <p className="text-[10px] text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
+        if (!profileData) return <p className="text-[10px] text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
 
         const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
         const isLongText = deskripsi.length > 150;
 
         return (
             <div className="space-y-4">
-                <div className="text-sm text-slate-700 space-y-1">
+                <div className="text-[11px] text-slate-700 space-y-1">
                     <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
                         <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>{deskripsi}</p>
                     </div>
                     {isLongText && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsTextExpanded(!isTextExpanded); }}
-                            className="text-[10px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
+                            className="text-[9px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
                         >
                             {isTextExpanded ? "Tutup" : "Selengkapnya"}
                         </button>
@@ -350,11 +345,9 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     };
 
     return (
-        // Menghapus rounded-3xl dan shadow-sm agar frameless (sesuai arahan layout GFW/Atlas)
-        // Dan pastikan overflow-hidden dari branch rekan diintegrasikan jika perlu.
         <div className={`h-full w-full overflow-hidden relative z-10 bg-slate-50 border-none`}>
             <SafeMapContainer
-                key={mapKey} // INJEKSI KUNCI: Mencegah Reuse Container oleh Leaflet
+                key={mapKey}
                 center={DEFAULT_CENTER}
                 zoom={DEFAULT_ZOOM}
                 minZoom={7}
@@ -374,6 +367,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     maxZoom={getTileMaxZoom()}
                 />
 
+                {/* Z-Index Layer 1: Masking (Kegelapan Luar Wilayah) */}
                 {maskingPositions.length > 0 && (
                     <SafePolygon
                         positions={maskingPositions}
@@ -385,18 +379,47 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     />
                 )}
 
+                {/* Z-Index Layer 2: Choropleth Polygon (Batas Wilayah) */}
                 {geoData && (
                     <SafeGeoJSON
+                        // KUNCI: key ini memaksa re-render instan saat state berubah
+                        key={activeChoropleth || 'default-layer'}
                         data={geoData}
                         style={districtStyle}
                         onEachFeature={onEachFeature}
                     />
                 )}
 
+                {/* Z-Index Layer 3: Point Markers (Titik Aset Geofencing) */}
+                {activeFeatures.map(feat => {
+                    const icon = createCustomIcon(feat.layer_id);
+                    if (!icon) return null;
+                    return (
+                        <SafeMarker key={feat.id} position={[feat.latitude, feat.longitude]} icon={icon}>
+                            <SafePopup className="custom-popup-sharp">
+                                <div className="p-1 font-sans">
+                                    <h4 className="text-[12px] font-black uppercase text-slate-900 border-b border-slate-200 pb-1.5 mb-1.5">{feat.name}</h4>
+                                    {feat.properties && (
+                                        <div className="flex flex-col gap-1 mt-2">
+                                            {Object.entries(feat.properties).map(([k, v]) => (
+                                                <div key={k} className="flex justify-between items-center text-[10px] bg-slate-50 px-2 py-1">
+                                                    <span className="text-slate-500 font-bold uppercase tracking-wider">{k.replace('_', ' ')}</span>
+                                                    <span className="text-slate-800 font-medium">{String(v)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </SafePopup>
+                        </SafeMarker>
+                    );
+                })}
+
+                {/* Pop-up Default Profil Wilayah (Click-to-Drilldown) */}
                 {!isAtlasMode && !isPreviewMode && popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
                         <div className="w-72 p-2 font-sans rounded-none">
-                            <h3 className="text-[13px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
+                            <h3 className="text-[12px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
                                 {popupInfo.name}
                             </h3>
                             {renderPopupContent()}

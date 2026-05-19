@@ -7,110 +7,122 @@ export type DetailTabType = "umum" | "analisis";
 
 interface ExplorerState {
     // ==========================================
-    // 1. STATE: Manajemen Panel (UI Layout)
+    // 1. STATE: Navigasi UI (GFW Paradigm)
     // ==========================================
     activePanels: ExplorerPanel[];
     activeDetailTab: DetailTabType; // Manajemen state untuk tab panel detail
 
+    // State khusus untuk Accordion OPD di Sidebar. 
+    // Menyimpan ID OPD yang sedang diekspansi menunya. Null = tidak ada yang terbuka.
+    expandedOpdId: number | null;
+
     // ==========================================
-    // 2. STATE: Konteks Eksplorasi Spasial (Reaktivitas Peta)
+    // 2. STATE: Spasial (Dual-Layering Map)
     // ==========================================
-    activeIndicator: string | null; // ID metrik yang sedang dianalisis (misal: "stunting_rate")
+
+    // Layer Statistik (Poligon) - SIFAT: Mutlak Single-Selection
+    // Menyimpan ID dari SpatialIndicator (contoh: "stunting_rate")
+    activeChoropleth: string | null;
+
+    // Layer Aset (Titik/Marker) - SIFAT: Kombinatorial Multi-Selection
+    // Menyimpan array ID dari AssetLayer (contoh: ["asset_puskesmas", "asset_jembatan"])
+    activeAssetLayers: string[];
+
     mapOpacity: number;             // Tingkat transparansi poligon peta (0 - 100)
     activeBaseMap: string;          // Jenis basemap yang aktif ("satellite", "dark", "street")
 
     // ==========================================
-    // ACTIONS: Manajemen Panel
+    // ACTIONS: Navigasi & UI
     // ==========================================
-    /**
-     * Membuka panel baru. 
-     * Jika panel dengan tipe yang sama sudah ada, maka akan di-update datanya.
-     * Jika belum ada, akan ditambahkan ke tumpukan (stack) paling kanan.
-     */
     openPanel: (type: ExplorerPanelType, title: string, data?: any) => void;
-
-    /**
-     * Menutup panel berdasarkan ID uniknya.
-     */
     closePanel: (id: string) => void;
-
-    /**
-     * Menutup seluruh panel dan mereset explorer ke keadaan awal.
-     */
     clearPanels: () => void;
-
-    /**
-     * Logika khusus GFW: Jika panel di "level" tertentu diklik, 
-     * tutup semua panel yang ada di sebelah kanannya.
-     */
     closePanelsToTheRight: (index: number) => void;
-
-    /**
-     * Mengatur tab yang sedang aktif pada panel detail wilayah.
-     */
     setActiveDetailTab: (tab: DetailTabType) => void;
 
-    // ==========================================
-    // ACTIONS: Konteks Eksplorasi
-    // ==========================================
-    /**
-     * Mengatur indikator aktif untuk memicu perubahan data Choropleth di peta.
-     */
-    setActiveIndicator: (indicatorKey: string | null) => void;
+    // Mengontrol Accordion OPD di Sidebar. Menutup yang lama, membuka yang baru.
+    setExpandedOpd: (opdId: number | null) => void;
 
-    /**
-     * Mengatur transparansi poligon (layer data) di atas peta.
-     */
+    // ==========================================
+    // ACTIONS: Spasial & Peta
+    // ==========================================
+
+    // Mutator Single-Selection: Menyalakan Poligon (mengganti yang lama jika ada)
+    setChoroplethLayer: (indicatorId: string | null) => void;
+
+    // Mutator Multi-Selection: Menyalakan/Mematikan Titik Aset (Push/Remove)
+    toggleAssetLayer: (assetLayerId: string) => void;
+
     setMapOpacity: (opacity: number) => void;
-
-    /**
-     * Mengubah tile layer dasar peta.
-     */
     setActiveBaseMap: (baseMapId: string) => void;
 
-    /**
-     * Me-reset eksplorasi peta ke kondisi awal (Blank Canvas).
-     * Menghapus indikator aktif dan menutup panel detail wilayah.
-     */
+    // Me-reset eksplorasi peta ke kondisi awal (Blank Canvas).
+    // Mematikan semua poligon dan aset yang menyala, serta mereset UI.
     resetMapData: () => void;
 }
 
 export const useExplorerStore = create<ExplorerState>()(
     devtools(
-        (set) => ({
-            // Inisialisasi State Default
+        (set, get) => ({
+            // ------------------------------------------
+            // INITIAL STATE
+            // ------------------------------------------
             activePanels: [],
-            activeDetailTab: "umum", // Tab default saat panel detail dibuka
-            activeIndicator: null,
-            mapOpacity: 70, // Default 70%
-            activeBaseMap: "satellite", // Default basemap
+            activeDetailTab: "umum",
+            expandedOpdId: null,
 
-            // Mutator: Konteks Eksplorasi
-            setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
+            activeChoropleth: null,
+            activeAssetLayers: [],
+            mapOpacity: 70,
+            activeBaseMap: "satellite",
+
+            // ------------------------------------------
+            // MUTATORS: SPASIAL & PETA
+            // ------------------------------------------
+
+            // Logika Single-Selection (Replace)
+            setChoroplethLayer: (indicatorId) => set({ activeChoropleth: indicatorId }),
+
+            // Logika Multi-Selection (Toggle: Tambah jika belum ada, Hapus jika sudah ada)
+            toggleAssetLayer: (assetLayerId) => {
+                const currentLayers = get().activeAssetLayers;
+                const isCurrentlyActive = currentLayers.includes(assetLayerId);
+
+                if (isCurrentlyActive) {
+                    // Hapus dari array
+                    set({ activeAssetLayers: currentLayers.filter(id => id !== assetLayerId) });
+                } else {
+                    // Tambahkan ke array
+                    set({ activeAssetLayers: [...currentLayers, assetLayerId] });
+                }
+            },
+
             setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
             setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
 
-            // Mutator: Manajemen Panel Tab Detail
-            setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
-
-            // Mutator: Reset Data Peta (Jalan Keluar Analisis)
+            // Reset Peta (Membersihkan Z-Stacking)
             resetMapData: () =>
                 set((state) => ({
-                    activeIndicator: null, // Peta akan merespons ini dengan mengembalikan warna ke default
-                    // Tutup panel detail wilayah jika sedang terbuka, biarkan panel kategori/layer tetap ada
+                    activeChoropleth: null, // Matikan poligon
+                    activeAssetLayers: [],  // Matikan semua aset
+                    expandedOpdId: null,    // Tutup accordion OPD
+                    // Tutup panel detail wilayah, biarkan panel OPD utama ('seleksi-opd') tetap ada
                     activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik"),
-                    // Kembalikan tab ke default saat reset
                     activeDetailTab: "umum",
                 })),
 
-            // Mutator: Manajemen Panel
+            // ------------------------------------------
+            // MUTATORS: UI & NAVIGASI GFW
+            // ------------------------------------------
+            setExpandedOpd: (opdId) => set({ expandedOpdId: opdId }),
+
+            setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
+
             openPanel: (type, title, data = null) =>
                 set((state) => {
-                    // Cari apakah panel dengan tipe yang sama sudah terbuka
                     const existingIndex = state.activePanels.findIndex((p) => p.type === type);
 
                     if (existingIndex !== -1) {
-                        // Jika sudah ada, update datanya tapi jangan duplikasi di stack
                         const updatedPanels = [...state.activePanels];
                         updatedPanels[existingIndex] = {
                             ...updatedPanels[existingIndex],
@@ -119,15 +131,12 @@ export const useExplorerStore = create<ExplorerState>()(
                             isVisible: true,
                         };
 
-                        // Jika panel yang diupdate adalah detil distrik, otomatis reset ke tab 'umum' (opsional, memberikan UX yang konsisten)
                         const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
-
                         return { activePanels: updatedPanels, ...resetTabObj };
                     }
 
-                    // Jika panel baru, buat objek panel baru
                     const newPanel: ExplorerPanel = {
-                        id: `${type}-${Date.now()}`, // Unique ID untuk list rendering
+                        id: `${type}-${Date.now()}`,
                         type,
                         title,
                         isVisible: true,
@@ -135,14 +144,12 @@ export const useExplorerStore = create<ExplorerState>()(
                     };
 
                     const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
-
                     return { activePanels: [...state.activePanels, newPanel], ...resetTabObj };
                 }),
 
             closePanel: (id) =>
                 set((state) => {
                     const filteredPanels = state.activePanels.filter((p) => p.id !== id);
-                    // Jika panel yang ditutup adalah panel detail, reset tab ke umum
                     const isDetailClosed = !filteredPanels.some(p => p.type === "detil-distrik");
 
                     return {
@@ -162,7 +169,11 @@ export const useExplorerStore = create<ExplorerState>()(
                     };
                 }),
 
-            clearPanels: () => set({ activePanels: [], activeDetailTab: "umum" }),
+            clearPanels: () => set({
+                activePanels: [],
+                activeDetailTab: "umum",
+                expandedOpdId: null // Reset juga UI accordion OPD jika panel dibersihkan
+            }),
         }),
         { name: "ExplorerStore" }
     )

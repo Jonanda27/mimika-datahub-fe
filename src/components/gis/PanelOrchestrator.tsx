@@ -2,10 +2,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X, Map as MapIcon } from "lucide-react";
+import { X, Map as MapIcon, Layers, Info, Building2 } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
+// Komponen Panel
 import CategoryPanel from "./panels/CategoryPanel";
 import DetailPanel from "./panels/DetailPanel";
 import LayerControl from "./panels/LayerControl";
@@ -15,12 +16,18 @@ import { getSemanticColor } from "@/src/app/lib/gisUtils";
 
 /**
  * PanelOrchestrator - The Stacking Drawer (GFW Paradigm)
- * Mengatur dua jenis perilaku panel dengan Sumbu X (Width) yang sangat ramping:
- * 1. Panel Menu (Flush/Docked): 280px, menempel rapat di kiri.
- * 2. Panel Detail (Floating): 280px, melayang secara dinamis sesuai jumlah panel aktif.
+ * * Bertindak sebagai pusat kendali visual yang mengelola stack panel dinamis.
+ * Menggunakan prinsip "Shifting Panels" di mana panel detail (Floating) 
+ * akan melayang di atas panel menu utama (Docked).
  */
 export default function PanelOrchestrator() {
-    const { activePanels, closePanel, closePanelsToTheRight, activeIndicator } = useExplorerStore();
+    const {
+        activePanels,
+        closePanel,
+        closePanelsToTheRight,
+        activeChoropleth // Menggunakan state baru dari store kita
+    } = useExplorerStore();
+
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -30,8 +37,8 @@ export default function PanelOrchestrator() {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Sumbu X: Base width 280px (Ultra Slim)
-    const PANEL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 32 : 280) : 280;
+    // Sumbu X: Base width 280px (Ultra Slim & High Density)
+    const PANEL_WIDTH = 280;
     const PANEL_GAP = 0;
 
     return (
@@ -42,23 +49,19 @@ export default function PanelOrchestrator() {
             ====================================================================== */}
             {activePanels.map((panel, index) => {
                 const isFloating = panel.type === "detil-distrik";
-
                 const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
 
-                // PERBAIKAN LOGIKA: Kalkulasi pergeseran melayang dinamis
-                // Jika index = 0 (panel melayang sendirian tanpa menu), dia merapat ke sidebar (16px).
-                // Jika index = 1 (ada menu di kirinya), dia bergeser ke kanan menu (280 + 16 = 296px).
+                // Kalkulasi pergeseran: Jika panel melayang (Detail), dia tidak mengikuti flow sidebar
                 const floatingLeft = isMobile ? 16 : (index * PANEL_WIDTH) + 16;
 
                 return (
                     <div
                         key={panel.id}
-                        // Menambahkan animasi transition-all agar saat panel lain ditutup,
-                        // panel ini bergeser sliding secara mulus ke kiri.
-                        className={`absolute pointer-events-auto transition-all duration-300 ease-in-out ${isFloating ? 'shadow-lg border border-slate-200' : 'border-r border-slate-200 shadow-none'
+                        className={`absolute pointer-events-auto transition-all duration-300 ease-in-out ${isFloating
+                            ? 'shadow-xl border-l border-slate-200'
+                            : 'border-r border-slate-200 shadow-none'
                             }`}
                         style={isFloating ? {
-                            // Floating Detail Panel (Menggunakan posisi X / Left Dinamis)
                             left: `${floatingLeft}px`,
                             top: '16px',
                             bottom: '16px',
@@ -66,7 +69,6 @@ export default function PanelOrchestrator() {
                             maxWidth: 'calc(100vw - 32px)',
                             zIndex: 50,
                         } : {
-                            // Menu Reguler: Docking & Flush (280px)
                             left: 0,
                             top: 0,
                             bottom: 0,
@@ -78,14 +80,14 @@ export default function PanelOrchestrator() {
                     >
                         <div className="bg-white h-full w-full rounded-none flex flex-col overflow-hidden">
 
-                            {/* Header Panel (Hanya untuk Menu Reguler) */}
+                            {/* Header Panel (Hanya untuk Menu Reguler/Docked) */}
                             {!isFloating && (
-                                <div className="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
+                                        <span className="text-[9px] font-black text-teal-700 uppercase tracking-widest leading-none">
                                             {panel.type.replace("-", " ")}
                                         </span>
-                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-[200px] tracking-tight mt-0.5">
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-[200px] tracking-tight mt-1">
                                             {panel.title}
                                         </h3>
                                     </div>
@@ -99,9 +101,9 @@ export default function PanelOrchestrator() {
                                 </div>
                             )}
 
-                            {/* BODY PANEL */}
+                            {/* BODY PANEL - Orchestrator bertugas menginjeksi komponen yang benar */}
                             <div
-                                className="flex-1 overflow-y-auto custom-scrollbar"
+                                className="flex-1 overflow-y-auto custom-scrollbar bg-white"
                                 onClick={() => !isFloating && closePanelsToTheRight(index)}
                             >
                                 {renderPanelContent(panel.type, panel.data, panel.id)}
@@ -113,32 +115,45 @@ export default function PanelOrchestrator() {
             })}
 
             {/* =====================================================================
-                2. LEGENDA DINAMIS PETA (ULTRA-COMPACT CONTINUOUS RAMP)
+                2. LEGENDA DINAMIS (CHOROPLETH LEGEND)
             ====================================================================== */}
-            {activeIndicator && <MapLegend indicatorKey={activeIndicator} />}
+            {activeChoropleth && <MapLegend indicatorKey={activeChoropleth} />}
 
         </div>
     );
 }
 
+/**
+ * PUSAT ORKESTRASI KOMPONEN
+ * Memetakan tipe panel ke komponen yang sesuai.
+ */
 function renderPanelContent(type: ExplorerPanelType, data: any, panelId: string) {
     switch (type) {
-        case "seleksi-kategori": return <CategoryPanel />;
-        case "detil-distrik": return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} panelId={panelId} />;
-        case "konfigurasi": return <LayerControl />;
-        case "tentang": return <AboutPanel />;
+        // [FIXED] Mapping tipe baru ke komponen yang relevan
+        case "seleksi-opd":
+            return <CategoryPanel />;
+        case "detil-distrik":
+            return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} panelId={panelId} />;
+        case "konfigurasi":
+            return <LayerControl />;
+        case "tentang":
+            return <AboutPanel />;
         case "hasil-pencarian":
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-3 text-slate-400 p-4">
                     <MapIcon size={32} className="text-teal-600/40" />
                     <div className="space-y-0.5">
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modul Pencarian</p>
-                        <p className="text-[11px] text-slate-600 mt-1">Fitur pencarian sedang dalam tahap integrasi.</p>
+                        <p className="text-[11px] text-slate-600 mt-1">Fitur pencarian spasial sedang dalam tahap integrasi.</p>
                     </div>
                 </div>
             );
         default:
-            return <div className="text-slate-500 text-[11px] p-4">Komponen panel belum didefinisikan.</div>;
+            return (
+                <div className="p-4 text-center">
+                    <p className="text-[11px] text-rose-600 font-bold">Error: Komponen '{type}' belum didefinisikan.</p>
+                </div>
+            );
     }
 }
 
@@ -152,34 +167,31 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
         .join(' ');
 
     const scaleBins = [
-        { label: "Sangat Padat (>80%)", value: 90 },
-        { label: "Padat (60-80%)", value: 70 },
-        { label: "Sedang (40-60%)", value: 50 },
-        { label: "Rendah (20-40%)", value: 30 },
-        { label: "Sgt. Rendah (<20%)", value: 10 },
+        { label: "Sangat Tinggi", value: 90 },
+        { label: "Tinggi", value: 70 },
+        { label: "Sedang", value: 50 },
+        { label: "Rendah", value: 30 },
+        { label: "Sangat Rendah", value: 10 },
     ];
 
     const MAX_VALUE = 100;
 
     return (
-        <div className="fixed bottom-8 right-[78px] pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-[170px] rounded-none animate-in fade-in slide-in-from-bottom-4">
-
-            <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+        <div className="fixed bottom-8 right-8 pointer-events-auto z-[60] bg-white border border-slate-200 shadow-xl w-[160px] rounded-none animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex items-center justify-between px-2.5 py-2 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center gap-1.5">
                     <MapIcon size={10} className="text-teal-700" />
-                    <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider truncate">
-                        Legenda
-                    </h4>
+                    <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider">Legenda</h4>
                 </div>
             </div>
 
             <div className="px-2.5 py-2.5 flex flex-col gap-1.5">
-                <h5 className="text-[9px] font-bold text-slate-800 leading-tight line-clamp-2">
+                <h5 className="text-[9px] font-bold text-slate-800 leading-tight line-clamp-2 uppercase">
                     {formattedTitle}
                 </h5>
 
-                <div className="flex mt-0.5">
-                    <div className="flex flex-col w-2.5 border border-slate-200 rounded-none shrink-0 shadow-sm">
+                <div className="flex mt-1">
+                    <div className="flex flex-col w-3 border border-slate-200 rounded-none shrink-0 shadow-sm">
                         {scaleBins.map((bin, idx) => {
                             const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
                             return (

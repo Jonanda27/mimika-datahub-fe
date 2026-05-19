@@ -7,6 +7,7 @@ import {
     Layers,
     Database,
     Info,
+    Building2, // Icon tambahan yang lebih representatif untuk OPD
 } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
@@ -27,10 +28,11 @@ export default function ExplorerSidebar() {
             title: "Pencarian Spasial Global"
         },
         {
-            type: "seleksi-kategori" as ExplorerPanelType,
-            label: "Sektor",
-            icon: Database,
-            title: "Katalog Data Sektoral"
+            // [UBAH] Transisi dari 'seleksi-kategori' ke 'seleksi-opd'
+            type: "seleksi-opd" as ExplorerPanelType,
+            label: "Instansi", // Mengubah label agar lebih OPD-Centric
+            icon: Building2,   // Menggunakan icon Building2 agar lebih terkesan Institusional
+            title: "Katalog Data Instansi / OPD"
         },
         {
             type: "konfigurasi" as ExplorerPanelType,
@@ -55,7 +57,7 @@ export default function ExplorerSidebar() {
         <aside className="fixed bottom-0 left-0 w-full h-16 md:static md:w-16 md:h-full flex flex-row md:flex-col items-center bg-white border-t md:border-t-0 md:border-r border-slate-200 z-50 transition-all">
 
             {/* BAGIAN UTAMA: Menu Navigasi */}
-            <div className="flex-1 flex flex-row md:flex-col justify-around md:justify-start items-center w-full">
+            <div className="flex-1 flex flex-row md:flex-col justify-around md:justify-start items-center w-full mt-0 md:mt-4 gap-2">
                 {navigationItems.map((item, index) => {
                     const isActive = item.type ? isPanelActive(item.type) : false;
 
@@ -89,7 +91,7 @@ export default function ExplorerSidebar() {
             </div>
 
             {/* BAGIAN BAWAH: Info & Branding */}
-            <div className="hidden md:flex flex-col items-center w-full mt-auto">
+            <div className="hidden md:flex flex-col items-center w-full mt-auto mb-4">
                 <div className="w-8 h-px bg-slate-200 mb-2" />
 
                 <div className="relative group w-full flex justify-center">
