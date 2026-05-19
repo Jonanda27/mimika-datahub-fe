@@ -1,7 +1,7 @@
 // src/app/services/gis.service.ts
 import { API_BASE_URL } from "../lib/config";
 import { SpatialStatResponse, DistrictDrilldownResponse } from "../types/gis";
-import { MOCK_INDICATOR_DETAILS, MOCK_DISTRICT_DRILLDOWN } from "../lib/mockExplorerData";
+import { MOCK_INDICATOR_DETAILS, MOCK_DISTRICT_DRILLDOWN, MOCK_SPATIAL_STATS } from "../lib/mockExplorerData";
 
 /**
  * Konfigurasi Sakelar Mock (Fase 5: Indirection)
@@ -14,6 +14,14 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_EXPLORER === "true";
  */
 const simulateDelay = (ms: number = 800) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Array statis 18 Distrik Mimika untuk memfasilitasi pembuatan struktur master data
+const ALL_DISTRICTS = [
+    "Mimika Baru", "Kuala Kencana", "Tembagapura", "Wania", "Iwaka",
+    "Kwamki Narama", "Mimika Timur", "Mimika Tengah", "Mimika Barat",
+    "Agimuga", "Jila", "Jita", "Mimika Timur Jauh", "Mimika Barat Jauh",
+    "Mimika Barat Tengah", "Amar", "Hoya", "Alama"
+];
+
 /**
  * Service untuk menangani pengambilan data spasial/GIS.
  */
@@ -25,15 +33,8 @@ export const gisService = {
     fetchGisStats: async (categoryId?: number, year?: number): Promise<SpatialStatResponse[]> => {
         if (USE_MOCK) {
             await simulateDelay(600);
-            // Data simulasi kepadatan dataset untuk 18 distrik
-            return [
-                { district_name: "Mimika Baru", total_dataset: 45, avg_quality: 88 },
-                { district_name: "Kuala Kencana", total_dataset: 32, avg_quality: 90 },
-                { district_name: "Wania", total_dataset: 28, avg_quality: 75 },
-                { district_name: "Tembagapura", total_dataset: 15, avg_quality: 95 },
-                { district_name: "Iwaka", total_dataset: 12, avg_quality: 60 },
-                // ... distrik lainnya disimulasikan secara dinamis
-            ] as SpatialStatResponse[];
+            // Mengambil data spasial realistis dari mock file Anda
+            return MOCK_SPATIAL_STATS;
         }
 
         try {
@@ -67,12 +68,10 @@ export const gisService = {
 
     /**
      * TAHAP 3: Action Logic: Fetch Indicator Data (Choropleth Engine)
-     * Mengambil nilai agregat spesifik (misal: prevalensi stunting) untuk setiap distrik.
-     * @param indicatorKey - Kunci unik indikator (contoh: "stunting_rate")
      */
     fetchIndicatorData: async (indicatorKey: string): Promise<any> => {
         if (USE_MOCK) {
-            await simulateDelay(600); // Simulasi kalkulasi backend
+            await simulateDelay(600);
             const data = MOCK_INDICATOR_DETAILS[indicatorKey];
 
             if (!data) {
@@ -84,7 +83,6 @@ export const gisService = {
 
         try {
             const token = localStorage.getItem("auth_token");
-            // Endpoint Backend untuk mengambil agregasi data indikator per wilayah
             const url = `${API_BASE_URL}/v1/gis/indicator/${indicatorKey}`;
 
             const response = await fetch(url, {
@@ -144,26 +142,25 @@ export const gisService = {
 
     /**
      * Action Logics: Drilldown Spasial (GFW Paradigm)
-     * Mengambil data profil wilayah dan kepadatan sektoral.
      */
     fetchDistrictDrilldown: async (districtId: number): Promise<DistrictDrilldownResponse> => {
         if (USE_MOCK) {
             await simulateDelay(800);
 
-            // Peningkatan Best Practice: Menggunakan data dari mockExplorerData jika tersedia
+            // Mengambil profil mendetail langsung dari MOCK_DISTRICT_DRILLDOWN
             if (MOCK_DISTRICT_DRILLDOWN && MOCK_DISTRICT_DRILLDOWN[districtId]) {
                 return MOCK_DISTRICT_DRILLDOWN[districtId];
             }
 
-            // Fallback Data Simulasi
+            // Fallback Data Simulasi jika ID distrik tidak ada di dalam Mock
             return {
                 district_id: districtId,
-                district_name: `Distrik Simulasi ${districtId}`,
+                district_name: ALL_DISTRICTS[districtId - 1] || `Distrik Simulasi ${districtId}`,
                 profile: {
                     id: districtId,
-                    luas_wilayah: 2216,
-                    jumlah_penduduk: 142000,
-                    deskripsi: "Profil wilayah simulasi. Silakan pilih Mimika Baru, Kuala Kencana, atau Tembagapura untuk melihat mock data yang lebih detail.",
+                    luas_wilayah: null,
+                    jumlah_penduduk: null,
+                    deskripsi: "Data kewilayahan belum diregistrasikan. Silakan hubungi admin GIS Bappeda.",
                     batas_wilayah: "-",
                 },
                 categories: [
@@ -199,11 +196,29 @@ export const gisService = {
     },
 
     /**
-     * Mengambil daftar seluruh distrik dari Master Bappeda
+     * Mengambil daftar seluruh distrik dari Master Bappeda (Digunakan di Halaman Manajemen Wilayah)
      */
     fetchDistricts: async (): Promise<any[]> => {
         if (USE_MOCK) {
-            return [{ id: 1, name: "Mimika Baru" }, { id: 2, name: "Kuala Kencana" }];
+            await simulateDelay(600);
+
+            // Generate list 18 Distrik O(N) dan injeksikan profile dari MOCK_DISTRICT_DRILLDOWN
+            return ALL_DISTRICTS.map((name, index) => {
+                const id = index + 1;
+                const mockData = MOCK_DISTRICT_DRILLDOWN[id];
+
+                return {
+                    id,
+                    name,
+                    // Jika ada di mock, pakai profilnya. Jika tidak, set ke null (Mensimulasikan data belum diisi)
+                    profile: mockData ? mockData.profile : {
+                        luas_wilayah: null,
+                        jumlah_penduduk: null,
+                        deskripsi: null,
+                        batas_wilayah: null
+                    }
+                };
+            });
         }
 
         try {
@@ -234,8 +249,16 @@ export const gisService = {
      */
     updateDistrictProfile: async (districtId: number, payload: any): Promise<any> => {
         if (USE_MOCK) {
-            await simulateDelay(500);
-            return { status: "success", message: "Profil berhasil diperbarui (Simulasi)" };
+            await simulateDelay(800);
+
+            // Simulasikan struktur data profile yang berhasil di-update dari DB
+            return {
+                id: districtId,
+                luas_wilayah: payload.luas_wilayah,
+                jumlah_penduduk: payload.jumlah_penduduk,
+                deskripsi: payload.deskripsi,
+                batas_wilayah: payload.batas_wilayah || "-"
+            };
         }
 
         try {

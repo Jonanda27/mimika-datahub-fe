@@ -166,6 +166,24 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
         ],
         last_updated: "2026-05-09T13:20:00Z"
     },
+    9: {
+        district_id: 9,
+        district_name: "Mimika Barat",
+        profile: {
+            id: 9,
+            luas_wilayah: 2750.00,
+            jumlah_penduduk: 4200,
+            deskripsi: "Merupakan salah satu distrik terluar di wilayah pesisir barat Kabupaten Mimika. Akses utama menuju ibu kota distrik (Kokonao) masih sangat bergantung pada transportasi laut dan sungai, menjadikannya rentan terhadap isolasi saat cuaca buruk.",
+            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
+            kode_kemendagri: "91.09.03"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 4 },
+            { category_id: 2, name: "Pendidikan", total: 5 },
+            { category_id: 4, name: "Infrastruktur", total: 3 }
+        ],
+        last_updated: "2026-05-15T09:00:00Z"
+    },
     10: {
         district_id: 10,
         district_name: "Agimuga",
@@ -185,6 +203,132 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
         ],
         last_updated: "2026-05-05T07:15:00Z"
     },
+    11: {
+        district_id: 11,
+        district_name: "Jila",
+        profile: {
+            id: 11,
+            luas_wilayah: 1820.00,
+            jumlah_penduduk: 2800,
+            deskripsi: "Distrik Jila berlokasi di area pegunungan tengah dengan topografi yang sangat curam. Masyarakatnya hidup secara subsisten dari hasil berkebun dan berburu. Penetrasi layanan kesehatan dan pendidikan masih menjadi fokus utama pembangunan daerah di sini.",
+            batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Agimuga, Timur: Distrik Alama, Barat: Distrik Tembagapura",
+            kode_kemendagri: "91.09.06"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 2 },
+            { category_id: 2, name: "Pendidikan", total: 3 },
+            { category_id: 5, name: "Sosial & Budaya", total: 7 }
+        ],
+        last_updated: "2026-05-16T10:00:00Z"
+    },
+    12: {
+        district_id: 12,
+        district_name: "Jita",
+        profile: {
+            id: 12,
+            luas_wilayah: 1350.00,
+            jumlah_penduduk: 3200,
+            deskripsi: "Berbatasan langsung dengan Kabupaten Asmat, Jita merupakan daerah dataran rendah bermilir dan berlumpur. Potensi perikanan darat dan perkebunan sagu menjadi penopang utama ekonomi masyarakat lokal.",
+            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Kabupaten Asmat, Barat: Distrik Mimika Timur Jauh",
+            kode_kemendagri: "91.09.07"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 3 },
+            { category_id: 3, name: "Ekonomi", total: 12 },
+            { category_id: 4, name: "Infrastruktur", total: 4 }
+        ],
+        last_updated: "2026-05-17T11:20:00Z"
+    },
+    13: {
+        district_id: 13,
+        district_name: "Mimika Timur Jauh",
+        profile: {
+            id: 13,
+            luas_wilayah: 2050.00,
+            jumlah_penduduk: 4500,
+            deskripsi: "Distrik pemekaran yang membentang di pesisir selatan Mimika. Wilayah ini kaya akan keanekaragaman hayati estuari, namun menghadapi kendala abrasi pantai dan kurangnya infrastruktur pemecah ombak di permukiman nelayan.",
+            batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Distrik Jita, Barat: Distrik Mimika Timur",
+            kode_kemendagri: "91.09.08"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 4 },
+            { category_id: 3, name: "Ekonomi", total: 18 },
+            { category_id: 4, name: "Infrastruktur", total: 5 }
+        ],
+        last_updated: "2026-05-18T09:30:00Z"
+    },
+    14: {
+        district_id: 14,
+        district_name: "Mimika Barat Jauh",
+        profile: {
+            id: 14,
+            luas_wilayah: 3450.00,
+            jumlah_penduduk: 2100,
+            deskripsi: "Merupakan distrik dengan luasan daratan rawa terbesar di bagian barat. Akses telekomunikasi dan listrik masih sangat minim, dan permukiman tersebar dalam kelompok-kampung kecil di sepanjang aliran sungai besar.",
+            batas_wilayah: "Utara: Kabupaten Kaimana, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat Tengah, Barat: Kabupaten Kaimana",
+            kode_kemendagri: "91.09.09"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 2 },
+            { category_id: 2, name: "Pendidikan", total: 3 },
+            { category_id: 4, name: "Infrastruktur", total: 2 }
+        ],
+        last_updated: "2026-05-19T08:15:00Z"
+    },
+    15: {
+        district_id: 15,
+        district_name: "Mimika Barat Tengah",
+        profile: {
+            id: 15,
+            luas_wilayah: 2850.00,
+            jumlah_penduduk: 3800,
+            deskripsi: "Berada di antara distrik pesisir dan dataran rendah, wilayah ini perlahan mulai berkembang dengan adanya inisiatif pembangunan dermaga perintis skala kecil. Mata pencaharian warga bertumpu pada hasil meramu hutan dan mencari ikan.",
+            batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat, Barat: Distrik Mimika Barat Jauh",
+            kode_kemendagri: "91.09.15"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 3 },
+            { category_id: 3, name: "Ekonomi", total: 9 },
+            { category_id: 5, name: "Sosial & Budaya", total: 5 }
+        ],
+        last_updated: "2026-05-20T10:45:00Z"
+    },
+    16: {
+        district_id: 16,
+        district_name: "Amar",
+        profile: {
+            id: 16,
+            luas_wilayah: 1250.00,
+            jumlah_penduduk: 2950,
+            deskripsi: "Distrik pemekaran baru di pesisir yang diproyeksikan sebagai salah satu klaster pengembangan perikanan tangkap terpadu. Kendala utama saat ini adalah air bersih yang payau serta terbatasnya tenaga kesehatan yang menetap.",
+            batas_wilayah: "Utara: Distrik Mimika Barat, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
+            kode_kemendagri: "91.09.16"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 4 },
+            { category_id: 2, name: "Pendidikan", total: 4 },
+            { category_id: 4, name: "Infrastruktur", total: 6 }
+        ],
+        last_updated: "2026-05-21T13:00:00Z"
+    },
+    17: {
+        district_id: 17,
+        district_name: "Hoya",
+        profile: {
+            id: 17,
+            luas_wilayah: 980.00,
+            jumlah_penduduk: 1500,
+            deskripsi: "Hoya adalah wilayah kantong di dataran tinggi yang berbatasan dengan Kabupaten Nduga. Sama seperti Alama dan Jila, layanan dasar di Hoya sangat bergantung pada penerbangan perintis subsidi pemerintah akibat putusnya akses jalan darat.",
+            batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Tembagapura, Timur: Distrik Jila, Barat: Kabupaten Puncak",
+            kode_kemendagri: "91.09.17"
+        },
+        categories: [
+            { category_id: 1, name: "Kesehatan", total: 1 },
+            { category_id: 2, name: "Pendidikan", total: 2 },
+            { category_id: 5, name: "Sosial & Budaya", total: 4 }
+        ],
+        last_updated: "2026-05-22T08:00:00Z"
+    },
     18: {
         district_id: 18,
         district_name: "Alama",
@@ -203,8 +347,6 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
         ],
         last_updated: "2026-04-28T16:00:00Z"
     }
-    // (Distrik 9, 11-17 direpresentasikan pada layer visual, 
-    // mock ini menampilkan distrik perwakilan utama dari karakteristik pesisir, gunung, kota, dan industri)
 };
 
 /**
@@ -224,7 +366,12 @@ export const MOCK_SPATIAL_STATS: SpatialStatResponse[] = [
     { district_name: "Jila", total_dataset: 12, total_rows: 2800, avg_quality: 62.5 },
     { district_name: "Jita", total_dataset: 15, total_rows: 3200, avg_quality: 64.0 },
     { district_name: "Alama", total_dataset: 13, total_rows: 1800, avg_quality: 58.5 },
-    { district_name: "Amar", total_dataset: 16, total_rows: 2100, avg_quality: 63.8 }
+    { district_name: "Amar", total_dataset: 16, total_rows: 2100, avg_quality: 63.8 },
+    // Menambahkan statistik untuk 4 distrik sisanya
+    { district_name: "Mimika Timur Jauh", total_dataset: 15, total_rows: 2900, avg_quality: 61.2 },
+    { district_name: "Mimika Barat Jauh", total_dataset: 11, total_rows: 1500, avg_quality: 55.0 },
+    { district_name: "Mimika Barat Tengah", total_dataset: 14, total_rows: 2200, avg_quality: 60.5 },
+    { district_name: "Hoya", total_dataset: 8, total_rows: 900, avg_quality: 52.3 }
 ];
 
 /**
@@ -300,7 +447,11 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "jila": 38.2,
             "jita": 34.4,
             "alama": 41.5,
-            "amar": 32.8
+            "amar": 32.8,
+            "mimikatimurjauh": 31.5,
+            "mimikabaratjauh": 36.8,
+            "mimikabarattengah": 33.2,
+            "hoya": 40.1
         }
     },
     // 2. INDIKATOR KEMISKINAN (Sosial)
@@ -324,7 +475,13 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "agimuga": 42.5,
             "alama": 48.0,
             "jila": 45.2,
-            "amar": 36.5
+            "amar": 36.5,
+            "mimikabarat": 33.5,
+            "jita": 35.8,
+            "mimikatimurjauh": 32.1,
+            "mimikabaratjauh": 44.5,
+            "mimikabarattengah": 38.4,
+            "hoya": 46.2
         }
     },
     // 3. INDIKATOR AKSES AIR BERSIH (Infrastruktur)
@@ -348,7 +505,14 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "mimikatengah": 38.0,
             "agimuga": 22.5, // Pegunungan: Mengandalkan air hujan/sungai
             "alama": 15.0,
-            "jila": 18.5
+            "jila": 18.5,
+            "mimikabarat": 25.4,
+            "jita": 28.2,
+            "amar": 26.5,
+            "mimikatimurjauh": 31.0,
+            "mimikabaratjauh": 19.5,
+            "mimikabarattengah": 24.8,
+            "hoya": 16.5
         }
     },
     // 4. INDIKATOR PDRB (Ekonomi) - Anomali karena Freeport
@@ -370,7 +534,15 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             "kwamkinarama": 1800,
             "mimikatimur": 1100, // Perikanan
             "agimuga": 250, // Subsisten
-            "alama": 180
+            "alama": 180,
+            "mimikabarat": 850,
+            "jila": 210,
+            "jita": 620,
+            "amar": 750,
+            "mimikatimurjauh": 810,
+            "mimikabaratjauh": 320,
+            "mimikabarattengah": 540,
+            "hoya": 195
         }
     }
 };

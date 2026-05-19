@@ -17,7 +17,7 @@ import { getSemanticColor } from "@/src/app/lib/gisUtils";
  * PanelOrchestrator - The Stacking Drawer (GFW Paradigm)
  * Mengatur dua jenis perilaku panel dengan Sumbu X (Width) yang sangat ramping:
  * 1. Panel Menu (Flush/Docked): 280px, menempel rapat di kiri.
- * 2. Panel Detail (Floating): 280px, melayang di sebelah kanan menu dengan shadow tegas.
+ * 2. Panel Detail (Floating): 280px, melayang secara dinamis sesuai jumlah panel aktif.
  */
 export default function PanelOrchestrator() {
     const { activePanels, closePanel, closePanelsToTheRight, activeIndicator } = useExplorerStore();
@@ -44,15 +44,21 @@ export default function PanelOrchestrator() {
                 const isFloating = panel.type === "detil-distrik";
 
                 const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
-                const floatingLeft = isMobile ? 16 : (PANEL_WIDTH + 16);
+
+                // PERBAIKAN LOGIKA: Kalkulasi pergeseran melayang dinamis
+                // Jika index = 0 (panel melayang sendirian tanpa menu), dia merapat ke sidebar (16px).
+                // Jika index = 1 (ada menu di kirinya), dia bergeser ke kanan menu (280 + 16 = 296px).
+                const floatingLeft = isMobile ? 16 : (index * PANEL_WIDTH) + 16;
 
                 return (
                     <div
                         key={panel.id}
-                        className={`absolute pointer-events-auto panel-transition ${isFloating ? 'shadow-lg border border-slate-200' : 'border-r border-slate-200 shadow-none'
+                        // Menambahkan animasi transition-all agar saat panel lain ditutup,
+                        // panel ini bergeser sliding secara mulus ke kiri.
+                        className={`absolute pointer-events-auto transition-all duration-300 ease-in-out ${isFloating ? 'shadow-lg border border-slate-200' : 'border-r border-slate-200 shadow-none'
                             }`}
                         style={isFloating ? {
-                            // Floating Detail Panel (X-Axis ramping 280px)
+                            // Floating Detail Panel (Menggunakan posisi X / Left Dinamis)
                             left: `${floatingLeft}px`,
                             top: '16px',
                             bottom: '16px',
@@ -79,7 +85,7 @@ export default function PanelOrchestrator() {
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
                                             {panel.type.replace("-", " ")}
                                         </span>
-                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-50 tracking-tight mt-0.5">
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-[200px] tracking-tight mt-0.5">
                                             {panel.title}
                                         </h3>
                                     </div>
@@ -150,16 +156,14 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
         { label: "Padat (60-80%)", value: 70 },
         { label: "Sedang (40-60%)", value: 50 },
         { label: "Rendah (20-40%)", value: 30 },
-        { label: "Sangat Rendah (<20%)", value: 10 },
+        { label: "Sgt. Rendah (<20%)", value: 10 },
     ];
 
     const MAX_VALUE = 100;
 
     return (
-        // Lebar kontainer dirampingkan menjadi w-[170px]
-        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-42.5 rounded-none animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-8 right-[78px] pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-[170px] rounded-none animate-in fade-in slide-in-from-bottom-4">
 
-            {/* Header Legenda - Spasi Ultra Rapat */}
             <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center gap-1.5">
                     <MapIcon size={10} className="text-teal-700" />
@@ -169,14 +173,12 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
                 </div>
             </div>
 
-            {/* Body Legenda */}
             <div className="px-2.5 py-2.5 flex flex-col gap-1.5">
                 <h5 className="text-[9px] font-bold text-slate-800 leading-tight line-clamp-2">
                     {formattedTitle}
                 </h5>
 
                 <div className="flex mt-0.5">
-                    {/* Pilar Warna (Lebar 2.5, Tinggi 4) */}
                     <div className="flex flex-col w-2.5 border border-slate-200 rounded-none shrink-0 shadow-sm">
                         {scaleBins.map((bin, idx) => {
                             const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
@@ -190,7 +192,6 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
                         })}
                     </div>
 
-                    {/* Label Keterangan */}
                     <div className="flex flex-col justify-between ml-2 py-0">
                         {scaleBins.map((bin, idx) => (
                             <div key={`label-${idx}`} className="h-4 flex items-center">

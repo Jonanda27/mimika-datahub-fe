@@ -33,7 +33,7 @@ const INFOGRAFIK_DATA = [
         title: "Piramida Penduduk & Ketenagakerjaan Mimika 2026",
         date: "15 Maret 2026",
         category: "Demografi",
-        image: "/infografik/sosial/sosial-01.jpg",
+        image: "/infografik/sosial/sosial-04.jpg",
     }
 ];
 
