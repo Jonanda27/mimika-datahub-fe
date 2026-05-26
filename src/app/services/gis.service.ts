@@ -1,7 +1,10 @@
 // src/app/services/gis.service.ts
 import { API_BASE_URL } from "../lib/config";
 import { SpatialStatResponse, DistrictDrilldownResponse } from "../types/gis";
-import { MOCK_INDICATOR_DETAILS, MOCK_DISTRICT_DRILLDOWN, MOCK_SPATIAL_STATS } from "../lib/mockExplorerData";
+
+// [REFACTOR] Import dipindahkan ke domain spesifik masing-masing
+import { MOCK_INDICATOR_DETAILS, MOCK_SPATIAL_STATS } from "../lib/mocks/mockIndicators";
+import { MOCK_DISTRICT_DRILLDOWN } from "../lib/mocks/mockDistricts";
 
 /**
  * Konfigurasi Sakelar Mock (Fase 5: Indirection)

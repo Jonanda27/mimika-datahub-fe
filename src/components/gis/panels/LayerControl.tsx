@@ -26,9 +26,11 @@ export default function LayerControl() {
     } = useExplorerStore();
 
     const baseMaps = [
-        { id: "satellite", label: "Satelit Resolusi Tinggi", icon: Sun, desc: "Citra Raster Google (Default)" },
-        { id: "street", label: "Peta Jalan (Roadmap)", icon: MapIcon, desc: "Navigasi Standar Vektor" },
-        { id: "dark", label: "Kanvas Gelap (Dark Mode)", icon: Moon, desc: "Kontras Tinggi untuk Data Poligon" },
+        { id: "satellite", label: "Google Satellite", icon: Sun, desc: "Citra Raster Google (Default)" },
+        { id: "street", label: "Google Roadmap", icon: MapIcon, desc: "Navigasi Standar Vektor" },
+        { id: "dark", label: "Carto Dark", icon: Moon, desc: "Kanvas Gelap untuk Data Poligon" },
+        { id: "esri", label: "Esri World Imagery", icon: MapIcon, desc: "Citra Resolusi Tinggi" },
+        { id: "osm", label: "OpenStreetMap", icon: Layers, desc: "Peta Komunitas Global" },
     ];
 
     return (

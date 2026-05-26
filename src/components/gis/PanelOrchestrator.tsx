@@ -6,10 +6,18 @@ import { X, Map as MapIcon } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
-import CategoryPanel from "./panels/CategoryPanel";
+// Mengimpor OpdPanel sebagai representasi antarmuka pemilihan instansi
+import OpdPanel from "./panels/OpdPanel";
+import AssetPanel from "./panels/AssetPanel";
 import DetailPanel from "./panels/DetailPanel";
 import LayerControl from "./panels/LayerControl";
 import AboutPanel from "./panels/AboutPanel";
+
+// Import Komponen AssetDetailPanel baru
+import AssetDetailPanel from "./panels/AssetDetailPanel";
+
+// [REFACTOR] FASE 2: Import Komponen DistrictListPanel (Eksplorasi Wilayah)
+import DistrictListPanel from "./panels/DistrictListPanel";
 
 import { getSemanticColor } from "@/src/app/lib/gisUtils";
 
@@ -41,24 +49,19 @@ export default function PanelOrchestrator() {
                 1. SISTEM SHIFTING & FLOATING PANEL
             ====================================================================== */}
             {activePanels.map((panel, index) => {
-                const isFloating = panel.type === "detil-distrik";
+                // Panel detil-aset juga termasuk panel floating
+                const isFloating = panel.type === "detil-distrik" || panel.type === "detil-aset";
 
                 const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
 
-                // PERBAIKAN LOGIKA: Kalkulasi pergeseran melayang dinamis
-                // Jika index = 0 (panel melayang sendirian tanpa menu), dia merapat ke sidebar (16px).
-                // Jika index = 1 (ada menu di kirinya), dia bergeser ke kanan menu (280 + 16 = 296px).
                 const floatingLeft = isMobile ? 16 : (index * PANEL_WIDTH) + 16;
 
                 return (
                     <div
                         key={panel.id}
-                        // Menambahkan animasi transition-all agar saat panel lain ditutup,
-                        // panel ini bergeser sliding secara mulus ke kiri.
                         className={`absolute pointer-events-auto transition-all duration-300 ease-in-out ${isFloating ? 'shadow-lg border border-slate-200' : 'border-r border-slate-200 shadow-none'
                             }`}
                         style={isFloating ? {
-                            // Floating Detail Panel (Menggunakan posisi X / Left Dinamis)
                             left: `${floatingLeft}px`,
                             top: '16px',
                             bottom: '16px',
@@ -66,7 +69,6 @@ export default function PanelOrchestrator() {
                             maxWidth: 'calc(100vw - 32px)',
                             zIndex: 50,
                         } : {
-                            // Menu Reguler: Docking & Flush (280px)
                             left: 0,
                             top: 0,
                             bottom: 0,
@@ -85,7 +87,7 @@ export default function PanelOrchestrator() {
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
                                             {panel.type.replace("-", " ")}
                                         </span>
-                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-[200px] tracking-tight mt-0.5">
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-50 tracking-tight mt-0.5">
                                             {panel.title}
                                         </h3>
                                     </div>
@@ -104,7 +106,8 @@ export default function PanelOrchestrator() {
                                 className="flex-1 overflow-y-auto custom-scrollbar"
                                 onClick={() => !isFloating && closePanelsToTheRight(index)}
                             >
-                                {renderPanelContent(panel.type, panel.data, panel.id)}
+                                {/* Melemparkan closePanel ke render helper */}
+                                {renderPanelContent(panel.type, panel.data, panel.id, closePanel)}
                             </div>
 
                         </div>
@@ -121,10 +124,17 @@ export default function PanelOrchestrator() {
     );
 }
 
-function renderPanelContent(type: ExplorerPanelType, data: any, panelId: string) {
+// Menambahkan argument closePanel agar bisa menutup panel dari dalam rendering komponen
+function renderPanelContent(type: ExplorerPanelType, data: any, panelId: string, closePanel: (id: string) => void) {
     switch (type) {
-        case "seleksi-kategori": return <CategoryPanel />;
+        case "seleksi-opd": return <OpdPanel />;
+        case "katalog-aset": return <AssetPanel />;
+
+        // [REFACTOR] FASE 2: Me-register tipe panel katalog-wilayah ke komponennya
+        case "katalog-wilayah": return <DistrictListPanel />;
+
         case "detil-distrik": return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} panelId={panelId} />;
+        case "detil-aset": return <AssetDetailPanel assetData={data} panelId={panelId} />;
         case "konfigurasi": return <LayerControl />;
         case "tentang": return <AboutPanel />;
         case "hasil-pencarian":
@@ -162,7 +172,7 @@ function MapLegend({ indicatorKey }: { indicatorKey: string }) {
     const MAX_VALUE = 100;
 
     return (
-        <div className="fixed bottom-8 right-[78px] pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-[170px] rounded-none animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-42.5 rounded-none animate-in fade-in slide-in-from-bottom-4">
 
             <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center gap-1.5">

@@ -77,12 +77,15 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
         ? Math.max(...data.categories.map(c => c.total))
         : 1;
 
+    // Logika pewarnaan disesuaikan untuk mengenali keyword OPD/Instansi
     const getCategoryColor = (name: string) => {
         const lowerName = name.toLowerCase();
         if (lowerName.includes('kesehatan')) return 'bg-rose-500';
-        if (lowerName.includes('ekonomi')) return 'bg-teal-500';
-        if (lowerName.includes('infrastruktur')) return 'bg-amber-500';
         if (lowerName.includes('pendidikan')) return 'bg-blue-500';
+        if (lowerName.includes('sosial')) return 'bg-indigo-500';
+        if (lowerName.includes('bappeda')) return 'bg-emerald-500';
+        if (lowerName.includes('pupr') || lowerName.includes('perhubungan') || lowerName.includes('infrastruktur')) return 'bg-amber-500';
+        if (lowerName.includes('koperasi') || lowerName.includes('ekonomi') || lowerName.includes('pertanian') || lowerName.includes('pariwisata')) return 'bg-teal-500';
         return 'bg-slate-500';
     };
 
@@ -231,11 +234,11 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
                 <div className="flex flex-col pb-6">
                     {/* SUMMARY HEADER - Solid Background */}
                     <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 py-2.5 px-4">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Densitas Dataset</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Distribusi per OPD</span>
                         <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 shadow-sm">
                             <TrendingUp size={12} className="text-teal-700" strokeWidth={2.5} />
                             <span className="text-[9px] font-bold text-teal-800 uppercase tracking-wider">
-                                {totalDatasets} Indikator
+                                {totalDatasets} Dataset
                             </span>
                         </div>
                     </div>

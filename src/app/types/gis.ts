@@ -5,11 +5,14 @@
  * Membantu Orchestrator menentukan komponen mana yang harus dirender di stack.
  */
 export type ExplorerPanelType =
-    | 'seleksi-kategori'
+    | 'seleksi-opd'
+    | 'katalog-aset'       // Telah dimutasi dari 'seleksi-kategori' untuk merepresentasikan domain OPD
+    | 'katalog-wilayah'    // [REFACTOR] FASE 1: Penambahan tipe panel untuk fitur Eksplorasi Wilayah (Sidebar)
     | 'detil-distrik'
+    | 'detil-aset'         // Penambahan tipe panel untuk detail spesifik titik aset (mikro)
     | 'konfigurasi'
     | 'hasil-pencarian'
-    | 'tentang'; // Penambahan tipe baru untuk modul informasi aplikasi
+    | 'tentang';           // Penambahan tipe baru untuk modul informasi aplikasi
 
 /**
  * Interface untuk mengelola state panel yang sedang terbuka.
@@ -34,6 +37,7 @@ export interface DistrictProfile {
     deskripsi: string | null;
     batas_wilayah: string | null; // Narasi batas geografis
     kode_kemendagri?: string | null;
+    thumbnail_url?: string | null; // [REFACTOR] FASE 1: Ditambahkan untuk mendukung Micro-Thumbnail pada list Sidebar
 }
 
 /**
@@ -52,6 +56,9 @@ export interface SpatialIndicator {
 /**
  * Response DTO untuk Drilldown Distrik (Injeksi Spasial).
  * Digunakan oleh DetailPanel.tsx saat user klik poligon di peta.
+ * Catatan Analisis Prototype: 
+ * Properti 'categories' dipertahankan secara struktural (backward compatibility), 
+ * namun secara semantik (payload data) kini merepresentasikan kontribusi dari 'OPD'.
  */
 export interface DistrictDrilldownResponse {
     district_id: number;

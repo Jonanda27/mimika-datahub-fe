@@ -10,7 +10,9 @@ import {
     Users,
     Info
 } from "lucide-react";
-import { MOCK_ATLAS_CATEGORIES } from "@/src/app/lib/mockExplorerData";
+
+// [REFACTOR] Import dipindahkan ke domain spesifik (mockIndicators)
+import { MOCK_ATLAS_CATEGORIES } from "@/src/app/lib/mocks/mockIndicators";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
 

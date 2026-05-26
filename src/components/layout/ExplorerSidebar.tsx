@@ -5,8 +5,10 @@ import React from "react";
 import {
     Search,
     Layers,
-    Database,
+    MapPin,
+    Building2,
     Info,
+    Map // [REFACTOR] FASE 2: Penambahan ikon Map untuk menu Wilayah
 } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
@@ -27,10 +29,23 @@ export default function ExplorerSidebar() {
             title: "Pencarian Spasial Global"
         },
         {
-            type: "seleksi-kategori" as ExplorerPanelType,
-            label: "Sektor",
-            icon: Database,
-            title: "Katalog Data Sektoral"
+            type: "seleksi-opd" as ExplorerPanelType,
+            label: "OPD",
+            icon: Building2,
+            title: "Katalog Data Instansi / OPD"
+        },
+        {
+            type: "katalog-aset" as ExplorerPanelType,
+            label: "Aset",
+            icon: MapPin,
+            title: "Katalog Sebaran Aset Fisik"
+        },
+        // [REFACTOR] FASE 2: Injeksi Menu Navigasi Eksplorasi Wilayah (Distrik)
+        {
+            type: "katalog-wilayah" as ExplorerPanelType,
+            label: "Wilayah",
+            icon: Map,
+            title: "Eksplorasi Wilayah Distrik"
         },
         {
             type: "konfigurasi" as ExplorerPanelType,

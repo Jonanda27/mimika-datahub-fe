@@ -10,14 +10,14 @@ import {
   Menu,
   X,
   LogOut,
-  User as UserIcon,
   ChevronDown,
   Building2,
   Globe,
   Eye,
   BarChart2,
   MapPin,
-  Search // Ditambahkan agar komponen Search bar Anda tidak error
+  Search,
+  Map // [REFACTOR] Icon baru untuk membedakan Manajemen Aset vs Manajemen Wilayah
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -47,7 +47,7 @@ export default function AdminNavbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Daftar menu (Gabungan: 6 Menu Standard + 1 Menu Manajemen Wilayah)
+  // [REFACTOR] Menambahkan "Manajemen Aset" untuk Admin
   const menuItems = [
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Data Pemerintah", href: "/data-pemerintah", icon: Building2 },
@@ -55,7 +55,8 @@ export default function AdminNavbar() {
     { name: "Manajemen Akun", href: "/akun-management", icon: BarChart2 },
     { name: "Monitoring OPD", href: "/monitoring-opd", icon: Eye },
     { name: "Data Quality", href: "/data-quality", icon: Globe },
-    { name: "Manajemen Wilayah", href: "/manajemen-wilayah", icon: MapPin },
+    { name: "Manajemen Wilayah", href: "/manajemen-wilayah", icon: Map },
+    { name: "Manajemen Aset", href: "/admin-manajemen-aset", icon: MapPin }, // <--- TAMBAHAN BARU
   ];
 
   const getInitials = (name: string) => {
