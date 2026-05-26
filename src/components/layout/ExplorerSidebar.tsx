@@ -8,7 +8,7 @@ import {
     MapPin,
     Building2,
     Info,
-    Map // [REFACTOR] FASE 2: Penambahan ikon Map untuk menu Wilayah
+    Map
 } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
@@ -19,7 +19,11 @@ import { ExplorerPanelType } from "@/src/app/types/gis";
  * Interaksi visual menggunakan border penanda alih-alih shadow atau rounded background.
  */
 export default function ExplorerSidebar() {
-    const { openPanel, activePanels, closePanelsToTheRight } = useExplorerStore();
+    // [REFACTOR] Menyadap galleryState untuk kebutuhan Interaction Guard
+    const { openPanel, activePanels, closePanelsToTheRight, galleryState } = useExplorerStore();
+
+    // Penanda apakah Mode Teater sedang aktif
+    const isTheaterMode = galleryState?.isOpen;
 
     const navigationItems = [
         {
@@ -40,7 +44,6 @@ export default function ExplorerSidebar() {
             icon: MapPin,
             title: "Katalog Sebaran Aset Fisik"
         },
-        // [REFACTOR] FASE 2: Injeksi Menu Navigasi Eksplorasi Wilayah (Distrik)
         {
             type: "katalog-wilayah" as ExplorerPanelType,
             label: "Wilayah",
@@ -67,7 +70,9 @@ export default function ExplorerSidebar() {
     };
 
     return (
-        <aside className="fixed bottom-0 left-0 w-full h-16 md:static md:w-16 md:h-full flex flex-row md:flex-col items-center bg-white border-t md:border-t-0 md:border-r border-slate-200 z-50 transition-all">
+        <aside className={`fixed bottom-0 left-0 w-full h-16 md:static md:w-16 md:h-full flex flex-row md:flex-col items-center bg-white border-t md:border-t-0 md:border-r border-slate-200 z-50 transition-all duration-300 ease-in-out
+            ${isTheaterMode ? "opacity-40 pointer-events-none grayscale" : "opacity-100"}
+        `}>
 
             {/* BAGIAN UTAMA: Menu Navigasi */}
             <div className="flex-1 flex flex-row md:flex-col justify-around md:justify-start items-center w-full">

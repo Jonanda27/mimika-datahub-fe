@@ -20,17 +20,23 @@ import { useExplorerStore } from "@/src/app/store/useExplorerStore";
  */
 export default function ExplorerNavbar() {
     const { profile, isLoading } = useAuthStore();
+
+    // [REFACTOR] Menyadap galleryState untuk kebutuhan Interaction Guard
     const {
         activeIndicator,
         activeBaseMap,
         openPanel,
         closePanelsToTheRight,
         clearPanels,
-        resetMapData
+        resetMapData,
+        galleryState
     } = useExplorerStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCopied, setIsCopied] = useState(false);
+
+    // Penanda apakah Mode Teater sedang aktif
+    const isTheaterMode = galleryState?.isOpen;
 
     const getInitials = (name: string) => {
         return name?.split(" ").map((n) => n[0]).join("").toUpperCase().substring(0, 2) || "U";
@@ -82,7 +88,11 @@ export default function ExplorerNavbar() {
     };
 
     return (
-        <nav className="w-full h-16 px-6 flex items-center justify-between bg-white border-b border-slate-200 relative z-50">
+        // [REFACTOR] INTERACTION GUARD
+        // Meredupkan dan mengunci seluruh Navbar saat Mode Teater aktif
+        <nav className={`w-full h-16 px-6 flex items-center justify-between bg-white border-b border-slate-200 relative z-50 transition-all duration-300 ease-in-out
+            ${isTheaterMode ? "opacity-40 pointer-events-none grayscale" : "opacity-100"}
+        `}>
 
             {/* KIRI: Branding */}
             <div className="flex items-center gap-6">

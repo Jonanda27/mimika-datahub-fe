@@ -17,6 +17,9 @@ import { gisService } from "@/src/app/services/gis.service";
 import { DistrictDrilldownResponse } from "@/src/app/types/gis";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
+// [REFACTOR] FASE 4: Import komponen Pure Fabrication untuk Slider Media
+import ImageCarousel from "@/src/components/ui/ImageCarousel";
+
 interface DetailPanelProps {
     districtId: number;
     districtName: string;
@@ -77,7 +80,6 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
         ? Math.max(...data.categories.map(c => c.total))
         : 1;
 
-    // Logika pewarnaan disesuaikan untuk mengenali keyword OPD/Instansi
     const getCategoryColor = (name: string) => {
         const lowerName = name.toLowerCase();
         if (lowerName.includes('kesehatan')) return 'bg-rose-500';
@@ -116,6 +118,9 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
         );
     }
 
+    // [REFACTOR] Menyadap array gambar dari properti dinamis (jika ada dari Backend/Mock)
+    const profileImages = (data?.profile as any)?.images || [];
+
     return (
         <div className="flex flex-col w-full h-full bg-white relative">
 
@@ -135,9 +140,6 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-0.5">
-                        <button className="p-1.5 text-slate-400 hover:text-teal-700 transition-colors" title="Informasi Profil">
-                            <Info size={14} strokeWidth={2.5} />
-                        </button>
                         {panelId && (
                             <button
                                 onClick={() => closePanel(panelId)}
@@ -176,7 +178,11 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
             {/* TAB CONTENT: DATA UMUM */}
             {activeTab === "umum" && (
                 <div className="flex flex-col pb-6">
-                    {/* STATISTIK DASAR - High-Density Data Row */}
+
+                    {/* [REFACTOR] 1. HERO IMAGE CAROUSEL */}
+                    <ImageCarousel images={profileImages} altText={`Foto Wilayah ${districtName}`} />
+
+                    {/* 2. STATISTIK DASAR - High-Density Data Row */}
                     <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-2.5 bg-white">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-500">
@@ -205,7 +211,7 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
                         </div>
                     </div>
 
-                    {/* GAMBARAN UMUM - Tipografi Reguler untuk Keterbacaan */}
+                    {/* 3. GAMBARAN UMUM */}
                     <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-1.5 bg-white">
                         <div className="flex items-center gap-2 text-slate-500 mb-0.5">
                             <FileText size={13} strokeWidth={2.5} className="text-teal-700" />
@@ -216,7 +222,7 @@ export default function DetailPanel({ districtId, districtName, panelId }: Detai
                         </p>
                     </div>
 
-                    {/* BATAS WILAYAH */}
+                    {/* 4. BATAS WILAYAH */}
                     <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-1.5 bg-white">
                         <div className="flex items-center gap-2 text-slate-500 mb-0.5">
                             <MapPin size={13} strokeWidth={2.5} className="text-teal-700" />

@@ -5,6 +5,14 @@ import { ExplorerPanel, ExplorerPanelType } from "../types/gis";
 
 export type DetailTabType = "umum" | "analisis";
 
+// [REFACTOR] THEATER MODE: Payload untuk state galeri global
+export interface GalleryPayload {
+    isOpen: boolean;
+    images: string[];
+    currentIndex: number;
+    title: string;
+}
+
 interface ExplorerState {
     // ==========================================
     // 1. STATE: Manajemen Panel (UI Layout)
@@ -20,9 +28,12 @@ interface ExplorerState {
     mapOpacity: number;
     activeBaseMap: string;
 
-    // [REFACTOR] FASE 2: Controller State untuk Peta
+    // Controller State untuk Peta
     // Berisi nama distrik yang sedang di-highlight dari Sidebar
     focusedDistrict: string | null;
+
+    // [REFACTOR] THEATER MODE: State untuk Cinematic Gallery Overlay
+    galleryState: GalleryPayload | null;
 
     // ==========================================
     // ACTIONS: Manajemen Panel
@@ -42,8 +53,13 @@ interface ExplorerState {
     setMapOpacity: (opacity: number) => void;
     setActiveBaseMap: (baseMapId: string) => void;
 
-    // [REFACTOR] FASE 2: Mutator Controller Distrik
+    // Mutator Controller Distrik
     setFocusDistrict: (districtName: string | null) => void;
+
+    // [REFACTOR] THEATER MODE: Actions
+    openGallery: (images: string[], startIndex: number, title?: string) => void;
+    closeGallery: () => void;
+    setGalleryIndex: (index: number) => void;
 
     resetMapData: () => void;
 }
@@ -59,6 +75,7 @@ export const useExplorerStore = create<ExplorerState>()(
             mapOpacity: 70,
             activeBaseMap: "satellite",
             focusedDistrict: null, // Default null (Tampilan seluruh Mimika)
+            galleryState: null,    // Default null (Mode Teater mati)
 
             // Mutator: Konteks Eksplorasi
             setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
@@ -86,25 +103,46 @@ export const useExplorerStore = create<ExplorerState>()(
             setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
             setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
 
-            // [REFACTOR] FASE 2: Mutator untuk state highlight distrik
+            // Mutator untuk state highlight distrik
             setFocusDistrict: (districtName) => set({ focusedDistrict: districtName }),
+
+            // ======================================================================
+            // [REFACTOR] THEATER MODE MUTATORS
+            // ======================================================================
+            openGallery: (images, startIndex, title = "Visualisasi Data") =>
+                set({
+                    galleryState: {
+                        isOpen: true,
+                        images,
+                        currentIndex: startIndex,
+                        title
+                    }
+                }),
+
+            closeGallery: () => set({ galleryState: null }),
+
+            setGalleryIndex: (index) => set((state) => ({
+                galleryState: state.galleryState
+                    ? { ...state.galleryState, currentIndex: index }
+                    : null
+            })),
 
             // Mutator: Manajemen Panel Tab Detail
             setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
 
             // Mutator: Reset Data Peta (Jalan Keluar Analisis)
-            // MEMASTIKAN FOCUSED DISTRICT IKUT TERESET KE NULL
             resetMapData: () =>
                 set((state) => ({
                     activeIndicator: null,
                     activeAssetLayers: [],
                     focusedDistrict: null,
+                    galleryState: null, // Paksa teater mati jika peta direset
                     activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik" && p.type !== "detil-aset"),
                     activeDetailTab: "umum",
                 })),
 
             // ======================================================================
-            // [REFACTOR] LOGIKA MUTUALLY EXCLUSIVE (CLEAN IMMUTABLE APPROACH)
+            // LOGIKA MUTUALLY EXCLUSIVE (CLEAN IMMUTABLE APPROACH)
             // ======================================================================
             openPanel: (type, title, data = null) =>
                 set((state) => {
@@ -114,15 +152,12 @@ export const useExplorerStore = create<ExplorerState>()(
                     let nextPanels = [...state.activePanels];
 
                     if (isDetailPanel) {
-                        // Aturan Singleton: Jika yang mau dibuka adalah Panel Detail (Aset/Distrik), 
-                        // hapus SEMUA panel detail lama yang sedang melayang di layar.
                         nextPanels = nextPanels.filter(p => p.type !== "detil-distrik" && p.type !== "detil-aset");
                     } else {
-                        // Untuk panel biasa (Menu), hapus panel dengan tipe yang sama agar tidak duplikat
                         nextPanels = nextPanels.filter(p => p.type !== type);
                     }
 
-                    // 2. Buat panel baru dengan ID unik (Mencegah React Key Conflict)
+                    // 2. Buat panel baru dengan ID unik
                     const newPanel: ExplorerPanel = {
                         id: `${type}-${Date.now()}`,
                         type,
@@ -134,7 +169,7 @@ export const useExplorerStore = create<ExplorerState>()(
                     // 3. Tambahkan ke tumpukan paling atas (stack)
                     nextPanels.push(newPanel);
 
-                    // 4. Pastikan tab kembali ke 'umum' khusus jika yang dibuka adalah profil distrik
+                    // 4. Reset tab
                     const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
 
                     return { activePanels: nextPanels, ...resetTabObj };
@@ -147,11 +182,11 @@ export const useExplorerStore = create<ExplorerState>()(
 
                     return {
                         activePanels: filteredPanels,
-                        // Jika panel detail ditutup, paksa hapus juga fokus distrik di peta
-                        // Ini menjaga UX konsisten. Tidak ada panel = Tidak ada highlight wilayah.
+                        // Jika panel detail ditutup, paksa hapus juga fokus distrik dan Teater Galeri
                         ...(isDetailClosed && {
                             activeDetailTab: "umum",
-                            focusedDistrict: null
+                            focusedDistrict: null,
+                            galleryState: null // Garbage Collection Teater
                         })
                     };
                 }),
@@ -163,10 +198,11 @@ export const useExplorerStore = create<ExplorerState>()(
 
                     return {
                         activePanels: slicedPanels,
-                        // Jika panel detail tertutup karena aksi ini, bersihkan state kamera/fokus
+                        // Jika panel detail tertutup karena aksi ini, bersihkan state kamera & Teater
                         ...(!isDetailStillOpen && {
                             activeDetailTab: "umum",
-                            focusedDistrict: null
+                            focusedDistrict: null,
+                            galleryState: null // Garbage Collection Teater
                         })
                     };
                 }),
@@ -174,7 +210,8 @@ export const useExplorerStore = create<ExplorerState>()(
             clearPanels: () => set({
                 activePanels: [],
                 activeDetailTab: "umum",
-                focusedDistrict: null
+                focusedDistrict: null,
+                galleryState: null // Garbage Collection Teater
             }),
         }),
         { name: "ExplorerStore" }

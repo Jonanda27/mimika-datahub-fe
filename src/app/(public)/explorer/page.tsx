@@ -13,6 +13,9 @@ import PanelOrchestrator from "@/src/components/gis/PanelOrchestrator";
 import MapHUD from "@/src/components/gis/MapHUD";
 import LoadingState from "@/components/ui/LoadingState";
 
+// [REFACTOR] FASE AKHIR: Import Mode Teater Sinematik
+import GalleryOverlay from "@/src/components/gis/GalleryOverlay";
+
 // Import MapWrapper secara dinamis (Bypass SSR)
 const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
     ssr: false,
@@ -48,8 +51,14 @@ export default function ExplorerPage() {
             </div>
 
             {/* =====================================================================
+                [REFACTOR] LAYER 0.5: THEATER MODE OVERLAY (z-20)
+                Menutupi peta, namun mengalah pada Panel (z-30), Sidebar (z-40) & Navbar (z-50)
+            ====================================================================== */}
+            <GalleryOverlay />
+
+            {/* =====================================================================
                 LAYER 1: THE GLOBAL CONTEXT (NAVBAR ATAS)
-                Posisi absolut di atas, mengambil tinggi 64px (h-16).
+                Posisi absolut di atas, mengambil tinggi 64px (h-16). z-50 (Tertinggi)
             ====================================================================== */}
             <div className="absolute top-0 left-0 right-0 h-16 z-50 pointer-events-auto">
                 <ExplorerNavbar />
@@ -57,7 +66,7 @@ export default function ExplorerPage() {
 
             {/* =====================================================================
                 LAYER 2: THE SLIM ANCHOR (SIDEBAR KIRI)
-                Dimulai persis di bawah Navbar (top-[64px] atau top-16).
+                Dimulai persis di bawah Navbar (top-[64px] atau top-16). z-40
             ====================================================================== */}
             <div className="absolute top-16 bottom-0 left-0 z-40 pointer-events-none">
                 <div className="h-full pointer-events-auto">
@@ -67,7 +76,7 @@ export default function ExplorerPage() {
 
             {/* =====================================================================
                 LAYER 3: THE STACKING DRAWERS (PANEL ANALISIS)
-                Mengadopsi pola Docking & Zero Gap (Flush).
+                Mengadopsi pola Docking & Zero Gap (Flush). z-30
                 Panel menempel sempurna di bawah Navbar (top-16), mentok ke dasar 
                 layar (bottom-0), dan berhimpit di sisi kanan Sidebar (left-16).
             ====================================================================== */}
@@ -77,7 +86,7 @@ export default function ExplorerPage() {
 
             {/* =====================================================================
                 LAYER 4: MAP HUD & CONTROLS (KANAN BAWAH)
-                Komponen MapHUD memegang fungsi Zoom dan Kesiapan Data.
+                Komponen MapHUD memegang fungsi Zoom dan Kesiapan Data. z-30
             ====================================================================== */}
             <div className="absolute bottom-8 right-8 z-30 pointer-events-none">
                 <MapHUD />

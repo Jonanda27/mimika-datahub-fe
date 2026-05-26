@@ -4,7 +4,7 @@ import { DistrictDrilldownResponse } from "../../types/gis";
 /**
  * MOCK DATA: DRILLDOWN DISTRIK (18 Distrik Kabupaten Mimika)
  * Domain: Kewilayahan (Profil & Batas Distrik)
- * [REFACTOR] Menambahkan thumbnail_url untuk dirender di Sidebar DistrictListPanel
+ * [REFACTOR] Menambahkan thumbnail_url untuk list, dan array 'images' untuk Theater Mode
  */
 export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> = {
     1: {
@@ -17,8 +17,14 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik Mimika Baru adalah pusat administrasi pemerintahan dan episentrum ekonomi utama Kabupaten Mimika. Menjadi wilayah dengan kepadatan tertinggi, distrik ini menghadapi tantangan urbanisasi cepat, manajemen tata ruang kota Timika, serta pemenuhan akses layanan kesehatan dan pendidikan yang memadai bagi masyarakat urban yang heterogen.",
             batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Wania, Timur: Distrik Mimika Timur, Barat: Distrik Iwaka",
             kode_kemendagri: "91.09.01",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-1/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-1/100/100",
+            // [REFACTOR] Injeksi Array Media untuk Carousel & Theater Mode
+            images: [
+                "https://picsum.photos/seed/mimika-dist-1-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-1-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-1-c/800/450"
+            ]
+        } as any, // Bypass strict type check sementara untuk prototyping
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 45 },
             { category_id: 2, name: "Dinas Pendidikan", total: 60 },
@@ -38,8 +44,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Dibangun khusus oleh PT Freeport Indonesia, Kuala Kencana merupakan kota industri modern pertama di Indonesia dengan utilitas (listrik, komunikasi) tertanam di bawah tanah dan sistem pengolahan limbah berstandar internasional. Merupakan wilayah penyokong logistik dan administrasi operasional pertambangan dengan indeks kualitas hidup tertinggi di Mimika.",
             batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Baru, Timur: Distrik Kwamki Narama, Barat: Distrik Iwaka",
             kode_kemendagri: "91.09.11",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-2/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-2/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-2-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-2-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-2-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 18 },
             { category_id: 2, name: "Dinas Pendidikan", total: 22 },
@@ -58,8 +69,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Tembagapura adalah distrik dataran tinggi yang menampung operasi tambang emas dan tembaga bawah tanah terbesar di dunia (Grasberg). Karena berada di area pegunungan bersuhu dingin ekstrem dengan topografi curam, akses ke wilayah ini sangat terbatas dan dikontrol ketat untuk kepentingan industri strategis nasional.",
             batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Kuala Kencana, Timur: Distrik Agimuga, Barat: Distrik Jila",
             kode_kemendagri: "91.09.04",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-3/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-3/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-3-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-3-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-3-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 15 },
             { category_id: 3, name: "Dinas Tenaga Kerja", total: 156 },
@@ -77,8 +93,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik Wania merupakan daerah penyangga langsung Distrik Mimika Baru. Wilayah ini didominasi oleh pemukiman transmigran dan warga lokal yang bergerak di sektor pertanian skala kecil serta peternakan. Tantangan utama distrik ini adalah peningkatan infrastruktur jalan poros antar desa dan fasilitas kesehatan rujukan.",
             batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru, Timur: Distrik Mimika Timur, Barat: Distrik Mimika Tengah",
             kode_kemendagri: "91.09.12",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-4/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-4/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-4-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-4-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-4-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 22 },
             { category_id: 2, name: "Dinas Pendidikan", total: 18 },
@@ -97,8 +118,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik Iwaka dikenal dengan potensi ekowisata alam dan hasil perkebunan kelapa sawit yang menjanjikan. Dengan dilaluinya jalur Jalan Trans Papua, distrik ini mulai berkembang pesat menjadi jalur distribusi komoditas pangan dari pedalaman menuju kota Timika.",
             batas_wilayah: "Utara: Distrik Tembagapura, Selatan: Distrik Mimika Tengah, Timur: Distrik Kuala Kencana, Barat: Distrik Mimika Barat",
             kode_kemendagri: "91.09.13",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-5/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-5/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-5-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-5-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-5-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Pariwisata", total: 10 },
             { category_id: 2, name: "Dinas Pendidikan", total: 12 },
@@ -117,8 +143,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Kwamki Narama merupakan salah satu distrik terpadat yang memiliki histori panjang terkait konflik komunal di masa lalu. Kini, pemerintah daerah fokus pada pendekatan humanis melalui intervensi pembangunan sekolah vokasi, pasar tradisional, dan program pemberdayaan pemuda berbasis komunitas.",
             batas_wilayah: "Utara: Distrik Kuala Kencana, Selatan: Distrik Mimika Baru, Timur: Distrik Mimika Timur, Barat: Distrik Wania",
             kode_kemendagri: "91.09.14",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-6/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-6/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-6-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-6-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-6-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 14 },
             { category_id: 2, name: "Dinas Pendidikan", total: 25 },
@@ -137,8 +168,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Terletak di kawasan estuari dan muara sungai besar, Mimika Timur didominasi oleh suku Kamoro. Wilayah ini kaya akan potensi perikanan pesisir (kepiting karang, udang) dan hutan mangrove. Pelabuhan pendaratan ikan (PPI) Poumako menjadi nadi utama ekonomi kelautan di distrik ini.",
             batas_wilayah: "Utara: Distrik Mimika Baru, Selatan: Laut Arafuru, Timur: Distrik Mimika Timur Jauh, Barat: Distrik Wania",
             kode_kemendagri: "91.09.02",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-7/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-7/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-7-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-7-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-7-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kelautan & Perikanan", total: 45 },
             { category_id: 2, name: "Dinas Perhubungan", total: 12 },
@@ -157,8 +193,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik Mimika Tengah sebagian besar wilayahnya merupakan hamparan dataran rendah rawa dan sungai. Transportasi air (ketinting/perahu motor) adalah satu-satunya moda transportasi yang menghubungkan kampung-kampung di wilayah ini menuju kota.",
             batas_wilayah: "Utara: Distrik Iwaka, Selatan: Laut Arafuru, Timur: Distrik Wania, Barat: Distrik Mimika Barat",
             kode_kemendagri: "91.09.10",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-8/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-8/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-8-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-8-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-8-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 5 },
             { category_id: 2, name: "Dinas Pendidikan", total: 8 },
@@ -177,8 +218,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Merupakan salah satu distrik terluar di wilayah pesisir barat Kabupaten Mimika. Akses utama menuju ibu kota distrik (Kokonao) masih sangat bergantung pada transportasi laut dan sungai, menjadikannya rentan terhadap isolasi saat cuaca buruk.",
             batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
             kode_kemendagri: "91.09.03",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-9/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-9/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-9-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-9-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-9-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 4 },
             { category_id: 2, name: "Dinas Pendidikan", total: 5 },
@@ -196,8 +242,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Agimuga adalah salah satu distrik terluas namun dengan kepadatan penduduk terendah di pedalaman pegunungan. Keterisolasian geografis membuat biaya hidup sangat tinggi, di mana pasokan barang hanya bisa mengandalkan pesawat perintis berbadan kecil (Cessna/Pilatus).",
             batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Mimika Timur Jauh, Timur: Distrik Jita, Barat: Distrik Tembagapura",
             kode_kemendagri: "91.09.05",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-10/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-10/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-10-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-10-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-10-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 3 },
             { category_id: 2, name: "Dinas Pendidikan", total: 4 },
@@ -216,8 +267,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik Jila berlokasi di area pegunungan tengah dengan topografi yang sangat curam. Masyarakatnya hidup secara subsisten dari hasil berkebun dan berburu. Penetrasi layanan kesehatan dan pendidikan masih menjadi fokus utama pembangunan daerah di sini.",
             batas_wilayah: "Utara: Kabupaten Puncak, Selatan: Distrik Agimuga, Timur: Distrik Alama, Barat: Distrik Tembagapura",
             kode_kemendagri: "91.09.06",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-11/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-11/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-11-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-11-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-11-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 2 },
             { category_id: 2, name: "Dinas Pendidikan", total: 3 },
@@ -235,8 +291,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Berbatasan langsung dengan Kabupaten Asmat, Jita merupakan daerah dataran rendah bermilir dan berlumpur. Potensi perikanan darat dan perkebunan sagu menjadi penopang utama ekonomi masyarakat lokal.",
             batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Kabupaten Asmat, Barat: Distrik Mimika Timur Jauh",
             kode_kemendagri: "91.09.07",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-12/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-12/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-12-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-12-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-12-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 3 },
             { category_id: 3, name: "Dinas Pertanian", total: 12 },
@@ -254,8 +315,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik pemekaran yang membentang di pesisir selatan Mimika. Wilayah ini kaya akan keanekaragaman hayati estuari, namun menghadapi kendala abrasi pantai dan kurangnya infrastruktur pemecah ombak di permukiman nelayan.",
             batas_wilayah: "Utara: Distrik Agimuga, Selatan: Laut Arafuru, Timur: Distrik Jita, Barat: Distrik Mimika Timur",
             kode_kemendagri: "91.09.08",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-13/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-13/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-13-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-13-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-13-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 4 },
             { category_id: 3, name: "Dinas Kelautan & Perikanan", total: 18 },
@@ -273,8 +339,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Merupakan distrik dengan luasan daratan rawa terbesar di bagian barat. Akses telekomunikasi dan listrik masih sangat minim, dan permukiman tersebar dalam kelompok-kampung kecil di sepanjang aliran sungai besar.",
             batas_wilayah: "Utara: Kabupaten Kaimana, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat Tengah, Barat: Kabupaten Kaimana",
             kode_kemendagri: "91.09.09",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-14/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-14/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-14-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-14-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-14-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kominfo", total: 2 },
             { category_id: 2, name: "Dinas Pendidikan", total: 3 },
@@ -292,8 +363,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Berada di antara distrik pesisir dan dataran rendah, wilayah ini perlahan mulai berkembang dengan adanya inisiatif pembangunan dermaga perintis skala kecil. Mata pencaharian warga bertumpu pada hasil meramu hutan dan mencari ikan.",
             batas_wilayah: "Utara: Kabupaten Deiyai, Selatan: Laut Arafuru, Timur: Distrik Mimika Barat, Barat: Distrik Mimika Barat Jauh",
             kode_kemendagri: "91.09.15",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-15/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-15/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-15-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-15-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-15-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 3 },
             { category_id: 3, name: "Dinas Perhubungan", total: 9 },
@@ -311,8 +387,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik pemekaran baru di pesisir yang diproyeksikan sebagai salah satu klaster pengembangan perikanan tangkap terpadu. Kendala utama saat ini adalah air bersih yang payau serta terbatasnya tenaga kesehatan yang menetap.",
             batas_wilayah: "Utara: Distrik Mimika Barat, Selatan: Laut Arafuru, Timur: Distrik Mimika Tengah, Barat: Distrik Mimika Barat Tengah",
             kode_kemendagri: "91.09.16",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-16/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-16/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-16-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-16-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-16-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 4 },
             { category_id: 2, name: "Dinas Kelautan & Perikanan", total: 4 },
@@ -330,8 +411,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Hoya adalah wilayah kantong di dataran tinggi yang berbatasan dengan Kabupaten Nduga. Sama seperti Alama dan Jila, layanan dasar di Hoya sangat bergantung pada penerbangan perintis subsidi pemerintah akibat putusnya akses jalan darat.",
             batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Tembagapura, Timur: Distrik Jila, Barat: Kabupaten Puncak",
             kode_kemendagri: "91.09.17",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-17/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-17/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-17-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-17-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-17-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 1 },
             { category_id: 2, name: "Dinas Pendidikan", total: 2 },
@@ -349,8 +435,13 @@ export const MOCK_DISTRICT_DRILLDOWN: Record<number, DistrictDrilldownResponse> 
             deskripsi: "Distrik paling terisolir di Kabupaten Mimika yang berada persis di sabuk Pegunungan Jayawijaya. Kondisi keamanan yang rentan dan ketiadaan jalan darat menjadikan pembangunan infrastruktur sipil sangat tersendat. Program pelayanan kesehatan berjalan ('Flying Doctor') menjadi andalan pemerintah.",
             batas_wilayah: "Utara: Kabupaten Nduga, Selatan: Distrik Agimuga, Timur: Kabupaten Asmat, Barat: Distrik Jila",
             kode_kemendagri: "91.09.18",
-            thumbnail_url: "https://picsum.photos/seed/mimika-dist-18/100/100"
-        },
+            thumbnail_url: "https://picsum.photos/seed/mimika-dist-18/100/100",
+            images: [
+                "https://picsum.photos/seed/mimika-dist-18-a/800/450",
+                "https://picsum.photos/seed/mimika-dist-18-b/800/450",
+                "https://picsum.photos/seed/mimika-dist-18-c/800/450"
+            ]
+        } as any,
         categories: [
             { category_id: 1, name: "Dinas Kesehatan", total: 2 },
             { category_id: 2, name: "Dinas Pendidikan", total: 3 },
