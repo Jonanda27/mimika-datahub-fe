@@ -1,15 +1,15 @@
 // src/components/gis/AssetMarkers.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import { ArrowRight } from "lucide-react"; // [REFACTOR] Icon tambahan untuk tombol
+import { ArrowRight } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
-// Import dipindahkan ke domain spesifik (mockAssets)
-import { MOCK_ASSET_DATA } from "@/src/app/lib/mocks/mockAssets";
+// [REFACTOR FASE 4.1] Hapus MOCK_ASSET_DATA, import assetService
+import { assetService } from "@/src/app/services/asset.service";
 import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 
 // ============================================================================
@@ -18,7 +18,6 @@ import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 
 // A. Ikon untuk Titik Individual (Menggunakan Icon URL & Color dari Config)
 const createCustomPin = (iconUrl: string, color: string) => {
-    // Desain pin kustom: Lingkaran berwarna dengan icon SVG di tengahnya, plus segitiga kecil di bawah
     return L.divIcon({
         className: "custom-pin-icon bg-transparent border-none",
         html: `
@@ -30,16 +29,15 @@ const createCustomPin = (iconUrl: string, color: string) => {
             </div>
         `,
         iconSize: [32, 40],
-        iconAnchor: [0, 0], // Di-handle oleh CSS transform di atas agar presisi di titik koordinat
-        popupAnchor: [0, -40], // Popup muncul tepat di atas pin
+        iconAnchor: [0, 0],
+        popupAnchor: [0, -40],
     });
 };
 
-// B. Ikon untuk Klaster (Saat di-zoom out) - Mempertahankan desain elegan aslimu
+// B. Ikon untuk Klaster (Saat di-zoom out) 
 const createClusterCustomIcon = function (cluster: any) {
     const count = cluster.getChildCount();
 
-    // Ukuran klaster dinamis berdasarkan jumlah titik
     let size = 'w-10 h-10';
     if (count < 10) size = 'w-8 h-8';
     if (count > 20) size = 'w-12 h-12';
@@ -58,17 +56,34 @@ const createClusterCustomIcon = function (cluster: any) {
 // KOMPONEN UTAMA
 // ============================================================================
 export default function AssetMarkers() {
-    // 1. Tarik state multi-selection array dan fungsi openPanel dari Store yang baru
     const { activeAssetLayers, openPanel } = useExplorerStore();
+
+    // [REFACTOR] State lokal untuk menyimpan data asli dari Database Backend
+    const [dbAssets, setDbAssets] = useState<Record<string, any[]>>({});
+
+    // Fetch data saat komponen peta pertama kali di-render
+    useEffect(() => {
+        let isMounted = true;
+
+        assetService.getPublicAssets()
+            .then(data => {
+                if (isMounted) setDbAssets(data);
+            })
+            .catch(err => {
+                console.error("Gagal mengambil data aset spasial dari server:", err);
+            });
+
+        return () => { isMounted = false; };
+    }, []);
 
     // 2. Mesin Filtering O(n) dengan Memoization
     const visibleMarkers = useMemo(() => {
-        // Jika tidak ada sakelar yang nyala sama sekali, return array kosong
         if (!activeAssetLayers || activeAssetLayers.length === 0) return [];
+        if (Object.keys(dbAssets).length === 0) return []; // Render kosong jika API belum membalas
 
         const markers: any[] = [];
 
-        // Buat Hash Map dari config untuk pencarian super cepat O(1)
+        // Buat Hash Map dari config lokal (SOT) untuk pencarian super cepat O(1)
         const configMap = new Map<string, any>();
         ASSET_TAXONOMY_CONFIG.forEach(opd => {
             opd.categories.forEach(cat => {
@@ -76,28 +91,31 @@ export default function AssetMarkers() {
             });
         });
 
-        // Iterasi seluruh mock data dan saring yang status layernya nyala
-        Object.keys(MOCK_ASSET_DATA).forEach(opdKey => {
-            const assets = MOCK_ASSET_DATA[opdKey];
+        // Looping menggunakan data asli dari database (dbAssets)
+        Object.keys(dbAssets).forEach(opdKey => {
+            const assets = dbAssets[opdKey];
 
             assets.forEach(asset => {
                 const layerId = `${opdKey}::${asset.type}`;
 
                 // Cek apakah jenis aset spesifik ini sedang diaktifkan user
                 if (activeAssetLayers.includes(layerId)) {
-                    const config = configMap.get(layerId);
-                    if (config) {
+                    const localConfig = configMap.get(layerId);
+                    if (localConfig) {
                         markers.push({
                             ...asset,
-                            config // Tempelkan config (warna & icon) ke data aset
+                            config: localConfig // Paksa pakai config lokal (UI) agar ikon selalu sinkron dengan Frontend
                         });
+                    } else if (asset.config) {
+                        // Fallback ke config dari backend jika di frontend belum diregistrasi
+                        markers.push(asset);
                     }
                 }
             });
         });
 
         return markers;
-    }, [activeAssetLayers]);
+    }, [activeAssetLayers, dbAssets]);
 
     // Jika hasil filter kosong (Layer Mati), render null agar tidak membebani DOM
     if (visibleMarkers.length === 0) {
@@ -116,16 +134,14 @@ export default function AssetMarkers() {
                 <Marker
                     key={`${marker.id}-${index}`}
                     position={[marker.lat, marker.lng]}
-                    // Panggil factory icon dengan data spesifik dari config
                     icon={createCustomPin(marker.config.iconUrl, marker.config.color)}
                 >
-                    {/* Mempertahankan Tooltip Info High-Density milikmu */}
                     <Popup className="asset-popup">
                         <div className="flex flex-col p-0.5 w-50">
 
                             <span
                                 className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
-                                style={{ color: marker.config.color }} // Warna judul ngikutin warna OPD
+                                style={{ color: marker.config.color }}
                             >
                                 {marker.type}
                             </span>
@@ -141,11 +157,10 @@ export default function AssetMarkers() {
                                 </span>
                             </div>
 
-                            {/* [REFACTOR] FASE 1: Tombol Trigger Panel Detail Aset */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    // Memicu perubahan state di Zustand untuk membuka panel detail aset
+                                    // Melempar data aktual dari database ke panel Detail
                                     openPanel("detil-aset", marker.name, marker);
                                 }}
                                 className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"

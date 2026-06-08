@@ -1,0 +1,4060 @@
+=== DOKUMENTASI UI GIS & INTEGRASI BE (FRONTEND ONLY) ===
+
+
+--- FILE: src/app/(public)/explorer/page.tsx ---
+// src/app/(public)/explorer/page.tsx
+"use client";
+
+import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
+
+// Komponen Navigasi Global (Atas) & Sidebar Slim (Kiri)
+import ExplorerNavbar from "@/src/components/layout/ExplorerNavbar";
+import ExplorerSidebar from "@/src/components/layout/ExplorerSidebar";
+
+// Orchestrator untuk Panel Bertumpuk & HUD Peta
+import PanelOrchestrator from "@/src/components/gis/PanelOrchestrator";
+import MapHUD from "@/src/components/gis/MapHUD";
+import LoadingState from "@/components/ui/LoadingState";
+
+// [REFACTOR] FASE AKHIR: Import Mode Teater Sinematik
+import GalleryOverlay from "@/src/components/gis/GalleryOverlay";
+
+// Import MapWrapper secara dinamis (Bypass SSR)
+const MapWrapper = dynamic(() => import("@/src/components/gis/MapWrapper"), {
+    ssr: false,
+    loading: () => (
+        // Loading state diubah ke tema TERANG BENDERANG yang bersih dan elegan
+        <div className="h-full w-full bg-slate-50 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6 shadow-md"></div>
+            <LoadingState message="Memuat Kanvas Spasial..." />
+        </div>
+    ),
+});
+
+/**
+ * ExplorerPage - The Immersive Command Center (Light & Clean Theme)
+ * Mengadopsi GFW Paradigm secara presisi:
+ * 1. Navbar di atas sebagai Global Context.
+ * 2. Sidebar di kiri sebagai alat navigasi spasial.
+ * 3. Peta mendominasi 100% ruang yang tersisa.
+ */
+export default function ExplorerPage() {
+    return (
+        // Latar belakang diatur ke terang (slate-50) dengan warna seleksi teks biru
+        <main className="relative h-dvh w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 selection:bg-blue-200 selection:text-blue-900">
+
+            {/* =====================================================================
+                LAYER 0: THE INFINITE CANVAS (PETA)
+                Berada di dasar (z-0), memenuhi 100% layar.
+            ====================================================================== */}
+            <div className="absolute inset-0 z-0">
+                <Suspense fallback={<div className="h-full w-full bg-slate-50" />}>
+                    <MapWrapper isAtlasMode={true} />
+                </Suspense>
+            </div>
+
+            {/* =====================================================================
+                [REFACTOR] LAYER 0.5: THEATER MODE OVERLAY (z-20)
+                Menutupi peta, namun mengalah pada Panel (z-30), Sidebar (z-40) & Navbar (z-50)
+            ====================================================================== */}
+            <GalleryOverlay />
+
+            {/* =====================================================================
+                LAYER 1: THE GLOBAL CONTEXT (NAVBAR ATAS)
+                Posisi absolut di atas, mengambil tinggi 64px (h-16). z-50 (Tertinggi)
+            ====================================================================== */}
+            <div className="absolute top-0 left-0 right-0 h-16 z-50 pointer-events-auto">
+                <ExplorerNavbar />
+            </div>
+
+            {/* =====================================================================
+                LAYER 2: THE SLIM ANCHOR (SIDEBAR KIRI)
+                Dimulai persis di bawah Navbar (top-[64px] atau top-16). z-40
+            ====================================================================== */}
+            <div className="absolute top-16 bottom-0 left-0 z-40 pointer-events-none">
+                <div className="h-full pointer-events-auto">
+                    <ExplorerSidebar />
+                </div>
+            </div>
+
+            {/* =====================================================================
+                LAYER 3: THE STACKING DRAWERS (PANEL ANALISIS)
+                Mengadopsi pola Docking & Zero Gap (Flush). z-30
+                Panel menempel sempurna di bawah Navbar (top-16), mentok ke dasar 
+                layar (bottom-0), dan berhimpit di sisi kanan Sidebar (left-16).
+            ====================================================================== */}
+            <div className="absolute top-16 bottom-0 left-16 z-30 pointer-events-none">
+                <PanelOrchestrator />
+            </div>
+
+            {/* =====================================================================
+                LAYER 4: MAP HUD & CONTROLS (KANAN BAWAH)
+                Komponen MapHUD memegang fungsi Zoom dan Kesiapan Data. z-30
+            ====================================================================== */}
+            <div className="absolute bottom-8 right-8 z-30 pointer-events-none">
+                <MapHUD />
+            </div>
+
+        </main>
+    );
+}
+
+--- FILE: src/app/lib/assetConfig.ts ---
+// src/app/lib/assetConfig.ts
+
+/**
+ * Asset Taxonomy Configuration
+ * Single Source of Truth untuk pemetaan hierarki OPD, jenis aset, dan properti visual (icon, warna).
+ * Konfigurasi ini menjamin Zero Hardcoding pada komponen UI dan Spatial Engine.
+ */
+
+export interface AssetCategoryMetadata {
+    type: string;      // Identifier unik yang harus sama persis (exact match) dengan key 'type' di mock data atau database
+    label: string;     // Nama ramah pembaca untuk ditampilkan di UI Accordion
+    iconUrl: string;   // Path relatif menuju aset statis icon marker
+    color: string;     // Kode warna HEX untuk fallback visual atau styling UI layer
+}
+
+export interface OpdAssetTaxonomy {
+    opdKey: string;    // Slug unik OPD, misal: "dinas_kesehatan"
+    opdName: string;   // Nama instansi lengkap untuk Header Accordion
+    categories: AssetCategoryMetadata[];
+}
+
+export const ASSET_TAXONOMY_CONFIG: OpdAssetTaxonomy[] = [
+    {
+        opdKey: "dinas_kesehatan",
+        opdName: "Dinas Kesehatan",
+        categories: [
+            { type: "Rumah Sakit", label: "Rumah Sakit Umum", iconUrl: "/icons/markers/hospital.svg", color: "#EF4444" },
+            { type: "Puskesmas", label: "Puskesmas", iconUrl: "/icons/markers/clinic.svg", color: "#F97316" },
+            { type: "Puskesmas Pembantu", label: "Puskesmas Pembantu", iconUrl: "/icons/markers/aid.svg", color: "#EAB308" },
+            { type: "Klinik Industri", label: "Klinik Industri", iconUrl: "/icons/markers/factory-clinic.svg", color: "#3B82F6" }
+        ]
+    },
+    {
+        opdKey: "dinas_pendidikan",
+        opdName: "Dinas Pendidikan",
+        categories: [
+            { type: "Gedung Sekolah", label: "Gedung Sekolah", iconUrl: "/icons/markers/school.svg", color: "#10B981" },
+            { type: "Fasilitas Umum", label: "Perpustakaan & Fasilitas Umum", iconUrl: "/icons/markers/library.svg", color: "#8B5CF6" }
+        ]
+    },
+    {
+        opdKey: "dinas_pupr",
+        opdName: "Dinas PUPR",
+        categories: [
+            { type: "Infrastruktur", label: "Infrastruktur Fisik", iconUrl: "/icons/markers/bridge.svg", color: "#64748B" },
+            { type: "Infrastruktur Dasar", label: "Infrastruktur Air/Sanitasi", iconUrl: "/icons/markers/water.svg", color: "#0EA5E9" },
+            { type: "Aset Bergerak", label: "Alat Berat", iconUrl: "/icons/markers/bulldozer.svg", color: "#F59E0B" },
+            { type: "Kantor Operasional", label: "Kantor Pemeliharaan", iconUrl: "/icons/markers/office.svg", color: "#334155" }
+        ]
+    },
+    {
+        opdKey: "dinas_sosial",
+        opdName: "Dinas Sosial",
+        categories: [
+            { type: "Fasilitas Sosial", label: "Fasilitas Sosial & Logistik", iconUrl: "/icons/markers/social-facility.svg", color: "#EC4899" }
+        ]
+    }
+];
+
+--- FILE: src/app/lib/gisUtils.ts ---
+// src/app/lib/gisUtils.ts
+
+/**
+ * gisUtils - Pure Fabrication Engine
+ * Berisi sekumpulan fungsi utilitas murni untuk kebutuhan spasial.
+ * Didesain tanpa ketergantungan pada React atau Leaflet agar 100% aman dieksekusi di Server-Side (Node.js).
+ */
+
+/**
+ * Konfigurasi Eksternal Tile Server (Basemap Gallery).
+ * Memisahkan definisi URL dari komponen UI untuk mematuhi prinsip High Cohesion & Low Coupling.
+ */
+export const BASEMAP_URLS: Record<string, string> = {
+    satellite: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", // Google Satellite High-Res
+    street: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",    // Google Roadmap
+    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" // Carto Dark Matter
+};
+
+/**
+ * Mengambil URL Tile Server berdasarkan ID aktif.
+ * @param baseMapId ID dari basemap (contoh: "satellite", "dark")
+ * @returns String URL Endpoint dari Tile Provider
+ */
+export const getBasemapUrl = (baseMapId: string): string => {
+    return BASEMAP_URLS[baseMapId] || BASEMAP_URLS.satellite;
+};
+
+/**
+ * Mengkalkulasi kode warna (Hex) untuk peta choropleth berdasarkan nilai data dan kategori indikator.
+ * @param value Nilai aktual dari distrik/poligon.
+ * @param max Nilai maksimum dari seluruh dataset indikator saat ini.
+ * @param indicatorKey Kata kunci indikator untuk menentukan skema warna (Semantic Color).
+ * @returns String kode warna Hexadecimal.
+ */
+export const getSemanticColor = (value: number, max: number, indicatorKey: string): string => {
+    const ratio = value / max;
+    const key = indicatorKey.toLowerCase();
+
+    // KESEHATAN / SOSIAL: Magenta - Deep Pink (Sangat Berani & Mencolok)
+    if (key.includes('stunting') || key.includes('kesehatan') || key.includes('penduduk') || key.includes('miskin')) {
+        if (ratio > 0.8) return '#9d174d'; // Pink-800
+        if (ratio > 0.6) return '#be185d'; // Pink-700
+        if (ratio > 0.4) return '#db2777'; // Pink-600
+        if (ratio > 0.2) return '#f43f5e'; // Rose-500
+        return '#fda4af';                  // Rose-300
+    }
+    // EKONOMI: Emerald - Cyan (Representasi Uang, Kemakmuran)
+    else if (key.includes('pdrb') || key.includes('ekonomi') || key.includes('uang') || key.includes('dana')) {
+        if (ratio > 0.8) return '#064e3b'; // Emerald-900
+        if (ratio > 0.6) return '#047857'; // Emerald-700
+        if (ratio > 0.4) return '#059669'; // Emerald-600
+        if (ratio > 0.2) return '#10b981'; // Emerald-500
+        return '#6ee7b7';                  // Emerald-300
+    }
+    // INFRASTRUKTUR / DEFAULT: Amber - Burnt Orange
+    else {
+        if (ratio > 0.8) return '#b45309'; // Amber-700
+        if (ratio > 0.6) return '#d97706'; // Amber-600
+        if (ratio > 0.4) return '#f59e0b'; // Amber-500
+        if (ratio > 0.2) return '#fbbf24'; // Amber-400
+        return '#fde68a';                  // Amber-200
+    }
+};
+
+--- FILE: src/app/services/asset.service.ts ---
+// src/app/services/asset.service.ts
+
+import { API_BASE_URL } from "../lib/config";
+
+/**
+ * Interface Payload untuk mengirim data aset baru (FormData).
+ * Mengapa FormData? Karena kita mendukung upload file gambar fisik.
+ */
+export interface CreateAssetPayload {
+    name: string;
+    source_id: number;
+    category_id: number;
+    district_id: number | null;
+    lat: number;
+    lng: number;
+    description: string;
+    image: File | null;
+    details: Record<string, string>; // Dynamic metadata (contoh: {"Kapasitas": "100", "Status": "Aktif"})
+}
+
+export const assetService = {
+    /**
+     * Helper internal untuk mengambil header otorisasi standar.
+     */
+    getAuthHeaders() {
+        const token = localStorage.getItem("auth_token");
+        return {
+            "Authorization": `Bearer ${token}`
+            // Jangan tambahkan "Content-Type": "application/json" jika mengirim FormData!
+        };
+    },
+
+    /**
+     * Mengambil daftar kategori aset (Master Data).
+     * Contoh: Rumah Sakit, Puskesmas, Jembatan, dll.
+     */
+    async getAssetCategories() {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/categories`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Gagal mengambil data kategori aset");
+        }
+        return response.json();
+    },
+
+    /**
+     * Mendaftarkan kategori aset baru ke dalam sistem.
+     */
+    async createAssetCategory(name: string, iconUrl?: string, color: string = "#0071bc") {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/categories`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders()
+            },
+            body: JSON.stringify({ name, icon_url: iconUrl, color })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Gagal membuat kategori aset baru");
+        }
+        return response.json();
+    },
+
+    /**
+     * Mendaftarkan Aset Fisik / Hasil GeoTagging baru.
+     * Menggunakan FormData karena melibatkan file gambar.
+     */
+    async createAsset(payload: CreateAssetPayload) {
+        const formData = new FormData();
+
+        formData.append("name", payload.name);
+        formData.append("source_id", payload.source_id.toString());
+        formData.append("category_id", payload.category_id.toString());
+        formData.append("lat", payload.lat.toString());
+        formData.append("lng", payload.lng.toString());
+
+        if (payload.district_id) formData.append("district_id", payload.district_id.toString());
+        if (payload.description) formData.append("description", payload.description);
+        if (payload.image) formData.append("image", payload.image);
+
+        if (Object.keys(payload.details).length > 0) {
+            formData.append("details", JSON.stringify(payload.details));
+        }
+
+        const response = await fetch(`${API_BASE_URL}/v1/assets/`, {
+            method: "POST",
+            headers: this.getAuthHeaders(),
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => null);
+            throw new Error(error?.detail || "Gagal menyimpan data aset ke server");
+        }
+        return response.json();
+    },
+
+    /**
+     * [REFACTOR] Melakukan Update pada Aset yang sudah ada
+     */
+    async updateAsset(assetId: number, payload: CreateAssetPayload) {
+        const formData = new FormData();
+
+        formData.append("name", payload.name);
+        formData.append("source_id", payload.source_id.toString());
+        formData.append("category_id", payload.category_id.toString());
+        formData.append("lat", payload.lat.toString());
+        formData.append("lng", payload.lng.toString());
+
+        if (payload.district_id) formData.append("district_id", payload.district_id.toString());
+        if (payload.description) formData.append("description", payload.description);
+
+        // Hanya append image jika user memilih foto baru
+        if (payload.image) {
+            formData.append("image", payload.image);
+        }
+
+        if (Object.keys(payload.details).length > 0) {
+            formData.append("details", JSON.stringify(payload.details));
+        }
+
+        const response = await fetch(`${API_BASE_URL}/v1/assets/${assetId}`, {
+            method: "PUT",
+            headers: this.getAuthHeaders(),
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => null);
+            throw new Error(error?.detail || "Gagal memperbarui data aset di server");
+        }
+        return response.json();
+    },
+
+    /**
+     * Mengambil daftar aset yang pernah didaftarkan oleh OPD tersebut.
+     */
+    async getMyAssets() {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/my-assets`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Gagal mengambil riwayat aset Anda");
+        }
+        return response.json();
+    },
+
+    /**
+     * Endpoint khusus untuk Admin (Melihat Semua Data)
+     */
+    async getAllAssets() {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/all`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Gagal mengambil data seluruh aset untuk moderasi");
+        }
+        return response.json();
+    },
+
+    /**
+     * Menghapus sebuah aset dari sistem berdasarkan ID-nya.
+     */
+    async deleteAsset(assetId: number) {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/${assetId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders()
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Gagal menghapus data aset");
+        }
+        return response.json();
+    },
+
+    /**
+     * API UNTUK EXPLORER SPATIAL (FRONTEND PUBLIK).
+     */
+    async getPublicAssets() {
+        const response = await fetch(`${API_BASE_URL}/v1/assets/public`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Gagal memuat koordinat aset spasial dari server");
+        }
+        return response.json();
+    }
+};
+
+--- FILE: src/app/services/gis.service.ts ---
+// src/app/services/gis.service.ts
+import { API_BASE_URL } from "../lib/config";
+import { SpatialStatResponse, DistrictDrilldownResponse } from "../types/gis";
+
+// [REFACTOR] Import dipindahkan ke domain spesifik masing-masing
+import { MOCK_INDICATOR_DETAILS, MOCK_SPATIAL_STATS } from "../lib/mocks/mockIndicators";
+import { MOCK_DISTRICT_DRILLDOWN } from "../lib/mocks/mockDistricts";
+
+/**
+ * Konfigurasi Sakelar Mock (Fase 5: Indirection)
+ * Memungkinkan Frontend berjalan tanpa bergantung pada Backend API.
+ */
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_EXPLORER === "true";
+
+/**
+ * Helper: Simulasi Latensi Jaringan (Best Practice Simulasi BE)
+ */
+const simulateDelay = (ms: number = 800) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Array statis 18 Distrik Mimika untuk memfasilitasi pembuatan struktur master data
+const ALL_DISTRICTS = [
+    "Mimika Baru", "Kuala Kencana", "Tembagapura", "Wania", "Iwaka",
+    "Kwamki Narama", "Mimika Timur", "Mimika Tengah", "Mimika Barat",
+    "Agimuga", "Jila", "Jita", "Mimika Timur Jauh", "Mimika Barat Jauh",
+    "Mimika Barat Tengah", "Amar", "Hoya", "Alama"
+];
+
+/**
+ * Service untuk menangani pengambilan data spasial/GIS.
+ */
+export const gisService = {
+    /**
+     * Mengambil data statistik distribusi dataset per distrik.
+     * Digunakan untuk pewarnaan peta tematik (Choropleth standar).
+     */
+    fetchGisStats: async (categoryId?: number, year?: number): Promise<SpatialStatResponse[]> => {
+        if (USE_MOCK) {
+            await simulateDelay(600);
+            // Mengambil data spasial realistis dari mock file Anda
+            return MOCK_SPATIAL_STATS;
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const queryParams = new URLSearchParams();
+
+            if (categoryId) queryParams.append("category_id", categoryId.toString());
+            if (year) queryParams.append("year", year.toString());
+
+            const queryString = queryParams.toString();
+            const url = `${API_BASE_URL}/v1/gis/stats${queryString ? `?${queryString}` : ''}`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data GIS: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error("Error fetching GIS stats:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * TAHAP 3: Action Logic: Fetch Indicator Data (Choropleth Engine)
+     */
+    fetchIndicatorData: async (indicatorKey: string): Promise<any> => {
+        if (USE_MOCK) {
+            await simulateDelay(600);
+            const data = MOCK_INDICATOR_DETAILS[indicatorKey];
+
+            if (!data) {
+                throw new Error(`Data simulasi untuk indikator '${indicatorKey}' tidak ditemukan.`);
+            }
+
+            return data;
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/indicator/${indicatorKey}`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data indikator: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error(`Error fetching indicator data for ${indicatorKey}:`, error);
+            throw error;
+        }
+    },
+
+    /**
+     * Mengambil detail statistik per distrik.
+     */
+    fetchDetailedGisStats: async (categoryId?: number): Promise<any[]> => {
+        if (USE_MOCK) {
+            await simulateDelay(1000);
+            return [{ district_name: "Mock District", total_rows: 5000, avg_quality: 85 }];
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const queryParams = new URLSearchParams();
+            if (categoryId) queryParams.append("category_id", categoryId.toString());
+
+            const queryString = queryParams.toString();
+            const url = `${API_BASE_URL}/v1/gis/stats/detail${queryString ? `?${queryString}` : ''}`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil detail GIS: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error("Error fetching detailed GIS stats:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Action Logics: Drilldown Spasial (GFW Paradigm)
+     */
+    fetchDistrictDrilldown: async (districtId: number): Promise<DistrictDrilldownResponse> => {
+        if (USE_MOCK) {
+            await simulateDelay(800);
+
+            // Mengambil profil mendetail langsung dari MOCK_DISTRICT_DRILLDOWN
+            if (MOCK_DISTRICT_DRILLDOWN && MOCK_DISTRICT_DRILLDOWN[districtId]) {
+                return MOCK_DISTRICT_DRILLDOWN[districtId];
+            }
+
+            // Fallback Data Simulasi jika ID distrik tidak ada di dalam Mock
+            return {
+                district_id: districtId,
+                district_name: ALL_DISTRICTS[districtId - 1] || `Distrik Simulasi ${districtId}`,
+                profile: {
+                    id: districtId,
+                    luas_wilayah: null,
+                    jumlah_penduduk: null,
+                    deskripsi: "Data kewilayahan belum diregistrasikan. Silakan hubungi admin GIS Bappeda.",
+                    batas_wilayah: "-",
+                },
+                categories: [
+                    { category_id: 1, name: "Kesehatan", total: Math.floor(Math.random() * 50) },
+                    { category_id: 2, name: "Ekonomi", total: Math.floor(Math.random() * 80) },
+                    { category_id: 3, name: "Infrastruktur", total: Math.floor(Math.random() * 40) },
+                ],
+                last_updated: new Date().toISOString()
+            } as DistrictDrilldownResponse;
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/district/${districtId}/drilldown`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data Drilldown Distrik: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error(`Error fetching drilldown for district ${districtId}:`, error);
+            throw error;
+        }
+    },
+
+    /**
+     * Mengambil daftar seluruh distrik dari Master Bappeda (Digunakan di Halaman Manajemen Wilayah)
+     */
+    fetchDistricts: async (): Promise<any[]> => {
+        if (USE_MOCK) {
+            await simulateDelay(600);
+
+            // Generate list 18 Distrik O(N) dan injeksikan profile dari MOCK_DISTRICT_DRILLDOWN
+            return ALL_DISTRICTS.map((name, index) => {
+                const id = index + 1;
+                const mockData = MOCK_DISTRICT_DRILLDOWN[id];
+
+                return {
+                    id,
+                    name,
+                    // Jika ada di mock, pakai profilnya. Jika tidak, set ke null (Mensimulasikan data belum diisi)
+                    profile: mockData ? mockData.profile : {
+                        luas_wilayah: null,
+                        jumlah_penduduk: null,
+                        deskripsi: null,
+                        batas_wilayah: null
+                    }
+                };
+            });
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/districts`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data master distrik: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error("Error fetching districts:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Menyimpan atau mengupdate profil kewilayahan
+     */
+    updateDistrictProfile: async (districtId: number, payload: any): Promise<any> => {
+        if (USE_MOCK) {
+            await simulateDelay(800);
+
+            // Simulasikan struktur data profile yang berhasil di-update dari DB
+            return {
+                id: districtId,
+                luas_wilayah: payload.luas_wilayah,
+                jumlah_penduduk: payload.jumlah_penduduk,
+                deskripsi: payload.deskripsi,
+                batas_wilayah: payload.batas_wilayah || "-"
+            };
+        }
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const url = `${API_BASE_URL}/v1/gis/district/${districtId}/profile`;
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Gagal memperbarui profil distrik: ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error(`Error updating profile for district ${districtId}:`, error);
+            throw error;
+        }
+    }
+};
+
+--- FILE: src/app/store/useExplorerStore.ts ---
+// src/app/store/useExplorerStore.ts
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { ExplorerPanel, ExplorerPanelType } from "../types/gis";
+
+export type DetailTabType = "umum" | "analisis";
+
+// [REFACTOR] THEATER MODE: Payload untuk state galeri global
+export interface GalleryPayload {
+    isOpen: boolean;
+    images: string[];
+    currentIndex: number;
+    title: string;
+}
+
+interface ExplorerState {
+    // ==========================================
+    // 1. STATE: Manajemen Panel (UI Layout)
+    // ==========================================
+    activePanels: ExplorerPanel[];
+    activeDetailTab: DetailTabType; // Manajemen state untuk tab panel detail
+
+    // ==========================================
+    // 2. STATE: Konteks Eksplorasi Spasial
+    // ==========================================
+    activeIndicator: string | null;
+    activeAssetLayers: string[]; // <--- MULTI-SELECTION STATE (Format: "opdKey::assetType")
+    mapOpacity: number;
+    activeBaseMap: string;
+
+    // Controller State untuk Peta
+    // Berisi nama distrik yang sedang di-highlight dari Sidebar
+    focusedDistrict: string | null;
+
+    // [REFACTOR] THEATER MODE: State untuk Cinematic Gallery Overlay
+    galleryState: GalleryPayload | null;
+
+    // ==========================================
+    // ACTIONS: Manajemen Panel
+    // ==========================================
+    openPanel: (type: ExplorerPanelType, title: string, data?: any) => void;
+    closePanel: (id: string) => void;
+    clearPanels: () => void;
+    closePanelsToTheRight: (index: number) => void;
+    setActiveDetailTab: (tab: DetailTabType) => void;
+
+    // ==========================================
+    // ACTIONS: Konteks Eksplorasi Spasial
+    // ==========================================
+    setActiveIndicator: (indicatorKey: string | null) => void;
+    toggleAssetLayer: (opdKey: string, assetType: string) => void;
+    toggleOpdAssets: (opdKey: string, assetTypes: string[], isTurnOn: boolean) => void;
+    setMapOpacity: (opacity: number) => void;
+    setActiveBaseMap: (baseMapId: string) => void;
+
+    // Mutator Controller Distrik
+    setFocusDistrict: (districtName: string | null) => void;
+
+    // [REFACTOR] THEATER MODE: Actions
+    openGallery: (images: string[], startIndex: number, title?: string) => void;
+    closeGallery: () => void;
+    setGalleryIndex: (index: number) => void;
+
+    resetMapData: () => void;
+}
+
+export const useExplorerStore = create<ExplorerState>()(
+    devtools(
+        (set) => ({
+            // Inisialisasi State Default
+            activePanels: [],
+            activeDetailTab: "umum",
+            activeIndicator: null,
+            activeAssetLayers: [],
+            mapOpacity: 70,
+            activeBaseMap: "satellite",
+            focusedDistrict: null, // Default null (Tampilan seluruh Mimika)
+            galleryState: null,    // Default null (Mode Teater mati)
+
+            // Mutator: Konteks Eksplorasi
+            setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
+
+            toggleAssetLayer: (opdKey, assetType) => set((state) => {
+                const layerId = `${opdKey}::${assetType}`;
+                const isExists = state.activeAssetLayers.includes(layerId);
+                return {
+                    activeAssetLayers: isExists
+                        ? state.activeAssetLayers.filter(id => id !== layerId)
+                        : [...state.activeAssetLayers, layerId]
+                };
+            }),
+
+            toggleOpdAssets: (opdKey, assetTypes, isTurnOn) => set((state) => {
+                const layerIds = assetTypes.map(type => `${opdKey}::${type}`);
+                if (isTurnOn) {
+                    const newSet = new Set([...state.activeAssetLayers, ...layerIds]);
+                    return { activeAssetLayers: Array.from(newSet) };
+                } else {
+                    return { activeAssetLayers: state.activeAssetLayers.filter(id => !layerIds.includes(id)) };
+                }
+            }),
+
+            setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
+            setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
+
+            // Mutator untuk state highlight distrik
+            setFocusDistrict: (districtName) => set({ focusedDistrict: districtName }),
+
+            // ======================================================================
+            // [REFACTOR] THEATER MODE MUTATORS
+            // ======================================================================
+            openGallery: (images, startIndex, title = "Visualisasi Data") =>
+                set({
+                    galleryState: {
+                        isOpen: true,
+                        images,
+                        currentIndex: startIndex,
+                        title
+                    }
+                }),
+
+            closeGallery: () => set({ galleryState: null }),
+
+            setGalleryIndex: (index) => set((state) => ({
+                galleryState: state.galleryState
+                    ? { ...state.galleryState, currentIndex: index }
+                    : null
+            })),
+
+            // Mutator: Manajemen Panel Tab Detail
+            setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
+
+            // Mutator: Reset Data Peta (Jalan Keluar Analisis)
+            resetMapData: () =>
+                set((state) => ({
+                    activeIndicator: null,
+                    activeAssetLayers: [],
+                    focusedDistrict: null,
+                    galleryState: null, // Paksa teater mati jika peta direset
+                    activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik" && p.type !== "detil-aset"),
+                    activeDetailTab: "umum",
+                })),
+
+            // ======================================================================
+            // LOGIKA MUTUALLY EXCLUSIVE (CLEAN IMMUTABLE APPROACH)
+            // ======================================================================
+            openPanel: (type, title, data = null) =>
+                set((state) => {
+                    const isDetailPanel = type === "detil-distrik" || type === "detil-aset";
+
+                    // 1. Bersihkan array panel yang ada (Filtering)
+                    let nextPanels = [...state.activePanels];
+
+                    if (isDetailPanel) {
+                        nextPanels = nextPanels.filter(p => p.type !== "detil-distrik" && p.type !== "detil-aset");
+                    } else {
+                        nextPanels = nextPanels.filter(p => p.type !== type);
+                    }
+
+                    // 2. Buat panel baru dengan ID unik
+                    const newPanel: ExplorerPanel = {
+                        id: `${type}-${Date.now()}`,
+                        type,
+                        title,
+                        isVisible: true,
+                        data,
+                    };
+
+                    // 3. Tambahkan ke tumpukan paling atas (stack)
+                    nextPanels.push(newPanel);
+
+                    // 4. Reset tab
+                    const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
+
+                    return { activePanels: nextPanels, ...resetTabObj };
+                }),
+
+            closePanel: (id) =>
+                set((state) => {
+                    const filteredPanels = state.activePanels.filter((p) => p.id !== id);
+                    const isDetailClosed = !filteredPanels.some(p => p.type === "detil-distrik" || p.type === "detil-aset");
+
+                    return {
+                        activePanels: filteredPanels,
+                        // Jika panel detail ditutup, paksa hapus juga fokus distrik dan Teater Galeri
+                        ...(isDetailClosed && {
+                            activeDetailTab: "umum",
+                            focusedDistrict: null,
+                            galleryState: null // Garbage Collection Teater
+                        })
+                    };
+                }),
+
+            closePanelsToTheRight: (index) =>
+                set((state) => {
+                    const slicedPanels = state.activePanels.slice(0, index + 1);
+                    const isDetailStillOpen = slicedPanels.some(p => p.type === "detil-distrik" || p.type === "detil-aset");
+
+                    return {
+                        activePanels: slicedPanels,
+                        // Jika panel detail tertutup karena aksi ini, bersihkan state kamera & Teater
+                        ...(!isDetailStillOpen && {
+                            activeDetailTab: "umum",
+                            focusedDistrict: null,
+                            galleryState: null // Garbage Collection Teater
+                        })
+                    };
+                }),
+
+            clearPanels: () => set({
+                activePanels: [],
+                activeDetailTab: "umum",
+                focusedDistrict: null,
+                galleryState: null // Garbage Collection Teater
+            }),
+        }),
+        { name: "ExplorerStore" }
+    )
+);
+
+--- FILE: src/app/types/gis.ts ---
+// src/app/types/gis.ts
+
+/**
+ * Definisi identitas panel untuk logika Shifting Panels (GFW Paradigm).
+ * Membantu Orchestrator menentukan komponen mana yang harus dirender di stack.
+ */
+export type ExplorerPanelType =
+    | 'seleksi-opd'
+    | 'katalog-aset'       // Telah dimutasi dari 'seleksi-kategori' untuk merepresentasikan domain OPD
+    | 'katalog-wilayah'    // [REFACTOR] FASE 1: Penambahan tipe panel untuk fitur Eksplorasi Wilayah (Sidebar)
+    | 'detil-distrik'
+    | 'detil-aset'         // Penambahan tipe panel untuk detail spesifik titik aset (mikro)
+    | 'konfigurasi'
+    | 'hasil-pencarian'
+    | 'tentang';           // Penambahan tipe baru untuk modul informasi aplikasi
+
+/**
+ * Interface untuk mengelola state panel yang sedang terbuka.
+ * Prinsip Larman (Information Expert): Objek ini tahu posisinya sendiri di dalam stack.
+ */
+export interface ExplorerPanel {
+    id: string;               // ID unik instance panel
+    type: ExplorerPanelType;  // Jenis komponen panel
+    title: string;            // Judul pada header panel
+    isVisible: boolean;       // Status visibility untuk animasi
+    data?: any;               // Payload data dinamis (misal: ID Distrik yang diklik atau query pencarian)
+}
+
+/**
+ * Domain Entitas: Profil Statis Distrik.
+ * Sinkron dengan Pydantic Schema 'DistrictProfile' di Backend (FastAPI).
+ */
+export interface DistrictProfile {
+    id: number;
+    luas_wilayah: number | null;
+    jumlah_penduduk: number | null;
+    deskripsi: string | null;
+    batas_wilayah: string | null; // Narasi batas geografis
+    kode_kemendagri?: string | null;
+    thumbnail_url?: string | null; // [REFACTOR] FASE 1: Ditambahkan untuk mendukung Micro-Thumbnail pada list Sidebar
+}
+
+/**
+ * Representasi Indikator Spasial untuk Legenda Peta.
+ * Menghubungkan nilai data dengan representasi visual.
+ */
+export interface SpatialIndicator {
+    id: string;
+    label: string;
+    min_value: number;
+    max_value: number;
+    unit: string;
+    steps: number; // Jumlah klasifikasi warna (bins)
+}
+
+/**
+ * Response DTO untuk Drilldown Distrik (Injeksi Spasial).
+ * Digunakan oleh DetailPanel.tsx saat user klik poligon di peta.
+ * Catatan Analisis Prototype: 
+ * Properti 'categories' dipertahankan secara struktural (backward compatibility), 
+ * namun secara semantik (payload data) kini merepresentasikan kontribusi dari 'OPD'.
+ */
+export interface DistrictDrilldownResponse {
+    district_id: number;
+    district_name: string;
+    profile: DistrictProfile;
+    categories: Array<{
+        category_id: number;
+        name: string;
+        total: number;
+    }>;
+    last_updated: string;
+}
+
+/**
+ * Kontrak data awal untuk memetakan kepadatan dataset ke GeoJSON (Choropleth Awal).
+ */
+export interface SpatialStatResponse {
+    district_name: string;
+    total_dataset: number;
+    total_rows?: number | null;
+    avg_quality?: number | null;
+}
+
+--- FILE: src/components/gis/AssetMarkers.tsx ---
+// src/components/gis/AssetMarkers.tsx
+"use client";
+
+import React, { useMemo } from "react";
+import { Marker, Popup } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import L from "leaflet";
+import { ArrowRight } from "lucide-react"; // [REFACTOR] Icon tambahan untuk tombol
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+// Import dipindahkan ke domain spesifik (mockAssets)
+import { MOCK_ASSET_DATA } from "@/src/app/lib/mocks/mockAssets";
+import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
+
+// ============================================================================
+// PURE FABRICATION: GENERATOR IKON KUSTOM DINAMIS
+// ============================================================================
+
+// A. Ikon untuk Titik Individual (Menggunakan Icon URL & Color dari Config)
+const createCustomPin = (iconUrl: string, color: string) => {
+    // Desain pin kustom: Lingkaran berwarna dengan icon SVG di tengahnya, plus segitiga kecil di bawah
+    return L.divIcon({
+        className: "custom-pin-icon bg-transparent border-none",
+        html: `
+            <div style="display: flex; flex-direction: column; items-center; filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.3)); transform: translate(-50%, -100%); width: 32px; align-items: center;">
+                <div style="background-color: ${color}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; z-index: 2;">
+                    <img src="${iconUrl}" style="width: 14px; height: 14px; filter: brightness(0) invert(1);" alt="icon" onerror="this.style.display='none'" />
+                </div>
+                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid ${color}; margin-top: -2px; z-index: 1;"></div>
+            </div>
+        `,
+        iconSize: [32, 40],
+        iconAnchor: [0, 0], // Di-handle oleh CSS transform di atas agar presisi di titik koordinat
+        popupAnchor: [0, -40], // Popup muncul tepat di atas pin
+    });
+};
+
+// B. Ikon untuk Klaster (Saat di-zoom out) - Mempertahankan desain elegan aslimu
+const createClusterCustomIcon = function (cluster: any) {
+    const count = cluster.getChildCount();
+
+    // Ukuran klaster dinamis berdasarkan jumlah titik
+    let size = 'w-10 h-10';
+    if (count < 10) size = 'w-8 h-8';
+    if (count > 20) size = 'w-12 h-12';
+
+    return L.divIcon({
+        html: `<div class="${size} bg-slate-800 text-white flex items-center justify-center rounded-full border-[3px] border-white shadow-md font-bold text-[12px] ring-2 ring-slate-800/30">
+                ${count}
+               </div>`,
+        className: 'custom-cluster-icon bg-transparent',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+    });
+};
+
+// ============================================================================
+// KOMPONEN UTAMA
+// ============================================================================
+export default function AssetMarkers() {
+    // 1. Tarik state multi-selection array dan fungsi openPanel dari Store yang baru
+    const { activeAssetLayers, openPanel } = useExplorerStore();
+
+    // 2. Mesin Filtering O(n) dengan Memoization
+    const visibleMarkers = useMemo(() => {
+        // Jika tidak ada sakelar yang nyala sama sekali, return array kosong
+        if (!activeAssetLayers || activeAssetLayers.length === 0) return [];
+
+        const markers: any[] = [];
+
+        // Buat Hash Map dari config untuk pencarian super cepat O(1)
+        const configMap = new Map<string, any>();
+        ASSET_TAXONOMY_CONFIG.forEach(opd => {
+            opd.categories.forEach(cat => {
+                configMap.set(`${opd.opdKey}::${cat.type}`, cat);
+            });
+        });
+
+        // Iterasi seluruh mock data dan saring yang status layernya nyala
+        Object.keys(MOCK_ASSET_DATA).forEach(opdKey => {
+            const assets = MOCK_ASSET_DATA[opdKey];
+
+            assets.forEach(asset => {
+                const layerId = `${opdKey}::${asset.type}`;
+
+                // Cek apakah jenis aset spesifik ini sedang diaktifkan user
+                if (activeAssetLayers.includes(layerId)) {
+                    const config = configMap.get(layerId);
+                    if (config) {
+                        markers.push({
+                            ...asset,
+                            config // Tempelkan config (warna & icon) ke data aset
+                        });
+                    }
+                }
+            });
+        });
+
+        return markers;
+    }, [activeAssetLayers]);
+
+    // Jika hasil filter kosong (Layer Mati), render null agar tidak membebani DOM
+    if (visibleMarkers.length === 0) {
+        return null;
+    }
+
+    return (
+        <MarkerClusterGroup
+            chunkedLoading
+            iconCreateFunction={createClusterCustomIcon}
+            showCoverageOnHover={false}
+            maxClusterRadius={50}
+            spiderfyOnMaxZoom={true}
+        >
+            {visibleMarkers.map((marker, index) => (
+                <Marker
+                    key={`${marker.id}-${index}`}
+                    position={[marker.lat, marker.lng]}
+                    // Panggil factory icon dengan data spesifik dari config
+                    icon={createCustomPin(marker.config.iconUrl, marker.config.color)}
+                >
+                    {/* Mempertahankan Tooltip Info High-Density milikmu */}
+                    <Popup className="asset-popup">
+                        <div className="flex flex-col p-0.5 w-50">
+
+                            <span
+                                className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
+                                style={{ color: marker.config.color }} // Warna judul ngikutin warna OPD
+                            >
+                                {marker.type}
+                            </span>
+
+                            <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
+                                {marker.name}
+                            </h4>
+
+                            <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
+                                <span className="text-[10px] text-slate-500">Koordinat:</span>
+                                <span className="text-[10px] font-medium text-slate-700 font-mono">
+                                    {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
+                                </span>
+                            </div>
+
+                            {/* [REFACTOR] FASE 1: Tombol Trigger Panel Detail Aset */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Memicu perubahan state di Zustand untuk membuka panel detail aset
+                                    openPanel("detil-aset", marker.name, marker);
+                                }}
+                                className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
+                            >
+                                <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
+                                    Analisis Detail
+                                </span>
+                                <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
+                            </button>
+
+                        </div>
+                    </Popup>
+                </Marker>
+            ))}
+        </MarkerClusterGroup>
+    );
+}
+
+--- FILE: src/components/gis/MapHUD.tsx ---
+// src/components/gis/MapHUD.tsx
+"use client";
+
+import React from "react";
+import { Plus, Minus, Maximize } from "lucide-react";
+
+/**
+ * MapHUD - Fokus murni pada Navigasi (Zoom & Center)
+ * Terletak di Kanan Bawah.
+ * Desain frameless: sudut siku (sharp edges), flat, dan tanpa shadow tebal.
+ */
+export default function MapHUD() {
+    const triggerZoomIn = () => window.dispatchEvent(new Event('map-zoom-in'));
+    const triggerZoomOut = () => window.dispatchEvent(new Event('map-zoom-out'));
+    const triggerResetView = () => window.dispatchEvent(new Event('map-reset-view'));
+
+    return (
+        <div className="flex flex-col items-end justify-end pointer-events-none w-full select-none">
+            {/* Kontainer Frameless: Menghilangkan radius dan shadow */}
+            <div className="pointer-events-auto flex flex-col bg-white border border-slate-300 shadow-none rounded-none overflow-hidden divide-y divide-slate-200">
+                <button
+                    onClick={triggerZoomIn}
+                    className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 rounded-none"
+                    title="Perbesar"
+                >
+                    <Plus size={18} strokeWidth={2.5} />
+                </button>
+
+                <button
+                    onClick={triggerResetView}
+                    className="w-10 h-9 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 group rounded-none"
+                    title="Reset Fokus"
+                >
+                    <Maximize size={14} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                </button>
+
+                <button
+                    onClick={triggerZoomOut}
+                    className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 rounded-none"
+                    title="Perkecil"
+                >
+                    <Minus size={18} strokeWidth={2.5} />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/MapPicker.tsx ---
+// src/components/gis/MapPicker.tsx
+"use client";
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// [REFACTOR] Import Library Geofencing
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import { point } from '@turf/helpers';
+
+// Fix untuk default icon leaflet yang sering hilang di Next.js
+const customIcon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Titik tengah default: Kabupaten Mimika
+const DEFAULT_CENTER: L.LatLngExpression = [-4.5421, 136.8945];
+
+interface MapPickerProps {
+    onLocationSelect: (lat: number, lng: number) => void;
+    selectedLat: number | null;
+    selectedLng: number | null;
+    focusDistrictName?: string | null; // Trigger eksternal untuk Auto-Focus ke Distrik tertentu
+}
+
+// ============================================================================
+// KOMPONEN INTERNAL: PENDETEKSI KLIK PENGGUNA DENGAN STRICT GEOFENCING
+// ============================================================================
+function LocationMarker({ onLocationSelect, selectedLat, selectedLng, focusDistrictName, geoData }: any) {
+    // Menangkap event klik di atas peta
+    useMapEvents({
+        click(e) {
+            // [REFACTOR] Logika Strict Geofencing (Point in Polygon)
+            if (focusDistrictName && geoData) {
+                // Cari poligon distrik yang sedang aktif
+                const targetFeature = geoData.features.find((f: any) =>
+                    f.properties.district_name.toLowerCase() === focusDistrictName.toLowerCase()
+                );
+
+                if (targetFeature) {
+                    // Buat titik referensi dari klik user (Perhatikan: GeoJSON menggunakan format [Longitude, Latitude])
+                    const clickedPoint = point([e.latlng.lng, e.latlng.lat]);
+
+                    // Kalkulasi matematika spasial
+                    const isInside = booleanPointInPolygon(clickedPoint, targetFeature);
+
+                    if (!isInside) {
+                        // Tolak pemasangan marker jika di luar batas
+                        window.alert(`Titik berada di luar batas administrasi Distrik ${focusDistrictName}! Silakan klik di dalam area yang ditandai.`);
+                        return;
+                    }
+                }
+            }
+
+            // Jika aman (di dalam poligon atau tidak ada distrik yang dipilih), pasang marker
+            onLocationSelect(e.latlng.lat, e.latlng.lng);
+        },
+    });
+
+    return selectedLat !== null && selectedLng !== null ? (
+        <Marker position={[selectedLat, selectedLng]} icon={customIcon} />
+    ) : null;
+}
+
+// ============================================================================
+// KOMPONEN INTERNAL: PENGENDALI AUTO-FOCUS & GEOJSON BOUNDARIES
+// ============================================================================
+function MapBoundaries({ focusDistrictName, geoData }: { focusDistrictName: string | null, geoData: any }) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!focusDistrictName || !geoData) return;
+
+        // Cari poligon distrik yang cocok berdasarkan nama
+        const targetFeature = geoData.features.find((f: any) =>
+            f.properties.district_name.toLowerCase() === focusDistrictName.toLowerCase()
+        );
+
+        if (targetFeature) {
+            // Buat layer sementara untuk mengekstrak batas (bounds)
+            const tempLayer = L.geoJSON(targetFeature);
+            const bounds = tempLayer.getBounds();
+
+            // Terbang ke area tersebut dengan sedikit padding
+            map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+        } else {
+            // Jika distrik tidak ada atau reset, kembali ke tengah Mimika
+            map.flyTo(DEFAULT_CENTER, 8, { duration: 1.5 });
+        }
+    }, [focusDistrictName, geoData, map]);
+
+    // Gaya transparan minimalis untuk batas distrik agar user tahu batasan wilayah
+    const districtStyle = {
+        fillColor: '#0071bc',
+        weight: 2, // Ditebalkan sedikit agar user lebih jelas melihat batasannya
+        color: '#0071bc',
+        dashArray: '4',
+        fillOpacity: 0.1 // Diterangkan sedikit agar batas wilayah lebih terlihat
+    };
+
+    return geoData ? (
+        <GeoJSON
+            data={geoData}
+            style={districtStyle}
+            // Mencegah GeoJSON menghalangi event klik ke layer peta di bawahnya
+            interactive={false}
+        />
+    ) : null;
+}
+
+// ============================================================================
+// KOMPONEN UTAMA
+// ============================================================================
+export default function MapPicker({ onLocationSelect, selectedLat, selectedLng, focusDistrictName }: MapPickerProps) {
+    const [geoData, setGeoData] = useState<any>(null);
+
+    // Load GeoJSON Mimika untuk referensi batas wilayah
+    useEffect(() => {
+        fetch('/mimika_18_distrik.json')
+            .then(res => res.json())
+            .then(data => setGeoData(data))
+            .catch(err => console.error("Gagal memuat GeoJSON:", err));
+    }, []);
+
+    // HACK: Cegah error "Map container is already initialized" di React 18 Strict Mode
+    const mapKey = useMemo(() => Date.now(), []);
+
+    return (
+        <div className="w-full h-full bg-slate-100 rounded-xl overflow-hidden border border-slate-300 shadow-inner relative z-0">
+            <MapContainer
+                key={mapKey}
+                center={DEFAULT_CENTER}
+                zoom={8}
+                scrollWheelZoom={true}
+                className="w-full h-full"
+            >
+                {/* Gunakan Basemap Google Street agar nama jalan terlihat jelas saat GeoTagging */}
+                <TileLayer
+                    url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                    attribution="&copy; Google Maps"
+                />
+
+                <MapBoundaries focusDistrictName={focusDistrictName || null} geoData={geoData} />
+
+                {/* [REFACTOR] Injeksi geoData dan focusDistrictName ke pendeteksi klik */}
+                <LocationMarker
+                    onLocationSelect={onLocationSelect}
+                    selectedLat={selectedLat}
+                    selectedLng={selectedLng}
+                    focusDistrictName={focusDistrictName}
+                    geoData={geoData}
+                />
+            </MapContainer>
+
+            {/* Overlay instruksi tipis di pojok kiri bawah */}
+            <div className="absolute bottom-4 left-4 z-400 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-slate-200 shadow-sm pointer-events-none">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-tight">
+                    Instruksi: <br /> <span className="font-medium text-slate-500 capitalize tracking-normal">Gunakan mouse untuk menggeser peta, lalu klik area spesifik untuk menandai lokasi bangunan/aset.</span>
+                </p>
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/MapWrapper.tsx ---
+// src/components/gis/MapWrapper.tsx
+"use client";
+
+import dynamic from 'next/dynamic';
+import React from 'react';
+import LoadingState from '@/components/ui/LoadingState';
+
+interface MapWrapperProps {
+    isAtlasMode?: boolean;
+    isPreviewMode?: boolean; // Penambahan parameter untuk skenario Landing Page
+}
+
+/**
+ * Import dinamis MimikaMap dengan bypass SSR.
+ * Loading state disesuaikan dengan tema "Papuan Midnight & Neon" 
+ * agar transisi visual lebih halus pada halaman Explorer dan Dashboard.
+ */
+const DynamicMimikaMap = dynamic(
+    () => import('./MimikaMap'),
+    {
+        ssr: false,
+        loading: () => (
+            // RESOLUSI: Menggunakan w-full h-full agar mengisi penuh parent (seperti instruksi rekan Anda),
+            // tetapi mempertahankan warna gelap agar teks putih & neon spinner tetap terbaca.
+            <div className="w-full h-full flex items-center justify-center bg-[#0A192F]">
+                <div className="text-center">
+                    {/* Menggunakan spinner Electric Cyan khas identitas baru */}
+                    <div className="w-12 h-12 border-4 border-[#00E5FF] border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-[0_0_20px_rgba(0,229,255,0.5)]"></div>
+                    <p className="text-xs text-[#00E5FF] font-black uppercase tracking-[0.3em] animate-pulse">
+                        Inisialisasi Mesin Spasial...
+                    </p>
+                    <p className="text-[10px] text-white/40 mt-2 font-medium">
+                        Menyiapkan kanvas geospasial Mimika
+                    </p>
+                </div>
+            </div>
+        )
+    }
+) as any;
+
+/**
+ * MapWrapper - Gateway utama mesin pemetaan.
+ * Bertindak sebagai kontainer absolut yang mengisi seluruh ruang parent (Base Layer).
+ * Menerapkan pola Indirection untuk mendistribusikan konfigurasi ke mesin utama.
+ */
+export default function MapWrapper({ isAtlasMode = false, isPreviewMode = false }: MapWrapperProps) {
+    return (
+        // Memastikan lebar dan tinggi 100% mengikuti parent (Infinite Canvas).
+        // Background diset ke Papuan Midnight agar saat tile belum termuat, layarnya tidak berkedip putih.
+        <div className={`w-full h-full relative z-0 overflow-hidden ${isAtlasMode ? 'bg-[#0A192F]' : 'bg-gray-50'}`}>
+
+            {/* isAtlasMode dan isPreviewMode dikirimkan ke MimikaMap untuk menentukan 
+                apakah peta harus merespons interaksi penuh atau hanya sekadar tampilan statis (Teaser).
+            */}
+            <DynamicMimikaMap
+                isAtlasMode={isAtlasMode}
+                isPreviewMode={isPreviewMode}
+            />
+
+            {/* Overlay Vignette: Memberikan efek gelap di pinggiran peta 
+                agar UI (Sidebar & HUD) yang melayang di atasnya terlihat lebih kontras (Best Practice UX).
+                Vignette disesuaikan dengan warna Midnight Blue agar blend dengan peta satelit/gelap.
+            */}
+            {isAtlasMode && !isPreviewMode && (
+                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(10,25,47,0.9)] z-10" />
+            )}
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/MimikaMap.tsx ---
+// src/components/gis/MimikaMap.tsx
+"use client";
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { gisService } from '@/src/app/services/gis.service';
+import { DistrictDrilldownResponse } from '@/src/app/types/gis';
+import { useExplorerStore } from '@/src/app/store/useExplorerStore';
+import AssetMarkers from "./AssetMarkers";
+
+import { getSemanticColor } from '@/src/app/lib/gisUtils';
+
+import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
+
+const DISTRICT_MAP: Record<string, number> = {
+    "mimikabaru": 1, "kualakencana": 2, "tembagapura": 3, "wania": 4, "iwaka": 5,
+    "kwamkinarama": 6, "mimikatimur": 7, "mimikatengah": 8, "mimikabarat": 9,
+    "agimuga": 10, "jila": 11, "jita": 12, "mimikatimurjauh": 13, "mimikabaratjauh": 14,
+    "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
+};
+
+const DEFAULT_CENTER: LatLngExpression = [-4.5421, 136.8945];
+const DEFAULT_ZOOM = 8;
+
+interface MimikaMapProps {
+    isAtlasMode?: boolean;
+    isPreviewMode?: boolean;
+}
+
+// ============================================================================
+// PURE FABRICATION: Kalkulator Gaya Poligon (Shared Logic)
+// ============================================================================
+function calculateLayerStyle(
+    districtName: string,
+    state: any,
+    indicatorValues: Record<string, number> | null,
+    maxValue: number,
+    zoomLevel: number
+): PathOptions {
+    const key = districtName.toLowerCase().replace(/\s/g, '');
+    const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+    let weight = zoomLevel >= 14 ? 0 : 1;
+    let color = state.activeBaseMap === 'dark' ? '#ffffff' : '#000000';
+    let dashArray: string | undefined = '2';
+    let fillOpacity = zoomLevel >= 14 ? 0 : (state.activeBaseMap === 'dark' ? 0.1 : 0);
+    let fillColor = state.activeBaseMap === 'dark' ? '#ffffff' : '#000000';
+
+    if (state.activeIndicator && indicatorValues && indicatorValues[key] !== undefined) {
+        fillColor = getSemanticColor(indicatorValues[key], maxValue, state.activeIndicator);
+        fillOpacity = zoomLevel >= 14 ? 0 : (state.mapOpacity / 100);
+        color = state.activeBaseMap === 'dark' ? '#000000' : '#ffffff';
+        dashArray = undefined;
+    }
+
+    if (isFocused) {
+        weight = 3;
+        color = '#14b8a6';
+        dashArray = undefined;
+        if (!state.activeIndicator) {
+            fillColor = '#14b8a6';
+            fillOpacity = 0.3;
+        } else {
+            fillOpacity = Math.min((state.mapOpacity / 100) + 0.3, 1);
+        }
+    } else if (state.focusedDistrict) {
+        fillOpacity = 0.05;
+        color = state.activeBaseMap === 'dark' ? '#334155' : '#cbd5e1';
+        weight = 1;
+    }
+
+    return { fillColor, color, weight, fillOpacity, dashArray };
+}
+
+function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+    useMapEvents({ zoomend: (e) => onZoomChange(e.target.getZoom()) });
+    return null;
+}
+
+function ExternalMapController() {
+    const map = useMap();
+    useEffect(() => {
+        const handleZoomIn = () => map.zoomIn();
+        const handleZoomOut = () => map.zoomOut();
+        const handleResetView = () => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true });
+
+        window.addEventListener('map-zoom-in', handleZoomIn);
+        window.addEventListener('map-zoom-out', handleZoomOut);
+        window.addEventListener('map-reset-view', handleResetView);
+
+        return () => {
+            window.removeEventListener('map-zoom-in', handleZoomIn);
+            window.removeEventListener('map-zoom-out', handleZoomOut);
+            window.removeEventListener('map-reset-view', handleResetView);
+        };
+    }, [map]);
+    return null;
+}
+
+// ============================================================================
+// CONTROLLER: Cinematic Spotlight & Imperative GeoJSON Updater
+// Terbagi menjadi dua entitas terpisah untuk mencegah Infinite Loop
+// ============================================================================
+function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, maxValue, zoomLevel }: any) {
+    const map = useMap();
+
+    // [FIX 1] Ekstraksi Primitif Murni: Menghindari error "getSnapshot should be cached"
+    const focusedDistrict = useExplorerStore((state) => state.focusedDistrict);
+    const activeIndicator = useExplorerStore((state) => state.activeIndicator);
+    const mapOpacity = useExplorerStore((state) => state.mapOpacity);
+    const activeBaseMap = useExplorerStore((state) => state.activeBaseMap);
+
+    // EFEK A: Mengurus murni STYLING (Warna, Garis Tepi, Opacity)
+    useEffect(() => {
+        if (!geoJsonRef.current || !geoData) return;
+
+        const stateSnapshot = { focusedDistrict, activeIndicator, mapOpacity, activeBaseMap };
+        const layers = geoJsonRef.current.getLayers();
+
+        layers.forEach((layer: any) => {
+            const districtName = layer.feature.properties?.district_name || "";
+            const isFocused = focusedDistrict && focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+            const newStyle = calculateLayerStyle(districtName, stateSnapshot, indicatorValues, maxValue, zoomLevel);
+            layer.setStyle(newStyle);
+
+            if (isFocused) {
+                layer.bringToFront();
+            }
+        });
+
+    }, [focusedDistrict, activeIndicator, mapOpacity, activeBaseMap, zoomLevel, geoData, indicatorValues, maxValue, geoJsonRef]);
+
+    // EFEK B: Mengurus murni KAMERA (Zoom/FlyTo)
+    // [FIX 2] Ketergantungan (Dependencies) Dibatasi secara ekstrim HANYA pada focusedDistrict.
+    // Menghilangkan zoomLevel dari array dependency agar tidak memicu infinite loop.
+    useEffect(() => {
+        if (!geoJsonRef.current || !geoData) return;
+
+        if (focusedDistrict) {
+            const layers = geoJsonRef.current.getLayers();
+            const targetLayer = layers.find((layer: any) => {
+                const districtName = layer.feature.properties?.district_name || "";
+                return districtName.toLowerCase() === focusedDistrict.toLowerCase();
+            });
+
+            if (targetLayer) {
+                map.flyToBounds(targetLayer.getBounds(), {
+                    paddingTopLeft: [380, 20],
+                    paddingBottomRight: [20, 20],
+                    duration: 1.5
+                });
+            }
+        } else {
+            map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 1.5 });
+        }
+    }, [focusedDistrict, geoData, geoJsonRef, map]); // <--- KUNCI ANTI INFINITE LOOP
+
+    return null;
+}
+
+export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }: MimikaMapProps) {
+    const router = useRouter();
+
+    const { openPanel, setFocusDistrict } = useExplorerStore();
+
+    const geoJsonRef = useRef<L.GeoJSON>(null);
+
+    const [geoData, setGeoData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
+    const [mapKey, setMapKey] = useState(Date.now());
+
+    const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
+    const [maxValue, setMaxValue] = useState<number>(100);
+
+    const indicatorValuesRef = useRef(indicatorValues);
+    const maxValueRef = useRef(maxValue);
+
+    useEffect(() => { indicatorValuesRef.current = indicatorValues; }, [indicatorValues]);
+    useEffect(() => { maxValueRef.current = maxValue; }, [maxValue]);
+
+    const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
+    const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [isTextExpanded, setIsTextExpanded] = useState(false);
+
+    useEffect(() => { return () => setMapKey(Date.now()); }, []);
+
+    useEffect(() => {
+        const loadMapResources = async () => {
+            setLoading(true);
+            try {
+                const geoRes = await fetch('/mimika_18_distrik.json').then(res => res.json());
+                setGeoData(geoRes);
+            } catch (error) {
+                console.error("Gagal memuat sumber daya peta:", error);
+            } finally { setLoading(false); }
+        };
+        loadMapResources();
+    }, []);
+
+    useEffect(() => {
+        if (!isAtlasMode && !isPreviewMode && popupInfo && popupInfo.id > 0) {
+            let isMounted = true;
+            setLoadingProfile(true);
+            gisService.fetchDistrictDrilldown(popupInfo.id)
+                .then(data => { if (isMounted) setProfileData(data); })
+                .catch(err => console.error("Gagal memuat profil wilayah:", err))
+                .finally(() => { if (isMounted) setLoadingProfile(false); });
+            return () => { isMounted = false; };
+        }
+    }, [popupInfo, isAtlasMode, isPreviewMode]);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (useExplorerStore.getState().activeIndicator) {
+            const generateMockData = async () => {
+                await new Promise(res => setTimeout(res, 300));
+                if (!isMounted) return;
+                const mockData: Record<string, number> = {};
+                Object.keys(DISTRICT_MAP).forEach(k => {
+                    mockData[k] = Math.floor(Math.random() * 90) + 10;
+                });
+                setIndicatorValues(mockData);
+                setMaxValue(100);
+            };
+            generateMockData();
+        } else {
+            setIndicatorValues(null);
+        }
+        return () => { isMounted = false; };
+    }, [useExplorerStore.getState().activeIndicator]);
+
+    const maskingPositions = useMemo(() => {
+        if (!geoData) return [];
+        const worldBounds: [number, number][] = [[90, -360], [90, 360], [-90, 360], [-90, -360]];
+        const holes: [number, number][][] = [];
+        geoData.features.forEach((feature: any) => {
+            if (feature.geometry.type === 'Polygon') {
+                const ring = feature.geometry.coordinates[0].map((c: number[]) => [c[1], c[0]] as [number, number]);
+                holes.push(ring);
+            } else if (feature.geometry.type === 'MultiPolygon') {
+                feature.geometry.coordinates.forEach((poly: any[]) => {
+                    const ring = poly[0].map((c: number[]) => [c[1], c[0]] as [number, number]);
+                    holes.push(ring);
+                });
+            }
+        });
+        return [worldBounds, ...holes];
+    }, [geoData]);
+
+    const onEachFeature = (feature: any, layer: Layer) => {
+        const districtName = feature.properties?.district_name || "Unknown";
+        const key = districtName.toLowerCase().replace(/\s/g, '');
+
+        layer.bindTooltip(
+            `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
+            { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
+        );
+
+        layer.on({
+            mouseover: (e: any) => {
+                const state = useExplorerStore.getState();
+                const target = e.target;
+                const currentZoom = target._map.getZoom();
+                if (currentZoom >= 14) return;
+
+                const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+                if (isFocused) return;
+
+                if (state.focusedDistrict) {
+                    target.setStyle({ fillOpacity: 0.15, color: '#94a3b8', weight: 2 });
+                    return;
+                }
+
+                if (state.activeIndicator) {
+                    target.setStyle({ weight: 2.5, color: '#ffffff', fillOpacity: Math.min((state.mapOpacity / 100) + 0.15, 1) });
+                } else {
+                    const isDarkMode = state.activeBaseMap === 'dark';
+                    target.setStyle({ weight: 2, color: isDarkMode ? '#ffffff' : '#000000', fillOpacity: isDarkMode ? 0 : 0.15 });
+                }
+                target.bringToFront();
+            },
+            mouseout: (e: any) => {
+                const state = useExplorerStore.getState();
+                const target = e.target;
+                const currentZoom = target._map.getZoom();
+
+                const originalStyle = calculateLayerStyle(
+                    districtName,
+                    {
+                        focusedDistrict: state.focusedDistrict,
+                        activeIndicator: state.activeIndicator,
+                        mapOpacity: state.mapOpacity,
+                        activeBaseMap: state.activeBaseMap
+                    },
+                    indicatorValuesRef.current,
+                    maxValueRef.current,
+                    currentZoom
+                );
+                target.setStyle(originalStyle);
+            },
+            click: (e: any) => {
+                if (isPreviewMode) {
+                    router.push('/explorer');
+                    return;
+                }
+
+                const distId = DISTRICT_MAP[key] || 0;
+
+                setFocusDistrict(districtName);
+
+                if (isAtlasMode) {
+                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
+                        id: distId,
+                        name: districtName
+                    });
+                } else {
+                    setProfileData(null);
+                    setIsTextExpanded(false);
+                    setPopupInfo({ name: districtName, latlng: e.target.getBounds().getCenter(), id: distId });
+                }
+            }
+        });
+    };
+
+    const getTileLayerUrl = () => {
+        const baseMapId = useExplorerStore.getState().activeBaseMap;
+        switch (baseMapId) {
+            case 'dark': return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+            case 'street': return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+            case 'esri': return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+            case 'osm': return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+            case 'satellite': default: return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+        }
+    };
+
+    const getTileMaxZoom = () => useExplorerStore.getState().activeBaseMap === 'satellite' ? 22 : 20;
+
+    if (loading) return null;
+
+    const SafeMapContainer = MapContainer as any;
+    const SafeTileLayer = TileLayer as any;
+    const SafeGeoJSON = GeoJSON as any;
+    const SafePopup = Popup as any;
+    const SafePolygon = Polygon as any;
+
+    const renderPopupContent = () => {
+        if (loadingProfile) {
+            return (
+                <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-none animate-spin"></div>
+                </div>
+            );
+        }
+        if (popupInfo?.id === 0) return <p className="text-xs text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
+        if (!profileData) return <p className="text-xs text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
+
+        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
+        const isLongText = deskripsi.length > 150;
+
+        return (
+            <div className="space-y-4">
+                <div className="text-sm text-slate-700 space-y-1">
+                    <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
+                        <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>{deskripsi}</p>
+                    </div>
+                    {isLongText && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsTextExpanded(!isTextExpanded); }}
+                            className="text-[10px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
+                        >
+                            {isTextExpanded ? "Tutup" : "Selengkapnya"}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const getMaskingOpacity = () => {
+        const state = useExplorerStore.getState();
+        if (zoomLevel >= 14) return 0;
+        if (state.activeBaseMap === 'dark') return 0.7;
+        if (state.activeBaseMap === 'street') return 0.4;
+        return 0.5;
+    };
+
+    return (
+        <div className={`h-full w-full overflow-hidden relative z-10 bg-slate-50 border-none`}>
+            <SafeMapContainer
+                key={mapKey}
+                center={DEFAULT_CENTER}
+                zoom={DEFAULT_ZOOM}
+                minZoom={7}
+                scrollWheelZoom={!isPreviewMode}
+                dragging={!isPreviewMode}
+                doubleClickZoom={!isPreviewMode}
+                zoomControl={false}
+                attributionControl={!(isAtlasMode || isPreviewMode)}
+                className="h-full w-full z-0 outline-none"
+            >
+                <MapEventsHandler onZoomChange={setZoomLevel} />
+                <ExternalMapController />
+
+                <CinematicSpotlightController
+                    geoData={geoData}
+                    geoJsonRef={geoJsonRef}
+                    indicatorValues={indicatorValues}
+                    maxValue={maxValue}
+                    zoomLevel={zoomLevel}
+                />
+
+                <SafeTileLayer
+                    attribution='&copy; Mimika DataHub | Map data &copy; Google'
+                    url={getTileLayerUrl()}
+                    maxZoom={getTileMaxZoom()}
+                />
+
+                {maskingPositions.length > 0 && (
+                    <SafePolygon
+                        positions={maskingPositions}
+                        pathOptions={{
+                            fillColor: '#000000',
+                            fillOpacity: getMaskingOpacity(),
+                            stroke: false
+                        }}
+                    />
+                )}
+
+                {geoData && (
+                    <SafeGeoJSON
+                        ref={geoJsonRef}
+                        data={geoData}
+                        onEachFeature={onEachFeature}
+                    />
+                )}
+
+                <AssetMarkers />
+
+                {!isAtlasMode && !isPreviewMode && popupInfo && (
+                    <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
+                        <div className="w-72 p-2 font-sans rounded-none">
+                            <h3 className="text-[13px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
+                                {popupInfo.name}
+                            </h3>
+                            {renderPopupContent()}
+                        </div>
+                    </SafePopup>
+                )}
+            </SafeMapContainer>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/PanelOrchestrator.tsx ---
+// src/components/gis/PanelOrchestrator.tsx
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { X, Map as MapIcon } from "lucide-react";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { ExplorerPanelType } from "@/src/app/types/gis";
+
+// Mengimpor OpdPanel sebagai representasi antarmuka pemilihan instansi
+import OpdPanel from "./panels/OpdPanel";
+import AssetPanel from "./panels/AssetPanel";
+import DetailPanel from "./panels/DetailPanel";
+import LayerControl from "./panels/LayerControl";
+import AboutPanel from "./panels/AboutPanel";
+
+// Import Komponen AssetDetailPanel baru
+import AssetDetailPanel from "./panels/AssetDetailPanel";
+
+// [REFACTOR] FASE 2: Import Komponen DistrictListPanel (Eksplorasi Wilayah)
+import DistrictListPanel from "./panels/DistrictListPanel";
+
+import { getSemanticColor } from "@/src/app/lib/gisUtils";
+
+/**
+ * PanelOrchestrator - The Stacking Drawer (GFW Paradigm)
+ * Mengatur dua jenis perilaku panel dengan Sumbu X (Width) yang sangat ramping:
+ * 1. Panel Menu (Flush/Docked): 280px, menempel rapat di kiri.
+ * 2. Panel Detail (Floating): 280px, melayang secara dinamis sesuai jumlah panel aktif.
+ */
+export default function PanelOrchestrator() {
+    const { activePanels, closePanel, closePanelsToTheRight, activeIndicator } = useExplorerStore();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Sumbu X: Base width 280px (Ultra Slim)
+    const PANEL_WIDTH = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 32 : 280) : 280;
+    const PANEL_GAP = 0;
+
+    return (
+        <div className="relative h-full w-full flex items-start pointer-events-none">
+
+            {/* =====================================================================
+                1. SISTEM SHIFTING & FLOATING PANEL
+            ====================================================================== */}
+            {activePanels.map((panel, index) => {
+                // Panel detil-aset juga termasuk panel floating
+                const isFloating = panel.type === "detil-distrik" || panel.type === "detil-aset";
+
+                const xOffset = index * (PANEL_WIDTH + PANEL_GAP);
+
+                const floatingLeft = isMobile ? 16 : (index * PANEL_WIDTH) + 16;
+
+                return (
+                    <div
+                        key={panel.id}
+                        className={`absolute pointer-events-auto transition-all duration-300 ease-in-out ${isFloating ? 'shadow-lg border border-slate-200' : 'border-r border-slate-200 shadow-none'
+                            }`}
+                        style={isFloating ? {
+                            left: `${floatingLeft}px`,
+                            top: '16px',
+                            bottom: '16px',
+                            width: '280px',
+                            maxWidth: 'calc(100vw - 32px)',
+                            zIndex: 50,
+                        } : {
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: `${PANEL_WIDTH}px`,
+                            maxWidth: 'calc(100vw - 32px)',
+                            transform: `translateX(${xOffset}px)`,
+                            zIndex: 40 - index,
+                        }}
+                    >
+                        <div className="bg-white h-full w-full rounded-none flex flex-col overflow-hidden">
+
+                            {/* Header Panel (Hanya untuk Menu Reguler) */}
+                            {!isFloating && (
+                                <div className="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
+                                            {panel.type.replace("-", " ")}
+                                        </span>
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate max-w-50 tracking-tight mt-0.5">
+                                            {panel.title}
+                                        </h3>
+                                    </div>
+
+                                    <button
+                                        onClick={() => closePanel(panel.id)}
+                                        className="p-1 rounded-none bg-transparent hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors active:scale-95"
+                                    >
+                                        <X size={14} strokeWidth={2.5} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* BODY PANEL */}
+                            <div
+                                className="flex-1 overflow-y-auto custom-scrollbar"
+                                onClick={() => !isFloating && closePanelsToTheRight(index)}
+                            >
+                                {/* Melemparkan closePanel ke render helper */}
+                                {renderPanelContent(panel.type, panel.data, panel.id, closePanel)}
+                            </div>
+
+                        </div>
+                    </div>
+                );
+            })}
+
+            {/* =====================================================================
+                2. LEGENDA DINAMIS PETA (ULTRA-COMPACT CONTINUOUS RAMP)
+            ====================================================================== */}
+            {activeIndicator && <MapLegend indicatorKey={activeIndicator} />}
+
+        </div>
+    );
+}
+
+// Menambahkan argument closePanel agar bisa menutup panel dari dalam rendering komponen
+function renderPanelContent(type: ExplorerPanelType, data: any, panelId: string, closePanel: (id: string) => void) {
+    switch (type) {
+        case "seleksi-opd": return <OpdPanel />;
+        case "katalog-aset": return <AssetPanel />;
+
+        // [REFACTOR] FASE 2: Me-register tipe panel katalog-wilayah ke komponennya
+        case "katalog-wilayah": return <DistrictListPanel />;
+
+        case "detil-distrik": return <DetailPanel districtId={data?.id || 0} districtName={data?.name || "Unknown"} panelId={panelId} />;
+        case "detil-aset": return <AssetDetailPanel assetData={data} panelId={panelId} />;
+        case "konfigurasi": return <LayerControl />;
+        case "tentang": return <AboutPanel />;
+        case "hasil-pencarian":
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-3 text-slate-400 p-4">
+                    <MapIcon size={32} className="text-teal-600/40" />
+                    <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modul Pencarian</p>
+                        <p className="text-[11px] text-slate-600 mt-1">Fitur pencarian sedang dalam tahap integrasi.</p>
+                    </div>
+                </div>
+            );
+        default:
+            return <div className="text-slate-500 text-[11px] p-4">Komponen panel belum didefinisikan.</div>;
+    }
+}
+
+/**
+ * Komponen Legenda (Ultra-Compact Continuous Color Ramp).
+ */
+function MapLegend({ indicatorKey }: { indicatorKey: string }) {
+    const formattedTitle = indicatorKey
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+    const scaleBins = [
+        { label: "Sangat Padat (>80%)", value: 90 },
+        { label: "Padat (60-80%)", value: 70 },
+        { label: "Sedang (40-60%)", value: 50 },
+        { label: "Rendah (20-40%)", value: 30 },
+        { label: "Sgt. Rendah (<20%)", value: 10 },
+    ];
+
+    const MAX_VALUE = 100;
+
+    return (
+        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-42.5 rounded-none animate-in fade-in slide-in-from-bottom-4">
+
+            <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                <div className="flex items-center gap-1.5">
+                    <MapIcon size={10} className="text-teal-700" />
+                    <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider truncate">
+                        Legenda
+                    </h4>
+                </div>
+            </div>
+
+            <div className="px-2.5 py-2.5 flex flex-col gap-1.5">
+                <h5 className="text-[9px] font-bold text-slate-800 leading-tight line-clamp-2">
+                    {formattedTitle}
+                </h5>
+
+                <div className="flex mt-0.5">
+                    <div className="flex flex-col w-2.5 border border-slate-200 rounded-none shrink-0 shadow-sm">
+                        {scaleBins.map((bin, idx) => {
+                            const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
+                            return (
+                                <div
+                                    key={`color-${idx}`}
+                                    className="h-4 w-full"
+                                    style={{ backgroundColor: boxColor }}
+                                />
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex flex-col justify-between ml-2 py-0">
+                        {scaleBins.map((bin, idx) => (
+                            <div key={`label-${idx}`} className="h-4 flex items-center">
+                                <span className="text-[9px] font-medium text-slate-600 tracking-tight whitespace-nowrap">
+                                    {bin.label}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/AboutPanel.tsx ---
+// src/components/gis/panels/AboutPanel.tsx
+"use client";
+
+import React from "react";
+import Image from "next/image";
+import {
+    Info,
+    ShieldCheck,
+    Database,
+    Code,
+    Globe,
+    CheckCircle2,
+    Building2,
+    Users,
+    Cpu
+} from "lucide-react";
+
+/**
+ * AboutPanel - Edge-to-Edge / Frameless Paradigm
+ * Menyajikan narasi visi digitalisasi Mimika tanpa menggunakan kotak (card) internal.
+ */
+export default function AboutPanel() {
+    return (
+        // Menghilangkan space-y-8 agar antar seksi menempel presisi dibatasi hairline
+        <div className="flex flex-col h-full bg-white pb-12 animate-in fade-in slide-in-from-left-4 duration-500 overflow-y-auto custom-scrollbar">
+
+            {/* 1. HERO SECTION: Edge-to-Edge Background */}
+            <div className="flex flex-col items-center text-center py-2 px-4 bg-slate-50 border-b border-slate-200">
+                {/* Sharp Logo Container (Tanpa Rounded) */}
+                <div className="relative w-24 h-24 bg-transparent pointer-events-none">
+                    <Image
+                        src="/logo-mimika.png"
+                        alt="Logo Mimika"
+                        fill
+                        sizes="256px"
+                        className="object-contain p-1.5"
+                    />
+                </div>
+                <div className="space-y-1">
+                    <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none uppercase">
+                        Mimika <span className="text-teal-700">DataHub</span>
+                    </h2>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                        v1.0.0-beta Eksplorasi Spasial
+                    </p>
+                </div>
+            </div>
+
+            {/* 2. VISI & MISI: Flush List Layout */}
+            <div className="flex flex-col">
+                <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <ShieldCheck size={14} className="text-teal-700" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Visi Pembangunan Digital</h4>
+                </div>
+
+                <div className="px-4 py-5 bg-teal-50/30 border-b border-slate-200">
+                    <p className="text-[11px] font-bold text-teal-900 italic leading-relaxed text-center">
+                        "Mewujudkan Tata Kelola Data Kabupaten Mimika yang Terintegrasi, Akurat, dan Akuntabel untuk Pengambilan Kebijakan Berbasis Data."
+                    </p>
+                </div>
+
+                {/* List Misi (Edge-to-Edge Items) */}
+                <div className="flex flex-col">
+                    {[
+                        "Konsolidasi Data Sektoral OPD",
+                        "Visualisasi Spasial Real-time",
+                        "Transparansi Informasi Publik"
+                    ].map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 w-full">
+                            <CheckCircle2 size={14} strokeWidth={2.5} className="text-teal-600" />
+                            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">{item}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 3. GOVERNANSI DATA: Informasi Sumber */}
+            <div className="flex flex-col mt-4 border-t border-slate-200">
+                <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <Database size={14} className="text-teal-700" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Otoritas & Sumber Data</h4>
+                </div>
+
+                <div className="flex flex-col bg-white">
+                    <div className="px-4 py-4 border-b border-slate-200">
+                        <p className="text-[11px] text-slate-600 font-medium leading-relaxed text-justify">
+                            Data yang tersaji dikelola secara kolaboratif oleh walidata dan produsen data di lingkungan <strong className="text-slate-800 font-black">Pemerintah Kabupaten Mimika</strong>.
+                        </p>
+                    </div>
+
+                    {/* Grid OPD Tanpa Kotak Tebal, Menggunakan Garis Pemisah (Divider) */}
+                    <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 border-b border-slate-200 bg-slate-50/50">
+                        {[
+                            { name: "Bappeda", icon: Building2 },
+                            { name: "Dinas Kesehatan", icon: Users },
+                            { name: "BPS Mimika", icon: Globe },
+                            { name: "Dinas Pendidikan", icon: CheckCircle2 }
+                        ].map((opd, i) => (
+                            <div key={i} className="flex items-center gap-2 px-4 py-3">
+                                <opd.icon size={12} className="text-teal-700" />
+                                <span className="text-[9px] font-black uppercase tracking-wider text-slate-700">{opd.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* 4. KREDIT: Tim Pengembang */}
+            <div className="flex flex-col mt-4 border-t border-slate-200">
+                <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <Code size={14} className="text-teal-700" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Tim Pengembang</h4>
+                </div>
+
+                <div className="flex flex-col px-4 py-5 bg-white border-b border-slate-200 gap-4">
+                    <div className="flex items-start gap-3">
+                        {/* Kotak Ikon Sharp */}
+                        <div className="w-10 h-10 rounded-none bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                            <Cpu size={18} strokeWidth={2} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Teknologi Spasial V4</p>
+                            <p className="text-[10px] text-slate-600 font-medium leading-relaxed">
+                                Dikembangkan oleh <span className="text-teal-700 font-bold">Geocitra</span> menggunakan arsitektur modern Next.js 15 dan Leaflet Engine.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-4 py-6 bg-white">
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest text-center leading-relaxed">
+                        © 2026 Pemerintah Kabupaten Mimika. <br /> All rights reserved.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/AssetDetailPanel.tsx ---
+// src/components/gis/panels/AssetDetailPanel.tsx
+"use client";
+
+import React from "react";
+import { X, MapPin, Info } from "lucide-react";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+// [REFACTOR] FASE 3: Import komponen Pure Fabrication untuk Slider Media
+import ImageCarousel from "@/src/components/ui/ImageCarousel";
+
+interface AssetDetailPanelProps {
+    assetData: any; // Menerima payload marker seutuhnya dari mockAssets
+    panelId: string;
+}
+
+export default function AssetDetailPanel({ assetData, panelId }: AssetDetailPanelProps) {
+    const { closePanel } = useExplorerStore();
+
+    if (!assetData) return null;
+
+    // Memastikan objek details aman untuk di-looping
+    const details = assetData.details || {};
+    const hasDetails = Object.keys(details).length > 0;
+
+    // [REFACTOR] FASE 3: Adaptor Data Media
+    // Menangani skema baru (array 'images') sekaligus backward compatibility skema lama (string 'image_url')
+    const mediaList: string[] = assetData.images
+        ? assetData.images
+        : (assetData.image_url ? [assetData.image_url] : []);
+
+    return (
+        <div className="flex flex-col h-full w-full bg-white relative">
+
+            {/* HEADER - Frameless & Sharp */}
+            <div className="flex items-start justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 sticky top-0 z-10 shadow-sm">
+                <div className="flex flex-col pr-2">
+                    <span
+                        className="text-[9px] font-bold uppercase tracking-widest leading-none mb-1"
+                        style={{ color: assetData.config?.color || '#0d9488' }}
+                    >
+                        {assetData.type || "Aset Daerah"}
+                    </span>
+                    <h3 className="text-xs font-bold text-slate-900 leading-tight">
+                        {assetData.name}
+                    </h3>
+                </div>
+
+                <button
+                    onClick={() => closePanel(panelId)}
+                    className="p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors rounded-none shrink-0"
+                    title="Tutup Panel"
+                >
+                    <X size={14} strokeWidth={2.5} />
+                </button>
+            </div>
+
+            {/* BODY - Scrollable */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-6">
+
+                {/* 1. HERO IMAGE CAROUSEL (Delegation Pattern) */}
+                {/* Fallback "Tidak Ada Foto" sudah di-handle sepenuhnya di dalam ImageCarousel */}
+                <ImageCarousel images={mediaList} altText={assetData.name} />
+
+                {/* 2. KOORDINAT LOKASI */}
+                <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-1.5 bg-white">
+                    <div className="flex items-center gap-2 text-slate-500 mb-0.5">
+                        <MapPin size={12} strokeWidth={2.5} className="text-teal-700" />
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider">Titik Koordinat</h4>
+                    </div>
+                    <p className="text-[11px] text-slate-800 font-mono font-medium">
+                        {assetData.lat.toFixed(5)}, {assetData.lng.toFixed(5)}
+                    </p>
+                </div>
+
+                {/* 3. DYNAMIC METADATA (Tabel Spesifikasi) */}
+                <div className="flex flex-col bg-white">
+                    <div className="flex items-center gap-2 text-slate-500 py-3 px-4 border-b border-slate-100 bg-slate-50/50">
+                        <Info size={12} strokeWidth={2.5} className="text-teal-700" />
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider">Spesifikasi Detail</h4>
+                    </div>
+
+                    {hasDetails ? (
+                        <div className="flex flex-col">
+                            {Object.entries(details).map(([key, value], index) => (
+                                <div key={index} className="flex flex-col border-b border-slate-100 py-2.5 px-4 bg-white hover:bg-slate-50 transition-colors">
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+                                        {key}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-800 leading-snug">
+                                        {value as React.ReactNode}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-6 px-4 text-center text-slate-400">
+                            <p className="text-[10px] font-bold uppercase tracking-widest italic">
+                                Belum ada metadata tambahan.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/AssetPanel.tsx ---
+// src/components/gis/panels/AssetPanel.tsx
+"use client";
+
+import React, { useState, useMemo } from "react";
+import {
+    Search,
+    MapPin,
+    Building2,
+    ChevronDown,
+    CheckSquare,
+    Square
+} from "lucide-react";
+import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+/**
+ * AssetPanel - GFW Paradigm (High-Density Data & Solid UI)
+ * Bertindak sebagai antarmuka katalog Sebaran Aset Fisik (GeoTagging).
+ * Menggunakan arsitektur Frameless Flush List yang menyatu dengan panel.
+ */
+export default function AssetPanel() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [expandedOpd, setExpandedOpd] = useState<string | null>("dinas_kesehatan");
+
+    // Atomic Selectors untuk reaktivitas array yang stabil di Next.js
+    const activeAssetLayers = useExplorerStore((state) => state.activeAssetLayers);
+    const toggleAssetLayer = useExplorerStore((state) => state.toggleAssetLayer);
+    const toggleOpdAssets = useExplorerStore((state) => state.toggleOpdAssets);
+
+    const safeActiveLayers = activeAssetLayers || [];
+
+    // Filter pencarian berdasarkan nama instansi atau jenis aset
+    const filteredTaxonomy = useMemo(() => {
+        if (!searchQuery) return ASSET_TAXONOMY_CONFIG;
+        const lowerQuery = searchQuery.toLowerCase();
+
+        return ASSET_TAXONOMY_CONFIG.filter(opd =>
+            opd.opdName.toLowerCase().includes(lowerQuery) ||
+            opd.categories.some(cat => cat.label.toLowerCase().includes(lowerQuery))
+        );
+    }, [searchQuery]);
+
+    return (
+        <div className="flex flex-col h-full bg-white pb-10">
+
+            {/* SECTION 1: SEARCH & FILTER (Solid & High-Density) */}
+            <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10 shadow-sm">
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
+                        size={14}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Cari instansi atau jenis aset..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-none py-1.5 pl-8 pr-3 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* SECTION 2: ASSET CATALOG LIST (Frameless Flush List) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+
+                {/* Header Petunjuk (Konteks GeoTagging) */}
+                <div className="px-4 py-3 bg-teal-50/50 border-b border-slate-200 flex items-start gap-2.5">
+                    <MapPin size={14} className="text-teal-600 mt-0.5 shrink-0" />
+                    <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+                        Nyalakan sakelar untuk menampilkan sebaran titik aset fisiknya di atas kanvas spasial. Titik akan dikelompokkan otomatis (Clustering).
+                    </p>
+                </div>
+
+                {filteredTaxonomy.length > 0 ? (
+                    filteredTaxonomy.map((opd) => {
+                        const isExpanded = expandedOpd === opd.opdKey;
+                        const opdLayerIds = opd.categories.map(c => `${opd.opdKey}::${c.type}`);
+
+                        const isAllActive = opdLayerIds.length > 0 && opdLayerIds.every(id => safeActiveLayers.includes(id));
+                        const isSomeActive = opdLayerIds.some(id => safeActiveLayers.includes(id)) && !isAllActive;
+
+                        return (
+                            <div key={opd.opdKey} className="flex flex-col">
+
+                                {/* Rumpun OPD Header (Frameless) */}
+                                <div className="flex items-center justify-between bg-slate-50 px-4 py-2 border-b border-slate-200 transition-colors">
+                                    <button
+                                        className="flex items-center gap-2 flex-1 text-left"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setExpandedOpd(isExpanded ? null : opd.opdKey);
+                                        }}
+                                    >
+                                        <ChevronDown
+                                            size={14}
+                                            className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                        />
+                                        <Building2 size={13} className="text-teal-700" />
+                                        <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider truncate">
+                                            {opd.opdName}
+                                        </h4>
+                                    </button>
+
+                                    {/* Master Toggle */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            toggleOpdAssets(opd.opdKey, opd.categories.map(c => c.type), !isAllActive);
+                                        }}
+                                        className="ml-2 text-teal-600 hover:text-teal-800 active:scale-95 transition-transform"
+                                        title={isAllActive ? "Matikan Semua" : "Nyalakan Semua"}
+                                    >
+                                        {isAllActive ? (
+                                            <CheckSquare size={15} />
+                                        ) : isSomeActive ? (
+                                            <div className="w-3.75 h-3.75 border-2 border-teal-600 flex items-center justify-center rounded-xs bg-white">
+                                                <div className="w-1.5 h-1.5 bg-teal-600" />
+                                            </div>
+                                        ) : (
+                                            <Square size={15} className="text-slate-300" />
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Instansi List - Flush List */}
+                                {isExpanded && (
+                                    <div className="flex flex-col bg-white">
+                                        {opd.categories.map((cat) => {
+                                            const layerId = `${opd.opdKey}::${cat.type}`;
+                                            const isActive = safeActiveLayers.includes(layerId);
+
+                                            return (
+                                                <button
+                                                    key={layerId}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        toggleAssetLayer(opd.opdKey, cat.type);
+                                                    }}
+                                                    className={`group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full ${isActive ? "bg-teal-50/20" : ""}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        {/* Custom UI Toggle Switch Asli */}
+                                                        <div
+                                                            className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'}`}
+                                                        >
+                                                            <span
+                                                                className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${isActive ? 'translate-x-3.5' : 'translate-x-0.5'}`}
+                                                            />
+                                                        </div>
+
+                                                        {/* Label Aset */}
+                                                        <span
+                                                            className={`text-[11px] transition-colors ${isActive
+                                                                ? 'text-teal-800 font-bold'
+                                                                : 'text-slate-600 font-medium group-hover:text-slate-900'
+                                                                }`}
+                                                        >
+                                                            {cat.label}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Indikator Visual Ikon */}
+                                                    <div className="p-1 transition-colors flex items-center gap-2">
+                                                        <div
+                                                            className="w-3 h-3 rounded-full shadow-sm"
+                                                            style={{ backgroundColor: cat.color }}
+                                                            title={`Warna Marker: ${cat.label}`}
+                                                        />
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
+                ) : (
+                    /* Empty State - High Density Typography */
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
+                        <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
+                            <Search size={20} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[12px] font-bold text-slate-700">Instansi Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Coba kata kunci pencarian lain</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/CategoryPanel.tsx ---
+// src/components/gis/panels/CategoryPanel.tsx
+"use client";
+
+import React, { useState, useMemo } from "react";
+import {
+    Search,
+    Activity,
+    GraduationCap,
+    BarChart4,
+    Users,
+    Info
+} from "lucide-react";
+
+// [REFACTOR] Import dipindahkan ke domain spesifik (mockIndicators)
+import { MOCK_ATLAS_CATEGORIES } from "@/src/app/lib/mocks/mockIndicators";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
+
+/**
+ * CategoryPanel - GFW Paradigm (High-Density Data & Solid UI)
+ * Menggunakan arsitektur Flush List tanpa margin kontainer internal.
+ * Interaksi menggunakan UI Toggle Switch (bukan block button).
+ */
+export default function CategoryPanel() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const { openPanel, activeIndicator, setActiveIndicator } = useExplorerStore();
+
+    const categoryIcons: Record<number, any> = {
+        1: Activity,
+        2: BarChart4,
+        3: Users,
+        4: GraduationCap,
+    };
+
+    const filteredCategories = useMemo(() => {
+        if (!searchQuery) return MOCK_ATLAS_CATEGORIES;
+        return MOCK_ATLAS_CATEGORIES.map(cat => ({
+            ...cat,
+            indicators: cat.indicators.filter(ind =>
+                ind.title.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        })).filter(cat => cat.indicators.length > 0);
+    }, [searchQuery]);
+
+    // Logika Pseudo-Radio: Jika layer yang sama diklik, matikan (Toggle OFF)
+    // Jika layer berbeda diklik, hidupkan dan timpa yang lama (Toggle ON)
+    const handleIndicatorClick = (indicator: AtlasIndicatorBrief) => {
+        if (activeIndicator === indicator.key) {
+            setActiveIndicator(null);
+        } else {
+            setActiveIndicator(indicator.key);
+            // Tetap buka panel konfigurasi di sebelah kanan untuk pengaturan layer lanjutan
+            openPanel(
+                "konfigurasi",
+                `Layer: ${indicator.title}`,
+                { indicatorKey: indicator.key }
+            );
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-white pb-10">
+
+            {/* SECTION 1: SEARCH & FILTER (Solid & High-Density) */}
+            <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
+                        size={14}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Cari indikator spasial..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        // Tipografi diubah ke font-medium (reguler), bukan bold/black
+                        className="w-full bg-white border border-slate-200 rounded-none py-1.5 pl-8 pr-3 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* SECTION 2: CATEGORY LIST (Flush List) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+                {filteredCategories.length > 0 ? (
+                    filteredCategories.map((category) => {
+                        const Icon = categoryIcons[category.category_id] || Info;
+
+                        return (
+                            <div key={category.category_id} className="flex flex-col">
+
+                                {/* Category Header - Rapat dan Solid (Aturan Densitas) */}
+                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
+                                    <Icon size={14} className="text-teal-700" />
+                                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                        {category.category_name}
+                                    </h4>
+                                </div>
+
+                                {/* Indicators List - Flexbox Row (Toggle UI) */}
+                                <div className="flex flex-col">
+                                    {category.indicators.map((indicator) => {
+                                        const isActive = activeIndicator === indicator.key;
+
+                                        return (
+                                            <button
+                                                key={indicator.key}
+                                                onClick={() => handleIndicatorClick(indicator)}
+                                                // Background selalu putih solid, padding lebih rapat (py-2.5)
+                                                className="group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full"
+                                            >
+                                                <div className="flex items-center gap-3">
+
+                                                    {/* Custom UI Toggle Switch */}
+                                                    <div
+                                                        className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'
+                                                            }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${isActive ? 'translate-x-3.5' : 'translate-x-0.5'
+                                                                }`}
+                                                        />
+                                                    </div>
+
+                                                    {/* Label Indikator (Tipografi Reguler/Medium) */}
+                                                    <span
+                                                        className={`text-[12px] transition-colors ${isActive
+                                                            ? 'text-teal-800 font-medium'
+                                                            : 'text-slate-700 font-normal group-hover:text-slate-900'
+                                                            }`}
+                                                    >
+                                                        {indicator.title}
+                                                    </span>
+                                                </div>
+
+                                                {/* Ikon Info di sebelah kanan (Aturan Interaksi) */}
+                                                <div className="p-1 hover:bg-slate-200 rounded-none transition-colors" title="Lihat Metadata">
+                                                    <Info size={14} className="text-slate-400 group-hover:text-teal-600" />
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    /* Empty State - High Density Typography */
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
+                        <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
+                            <Search size={20} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[12px] font-bold text-slate-700">Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Coba kata kunci lain</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/DetailPanel.tsx ---
+// src/components/gis/panels/DetailPanel.tsx
+"use client";
+
+import React, { useEffect, useState } from "react";
+import {
+    MapPin,
+    Users,
+    Maximize2,
+    History,
+    FileText,
+    AlertCircle,
+    TrendingUp,
+    X,
+    Info
+} from "lucide-react";
+import { gisService } from "@/src/app/services/gis.service";
+import { DistrictDrilldownResponse } from "@/src/app/types/gis";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+// [REFACTOR] FASE 4: Import komponen Pure Fabrication untuk Slider Media
+import ImageCarousel from "@/src/components/ui/ImageCarousel";
+
+interface DetailPanelProps {
+    districtId: number;
+    districtName: string;
+    panelId?: string; // Diinjeksi oleh PanelOrchestrator untuk fungsi Close
+}
+
+type TabType = "umum" | "analisis";
+
+/**
+ * DetailPanel - GFW Paradigm (Floating & High-Density)
+ * Bertindak sebagai panel melayang independen. Memiliki header kustom 
+ * dan kontrol penutup (close) mandiri.
+ */
+export default function DetailPanel({ districtId, districtName, panelId }: DetailPanelProps) {
+    const { closePanel } = useExplorerStore();
+    const [data, setData] = useState<DistrictDrilldownResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // State Tab GFW Style
+    const [activeTab, setActiveTab] = useState<TabType>("umum");
+    const [animateBars, setAnimateBars] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        setAnimateBars(false);
+
+        const loadDetail = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await gisService.fetchDistrictDrilldown(districtId);
+                if (isMounted) {
+                    setData(response);
+                }
+            } catch (err) {
+                if (isMounted) setError("Gagal memuat profil wilayah. Silakan coba lagi.");
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        loadDetail();
+        return () => { isMounted = false; };
+    }, [districtId]);
+
+    // Memicu animasi bar chart saat masuk ke tab analisis
+    useEffect(() => {
+        if (activeTab === "analisis" && data) {
+            setTimeout(() => setAnimateBars(true), 50);
+        } else {
+            setAnimateBars(false);
+        }
+    }, [activeTab, data]);
+
+    const totalDatasets = data ? data.categories.reduce((acc, curr) => acc + curr.total, 0) : 0;
+    const maxCategoryValue = data && data.categories.length > 0
+        ? Math.max(...data.categories.map(c => c.total))
+        : 1;
+
+    const getCategoryColor = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('kesehatan')) return 'bg-rose-500';
+        if (lowerName.includes('pendidikan')) return 'bg-blue-500';
+        if (lowerName.includes('sosial')) return 'bg-indigo-500';
+        if (lowerName.includes('bappeda')) return 'bg-emerald-500';
+        if (lowerName.includes('pupr') || lowerName.includes('perhubungan') || lowerName.includes('infrastruktur')) return 'bg-amber-500';
+        if (lowerName.includes('koperasi') || lowerName.includes('ekonomi') || lowerName.includes('pertanian') || lowerName.includes('pariwisata')) return 'bg-teal-500';
+        return 'bg-slate-500';
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-4 animate-pulse px-4 py-5 bg-white h-full w-full">
+                <div className="h-6 w-full bg-slate-200" />
+                <div className="h-3 w-3/4 bg-slate-200" />
+                <div className="h-3 w-full bg-slate-200" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4 bg-white h-full w-full">
+                <AlertCircle className="text-rose-600 mb-3" size={28} />
+                <p className="text-[12px] font-bold text-slate-700">{error}</p>
+                {panelId && (
+                    <button
+                        onClick={() => closePanel(panelId)}
+                        className="mt-4 px-3 py-1.5 border border-slate-300 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-50"
+                    >
+                        Tutup Panel
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    // [REFACTOR] Menyadap array gambar dari properti dinamis (jika ada dari Backend/Mock)
+    const profileImages = (data?.profile as any)?.images || [];
+
+    return (
+        <div className="flex flex-col w-full h-full bg-white relative">
+
+            {/* HEADER CUSTOM & TABS - Rapat dan Presisi */}
+            <div className="flex flex-col border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
+
+                {/* Title & Actions Bar */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-teal-700 uppercase tracking-widest leading-none">
+                            Profil Wilayah
+                        </span>
+                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider truncate mt-1">
+                            {districtName}
+                        </h3>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-0.5">
+                        {panelId && (
+                            <button
+                                onClick={() => closePanel(panelId)}
+                                className="p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors rounded-none"
+                                title="Tutup Panel"
+                            >
+                                <X size={14} strokeWidth={2.5} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Tabs Bar */}
+                <div className="flex bg-white">
+                    <button
+                        onClick={() => setActiveTab("umum")}
+                        className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${activeTab === "umum"
+                            ? "border-b-2 border-teal-700 text-teal-800 bg-teal-50/30"
+                            : "border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                            }`}
+                    >
+                        Data Umum
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("analisis")}
+                        className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${activeTab === "analisis"
+                            ? "border-b-2 border-teal-700 text-teal-800 bg-teal-50/30"
+                            : "border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                            }`}
+                    >
+                        Analitik Data
+                    </button>
+                </div>
+            </div>
+
+            {/* TAB CONTENT: DATA UMUM */}
+            {activeTab === "umum" && (
+                <div className="flex flex-col pb-6">
+
+                    {/* [REFACTOR] 1. HERO IMAGE CAROUSEL */}
+                    <ImageCarousel images={profileImages} altText={`Foto Wilayah ${districtName}`} />
+
+                    {/* 2. STATISTIK DASAR - High-Density Data Row */}
+                    <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-2.5 bg-white">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Maximize2 size={13} strokeWidth={2.5} className="text-teal-700" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Luas Wilayah</span>
+                            </div>
+                            <div className="text-right flex items-baseline gap-1">
+                                <span className="text-[13px] font-bold tracking-tight text-slate-800">
+                                    {data?.profile.luas_wilayah?.toLocaleString('id-ID') || "-"}
+                                </span>
+                                <span className="text-[9px] text-slate-500 font-medium uppercase">km²</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Users size={13} strokeWidth={2.5} className="text-teal-700" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Populasi</span>
+                            </div>
+                            <div className="text-right flex items-baseline gap-1">
+                                <span className="text-[13px] font-bold tracking-tight text-slate-800">
+                                    {data?.profile.jumlah_penduduk?.toLocaleString('id-ID') || "-"}
+                                </span>
+                                <span className="text-[9px] text-slate-500 font-medium uppercase">Jiwa</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. GAMBARAN UMUM */}
+                    <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-1.5 bg-white">
+                        <div className="flex items-center gap-2 text-slate-500 mb-0.5">
+                            <FileText size={13} strokeWidth={2.5} className="text-teal-700" />
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider">Gambaran Umum</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-normal leading-relaxed text-justify">
+                            {data?.profile.deskripsi || "Informasi deskripsi untuk wilayah ini belum tersedia di database spasial Bappeda."}
+                        </p>
+                    </div>
+
+                    {/* 4. BATAS WILAYAH */}
+                    <div className="flex flex-col border-b border-slate-200 py-3 px-4 gap-1.5 bg-white">
+                        <div className="flex items-center gap-2 text-slate-500 mb-0.5">
+                            <MapPin size={13} strokeWidth={2.5} className="text-teal-700" />
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider">Batas Administrasi</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-800 font-medium leading-relaxed">
+                            {data?.profile.batas_wilayah || "Tidak terdefinisi"}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB CONTENT: DATA ANALISIS */}
+            {activeTab === "analisis" && (
+                <div className="flex flex-col pb-6">
+                    {/* SUMMARY HEADER - Solid Background */}
+                    <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 py-2.5 px-4">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Distribusi per OPD</span>
+                        <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 shadow-sm">
+                            <TrendingUp size={12} className="text-teal-700" strokeWidth={2.5} />
+                            <span className="text-[9px] font-bold text-teal-800 uppercase tracking-wider">
+                                {totalDatasets} Dataset
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* BARS: FLUSH LIST (Tanpa Card dan Bayangan) */}
+                    <div className="flex flex-col">
+                        {data?.categories.map((cat) => {
+                            const barPercentage = maxCategoryValue > 0 ? (cat.total / maxCategoryValue) * 100 : 0;
+                            const totalPercentage = totalDatasets > 0 ? ((cat.total / totalDatasets) * 100).toFixed(1) : 0;
+                            const barColor = getCategoryColor(cat.name);
+
+                            return (
+                                <div key={cat.category_id} className="flex flex-col border-b border-slate-100 py-2.5 px-4 gap-1.5 hover:bg-slate-50 transition-colors bg-white">
+                                    <div className="flex justify-between items-end">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">
+                                                {cat.name}
+                                            </span>
+                                            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">
+                                                {totalPercentage}% dari total
+                                            </span>
+                                        </div>
+                                        <div className="text-right flex items-baseline gap-1">
+                                            <span className="text-[13px] font-bold tracking-tight text-slate-800">
+                                                {cat.total}
+                                            </span>
+                                            <span className="text-[9px] text-slate-500 font-medium uppercase">Set</span>
+                                        </div>
+                                    </div>
+
+                                    {/* PROGRESS BAR - SHARP EDGES (rounded-none) */}
+                                    <div className="w-full h-1 bg-slate-100 rounded-none overflow-hidden mt-0.5">
+                                        <div
+                                            className={`h-full ${barColor} rounded-none transition-all ease-out duration-1000`}
+                                            style={{ width: animateBars ? `${Math.max(barPercentage, 1)}%` : '0%' }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* FOOTER METADATA - Solid Edge */}
+            <div className="py-2.5 px-4 bg-slate-50 text-slate-500 flex items-center justify-between border-t border-slate-200 mt-auto">
+                <div className="flex items-center gap-2">
+                    <History size={12} strokeWidth={2} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Update Terakhir</span>
+                </div>
+                <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">
+                    {data?.last_updated ? new Date(data.last_updated).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"}
+                </span>
+            </div>
+
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/DistrictListPanel.tsx ---
+// src/components/gis/panels/DistrictListPanel.tsx
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
+import { Search, Map, ChevronRight, Image as ImageIcon } from "lucide-react";
+
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { gisService } from "@/src/app/services/gis.service";
+
+/**
+ * DistrictListPanel - GFW Paradigm (High-Density Flush List)
+ * Menampilkan daftar wilayah/distrik dengan micro-thumbnail (40x40px).
+ * Bertindak sebagai Controller murni yang memicu flyTo (Zoom) pada mesin Leaflet.
+ */
+export default function DistrictListPanel() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [districts, setDistricts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // [REFACTOR] FASE FINAL: Ekstraksi murni State dan Action dari Store. 
+    // Menghapus fallback / mock safety karena ekosistem Store sudah matang.
+    const { openPanel, focusedDistrict, setFocusDistrict } = useExplorerStore();
+
+    // Fetch data list distrik saat panel dibuka
+    useEffect(() => {
+        let isMounted = true;
+        setLoading(true);
+
+        gisService.fetchDistricts()
+            .then(data => {
+                if (isMounted) setDistricts(data);
+            })
+            .catch(err => console.error("Gagal memuat list distrik:", err))
+            .finally(() => {
+                if (isMounted) setLoading(false);
+            });
+
+        return () => { isMounted = false; };
+    }, []);
+
+    // Filter Pencarian Lokal O(N)
+    const filteredDistricts = useMemo(() => {
+        if (!searchQuery) return districts;
+        return districts.filter(d =>
+            d.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [searchQuery, districts]);
+
+    // Handler Klik Baris Utama: Toggle Zoom & Spotlight pada Peta
+    const handleDistrictClick = (districtName: string) => {
+        if (focusedDistrict === districtName) {
+            setFocusDistrict(null); // Toggle Off (Peta kembali ke tampilan seluruh Mimika)
+        } else {
+            setFocusDistrict(districtName); // Toggle On (Peta terbang ke wilayah terkait)
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-white pb-10">
+
+            {/* SECTION 1: SEARCH BAR (Sticky Header) */}
+            <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10 shadow-sm">
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
+                        size={14}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Cari wilayah distrik..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-none py-1.5 pl-8 pr-3 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* SECTION 2: LIST WILAYAH (Flush List with Micro-Thumbnail) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+
+                {/* Header Petunjuk */}
+                <div className="px-4 py-3 bg-teal-50/50 border-b border-slate-200 flex items-start gap-2.5">
+                    <Map size={14} className="text-teal-600 mt-0.5 shrink-0" />
+                    <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+                        Klik pada nama wilayah untuk memfokuskan kanvas peta (Zoom). Klik ganda panah kanan untuk membuka profil mendetail.
+                    </p>
+                </div>
+
+                {loading ? (
+                    /* Loading State (Pulse) */
+                    <div className="flex flex-col">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                            <div key={n} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+                                <div className="w-10 h-10 bg-slate-200 animate-pulse shrink-0" />
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <div className="w-1/2 h-3 bg-slate-200 animate-pulse" />
+                                    <div className="w-1/3 h-2 bg-slate-100 animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : filteredDistricts.length > 0 ? (
+                    <div className="flex flex-col bg-white">
+                        {filteredDistricts.map((district) => {
+                            const isActive = focusedDistrict === district.name;
+
+                            // Thumbnail Deterministik
+                            const mockThumbnail = `https://picsum.photos/seed/mimika-dist-${district.id}/100/100`;
+
+                            return (
+                                <button
+                                    key={district.id}
+                                    onClick={() => handleDistrictClick(district.name)}
+                                    className={`group flex items-center justify-between px-4 py-2 border-b border-slate-200 transition-colors text-left w-full ${isActive ? "bg-teal-50/40" : "bg-white hover:bg-slate-50"
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3 w-full">
+
+                                        {/* MICRO-THUMBNAIL (Sharp Edges / 40x40px) */}
+                                        <div className="relative w-10 h-10 bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                                            {mockThumbnail ? (
+                                                <Image
+                                                    src={mockThumbnail}
+                                                    alt={district.name}
+                                                    fill
+                                                    sizes="40px"
+                                                    className={`object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
+                                                />
+                                            ) : (
+                                                <ImageIcon size={14} className="text-slate-300" />
+                                            )}
+
+                                            {/* Highlight Indicator Border Kiri di dalam thumbnail */}
+                                            {isActive && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500 z-10 shadow-[1px_0_4px_rgba(20,184,166,0.5)]" />
+                                            )}
+                                        </div>
+
+                                        {/* DETAIL TEKS SANGAT PADAT (High-Density Typography) */}
+                                        <div className="flex flex-col flex-1 overflow-hidden pr-2">
+                                            <span className={`text-[12px] truncate transition-colors ${isActive ? 'text-teal-800 font-bold' : 'text-slate-700 font-bold group-hover:text-slate-900'
+                                                }`}>
+                                                {district.name}
+                                            </span>
+
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">
+                                                    ID: {district.id.toString().padStart(2, '0')}
+                                                </span>
+                                                <span className="text-[8px] text-slate-300">•</span>
+                                                <span className="text-[9px] font-medium text-slate-500 truncate">
+                                                    {district.profile?.jumlah_penduduk ? `${(district.profile.jumlah_penduduk / 1000).toFixed(1)}k Jiwa` : 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* TOMBOL BUKA DETAIL PANEL & PAKSA ZOOM */}
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Mencegah klik menyebar ke tombol baris
+
+                                                // [UX ENHANCEMENT] Paksa peta untuk ikut tersorot saat panel detail dibuka
+                                                setFocusDistrict(district.name);
+
+                                                openPanel("detil-distrik", `Profil Distrik ${district.name}`, {
+                                                    id: district.id,
+                                                    name: district.name
+                                                });
+                                            }}
+                                            className="p-1.5 bg-white border border-slate-200 text-slate-400 hover:text-teal-700 hover:border-teal-500 transition-all rounded-none opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                            title="Buka Profil Lengkap"
+                                        >
+                                            <ChevronRight size={14} strokeWidth={2.5} />
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    /* EMPTY STATE */
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
+                        <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
+                            <Search size={20} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[12px] font-bold text-slate-700">Wilayah Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Periksa kembali ejaan distrik</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/LayerControl.tsx ---
+// src/components/gis/panels/LayerControl.tsx
+"use client";
+
+import React from "react";
+import {
+    Layers,
+    Settings2,
+    Map as MapIcon,
+    Sun,
+    Moon,
+    Info
+} from "lucide-react";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+/**
+ * LayerControl - GFW Paradigm (High-Density Data & Solid UI)
+ * Desain tanpa card internal (Flush List). Lebar penuh, dipisahkan oleh hairline.
+ * Menggunakan Toggle Switch UI untuk interaksi pemilihan.
+ */
+export default function LayerControl() {
+    const {
+        mapOpacity,
+        setMapOpacity,
+        activeBaseMap,
+        setActiveBaseMap
+    } = useExplorerStore();
+
+    const baseMaps = [
+        { id: "satellite", label: "Google Satellite", icon: Sun, desc: "Citra Raster Google (Default)" },
+        { id: "street", label: "Google Roadmap", icon: MapIcon, desc: "Navigasi Standar Vektor" },
+        { id: "dark", label: "Carto Dark", icon: Moon, desc: "Kanvas Gelap untuk Data Poligon" },
+        { id: "esri", label: "Esri World Imagery", icon: MapIcon, desc: "Citra Resolusi Tinggi" },
+        { id: "osm", label: "OpenStreetMap", icon: Layers, desc: "Peta Komunitas Global" },
+    ];
+
+    return (
+        <div className="flex flex-col h-full pb-10 bg-white">
+
+            {/* SECTION 1: BASEMAP GALLERY */}
+            <div className="flex flex-col">
+                {/* Header Section - Rapat dan Solid (Aturan Densitas) */}
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <Layers size={14} className="text-teal-700" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider">Basemap Gallery</h4>
+                </div>
+
+                {/* List Items - Flush List dengan Custom Toggle */}
+                <div className="flex flex-col">
+                    {baseMaps.map((map) => {
+                        const isActive = activeBaseMap === map.id;
+                        return (
+                            <button
+                                key={map.id}
+                                onClick={() => setActiveBaseMap(map.id)}
+                                // Background selalu putih, hover state minimalis
+                                className="group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full"
+                            >
+                                <div className="flex items-center gap-3">
+                                    {/* Custom UI Toggle Switch (Kiri) */}
+                                    <div
+                                        className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${isActive ? 'translate-x-3.5' : 'translate-x-0.5'
+                                                }`}
+                                        />
+                                    </div>
+
+                                    {/* Icon & Label (Tengah - Tipografi Reguler/Medium) */}
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={`transition-colors ${isActive ? "text-teal-700" : "text-slate-400 group-hover:text-slate-600"}`}>
+                                            <map.icon size={16} strokeWidth={2} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span
+                                                className={`text-[12px] transition-colors ${isActive
+                                                    ? 'text-teal-800 font-medium'
+                                                    : 'text-slate-700 font-normal group-hover:text-slate-900'
+                                                    }`}
+                                            >
+                                                {map.label}
+                                            </span>
+                                            <span className="text-[11px] font-normal text-slate-500">{map.desc}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Ikon Info (Kanan) */}
+                                <div className="p-1 hover:bg-slate-200 rounded-none transition-colors" title="Info Basemap">
+                                    <Info size={14} className="text-slate-400 group-hover:text-teal-600" />
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* SECTION 2: OPACITY CONTROL */}
+            <div className="flex flex-col mt-0"> {/* Margin top dihilangkan agar rapat jika digabung */}
+                {/* Header Section - Rapat dan Solid */}
+                <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200">
+                    <div className="flex items-center gap-2 text-slate-500">
+                        <Settings2 size={14} className="text-teal-700" />
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider">Opacity Control</h4>
+                    </div>
+                    <span className="text-[11px] font-medium text-teal-800 font-mono bg-teal-50 px-1.5 py-0.5 border border-teal-100">
+                        {mapOpacity}%
+                    </span>
+                </div>
+
+                {/* Slider Area - Spasi dirampingkan (py-3) */}
+                <div className="px-4 py-3 border-b border-slate-200 bg-white space-y-2">
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={mapOpacity}
+                        onChange={(e) => setMapOpacity(parseInt(e.target.value))}
+                        className="w-full h-1.5 bg-slate-200 rounded-none appearance-none cursor-pointer accent-teal-600"
+                    />
+                    <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                        <span>Transparan</span>
+                        <span>Solid</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 3: LAYER CONTEXT INFO */}
+            <div className="flex flex-col px-4 py-4 gap-1.5 bg-white border-b border-slate-200">
+                <div className="flex items-center gap-2 text-slate-400">
+                    <Info size={14} strokeWidth={2} />
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider">Feature Layer Info</h4>
+                </div>
+                <p className="text-[12px] text-slate-600 font-normal leading-relaxed text-justify">
+                    Warna poligon (Choropleth) dan skala legenda dikalkulasi otomatis berdasarkan <strong className="text-slate-800 font-medium">Data Layer Sektoral</strong> yang aktif pada katalog data.
+                </p>
+            </div>
+
+        </div>
+    );
+}
+
+--- FILE: src/components/gis/panels/OpdPanel.tsx ---
+// src/components/gis/panels/OpdPanel.tsx
+"use client";
+
+import React, { useState, useMemo } from "react";
+import {
+    Search,
+    Building2,
+    Map,
+    Briefcase,
+    Info
+} from "lucide-react";
+
+// [REFACTOR] Import dipindahkan ke domain spesifik (mockIndicators)
+import { MOCK_ATLAS_CATEGORIES } from "@/src/app/lib/mocks/mockIndicators";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { AtlasIndicatorBrief } from "@/src/app/types/atlas";
+
+/**
+ * OpdPanel - GFW Paradigm (High-Density Data & Solid UI)
+ * Menggantikan CategoryPanel untuk memfokuskan UX pada filter berbasis Instansi/OPD.
+ * Menggunakan arsitektur Flush List tanpa margin kontainer internal.
+ */
+export default function OpdPanel() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const { openPanel, activeIndicator, setActiveIndicator } = useExplorerStore();
+
+    // Ikon disesuaikan dengan "Rumpun OPD" yang baru
+    const opdGroupIcons: Record<number, any> = {
+        1: Building2, // Rumpun Pelayanan Dasar
+        2: Map,       // Rumpun Infrastruktur & Wilayah
+        3: Briefcase, // Rumpun Ekonomi & Pariwisata
+    };
+
+    const filteredGroups = useMemo(() => {
+        if (!searchQuery) return MOCK_ATLAS_CATEGORIES;
+        return MOCK_ATLAS_CATEGORIES.map(group => ({
+            ...group,
+            indicators: group.indicators.filter(ind =>
+                ind.title.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        })).filter(group => group.indicators.length > 0);
+    }, [searchQuery]);
+
+    // Logika Pseudo-Radio: Jika layer yang sama diklik, matikan (Toggle OFF)
+    // Jika layer berbeda diklik, hidupkan dan timpa yang lama (Toggle ON)
+    const handleIndicatorClick = (indicator: AtlasIndicatorBrief) => {
+        if (activeIndicator === indicator.key) {
+            setActiveIndicator(null);
+        } else {
+            setActiveIndicator(indicator.key);
+            // Tetap buka panel konfigurasi di sebelah kanan untuk pengaturan layer lanjutan
+            openPanel(
+                "konfigurasi",
+                `Layer: ${indicator.title}`,
+                { indicatorKey: indicator.key }
+            );
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-white pb-10">
+
+            {/* SECTION 1: SEARCH & FILTER (Solid & High-Density) */}
+            <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors"
+                        size={14}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Cari instansi / OPD..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-none py-1.5 pl-8 pr-3 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* SECTION 2: OPD LIST (Flush List) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+                {filteredGroups.length > 0 ? (
+                    filteredGroups.map((group) => {
+                        const Icon = opdGroupIcons[group.category_id] || Info;
+
+                        return (
+                            <div key={group.category_id} className="flex flex-col">
+
+                                {/* Rumpun OPD Header - Rapat dan Solid (Aturan Densitas) */}
+                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
+                                    <Icon size={14} className="text-teal-700" />
+                                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                        {group.category_name}
+                                    </h4>
+                                </div>
+
+                                {/* Instansi List - Flexbox Row (Toggle UI) */}
+                                <div className="flex flex-col">
+                                    {group.indicators.map((indicator) => {
+                                        const isActive = activeIndicator === indicator.key;
+
+                                        return (
+                                            <button
+                                                key={indicator.key}
+                                                onClick={() => handleIndicatorClick(indicator)}
+                                                // Background selalu putih solid, padding lebih rapat (py-2.5)
+                                                className="group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full"
+                                            >
+                                                <div className="flex items-center gap-3">
+
+                                                    {/* Custom UI Toggle Switch */}
+                                                    <div
+                                                        className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'
+                                                            }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${isActive ? 'translate-x-3.5' : 'translate-x-0.5'
+                                                                }`}
+                                                        />
+                                                    </div>
+
+                                                    {/* Label OPD (Tipografi Reguler/Medium) */}
+                                                    <span
+                                                        className={`text-[12px] transition-colors ${isActive
+                                                            ? 'text-teal-800 font-medium'
+                                                            : 'text-slate-700 font-normal group-hover:text-slate-900'
+                                                            }`}
+                                                    >
+                                                        {indicator.title}
+                                                    </span>
+                                                </div>
+
+                                                {/* Ikon Info di sebelah kanan (Aturan Interaksi) */}
+                                                <div className="p-1 hover:bg-slate-200 rounded-none transition-colors" title="Lihat Metadata">
+                                                    <Info size={14} className="text-slate-400 group-hover:text-teal-600" />
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    /* Empty State - High Density Typography */
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
+                        <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
+                            <Search size={20} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[12px] font-bold text-slate-700">Instansi Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Coba kata kunci lain</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+--- FILE: src/components/layout/ExplorerNavbar.tsx ---
+// src/components/layout/ExplorerNavbar.tsx
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+    Search,
+    ChevronLeft,
+    Share2,
+    Check,
+    UserIcon
+} from "lucide-react";
+import { useAuthStore } from "@/src/app/store/useAuthStore";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+
+/**
+ * ExplorerNavbar - Komponen Navigasi Frameless
+ * Menggunakan sudut siku tegas dan tata letak padat untuk memaksimalkan ruang fungsional.
+ */
+export default function ExplorerNavbar() {
+    const { profile, isLoading } = useAuthStore();
+
+    // [REFACTOR] Menyadap galleryState untuk kebutuhan Interaction Guard
+    const {
+        activeIndicator,
+        activeBaseMap,
+        openPanel,
+        closePanelsToTheRight,
+        clearPanels,
+        resetMapData,
+        galleryState
+    } = useExplorerStore();
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isCopied, setIsCopied] = useState(false);
+
+    // Penanda apakah Mode Teater sedang aktif
+    const isTheaterMode = galleryState?.isOpen;
+
+    const getInitials = (name: string) => {
+        return name?.split(" ").map((n) => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        closePanelsToTheRight(-1);
+        openPanel("hasil-pencarian", "Hasil Pencarian", { query: searchQuery });
+    };
+
+    const handleLogoClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        clearPanels();
+        resetMapData();
+        setSearchQuery("");
+    };
+
+    const handleShareClick = async () => {
+        const baseUrl = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams();
+
+        if (activeIndicator) params.set("indicator", activeIndicator);
+        if (activeBaseMap) params.set("basemap", activeBaseMap);
+
+        const shareUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Mimika DataHub - Eksplorasi Spasial',
+                    text: `Lihat data spasial ${activeIndicator || 'Kabupaten Mimika'} di DataHub.`,
+                    url: shareUrl,
+                });
+                return;
+            } catch (err) {
+                console.log("Share cancelled or failed", err);
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error("Gagal menyalin tautan", err);
+        }
+    };
+
+    return (
+        // [REFACTOR] INTERACTION GUARD
+        // Meredupkan dan mengunci seluruh Navbar saat Mode Teater aktif
+        <nav className={`w-full h-16 px-6 flex items-center justify-between bg-white border-b border-slate-200 relative z-50 transition-all duration-300 ease-in-out
+            ${isTheaterMode ? "opacity-40 pointer-events-none grayscale" : "opacity-100"}
+        `}>
+
+            {/* KIRI: Branding */}
+            <div className="flex items-center gap-6">
+                <Link
+                    href="/"
+                    className="group flex items-center gap-2 text-slate-500 hover:text-teal-700 transition-all rounded-none"
+                >
+                    <div className="p-1.5 group-hover:bg-slate-100 transition-colors rounded-none">
+                        <ChevronLeft size={20} />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-widest hidden md:block">Beranda</span>
+                </Link>
+
+                <div className="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+
+                <button onClick={handleLogoClick} className="flex items-center gap-3 active:scale-95 transition-transform group rounded-none">
+                    <div className="relative w-8 h-8">
+                        <Image
+                            src="/logo-mimika.png"
+                            alt="Logo Mimika"
+                            fill
+                            sizes="32px"
+                            className="object-contain filter group-hover:brightness-110"
+                        />
+                    </div>
+                    <div className="flex flex-col leading-none text-left">
+                        <span className="text-sm font-black text-slate-800 tracking-tighter uppercase">
+                            Mimika <span className="text-teal-600">DataHub</span>
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">
+                            Eksplorasi Spasial
+                        </span>
+                    </div>
+                </button>
+            </div>
+
+            {/* TENGAH: Search */}
+            <div className="hidden lg:flex flex-1 max-w-xl mx-12">
+                <form onSubmit={handleSearchSubmit} className="w-full relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors" size={18} />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari lokasi atau indikator sektoral..."
+                        className="w-full bg-slate-50 border border-slate-200 py-2.5 pl-12 pr-6 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-600 focus:bg-white transition-all rounded-none"
+                    />
+                </form>
+            </div>
+
+            {/* KANAN: Single Tool & Profile */}
+            <div className="flex items-center gap-3 md:gap-5">
+
+                {/* UNITARY TOOL: Enhanced Share Button */}
+                <button
+                    onClick={handleShareClick}
+                    className={`flex items-center gap-2 px-4 py-2 border transition-all active:scale-95 rounded-none ${isCopied
+                        ? "bg-teal-50 border-teal-600 text-teal-700"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                        }`}
+                    title="Bagikan tampilan peta saat ini"
+                >
+                    {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+                    <span className="text-xs font-black uppercase tracking-widest hidden sm:block">
+                        {isCopied ? "Tersalin" : "Bagikan"}
+                    </span>
+                </button>
+
+                <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+                {/* Profile */}
+                <Link
+                    href="/login"
+                    className="flex items-center gap-3 p-1.5 pl-1.5 pr-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all group rounded-none"
+                >
+                    {/* Avatar tetap bulat sempurna sebagai pengecualian elemen wajah/profil */}
+                    <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-xs font-black text-white group-hover:bg-teal-700 transition-colors">
+                        {isLoading ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : profile ? (
+                            getInitials(profile.full_name)
+                        ) : (
+                            <UserIcon size={14} />
+                        )}
+                    </div>
+                    <div className="hidden sm:flex flex-col items-start">
+                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight line-clamp-1 max-w-20">
+                            {profile?.full_name || "Login"}
+                        </span>
+                        <span className="text-[8px] text-teal-600 font-bold uppercase tracking-widest">
+                            {profile?.role || "Publik"}
+                        </span>
+                    </div>
+                </Link>
+            </div>
+
+        </nav>
+    );
+}
+
+--- FILE: src/components/layout/ExplorerSidebar.tsx ---
+// src/components/layout/ExplorerSidebar.tsx
+"use client";
+
+import React from "react";
+import {
+    Search,
+    Layers,
+    MapPin,
+    Building2,
+    Info,
+    Map
+} from "lucide-react";
+import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { ExplorerPanelType } from "@/src/app/types/gis";
+
+/**
+ * ExplorerSidebar - The Slim Anchor (Frameless Edition)
+ * Desain: Ultra-Thin Ribbon dengan lebar w-16, menempel di tepi viewport.
+ * Interaksi visual menggunakan border penanda alih-alih shadow atau rounded background.
+ */
+export default function ExplorerSidebar() {
+    // [REFACTOR] Menyadap galleryState untuk kebutuhan Interaction Guard
+    const { openPanel, activePanels, closePanelsToTheRight, galleryState } = useExplorerStore();
+
+    // Penanda apakah Mode Teater sedang aktif
+    const isTheaterMode = galleryState?.isOpen;
+
+    const navigationItems = [
+        {
+            type: "hasil-pencarian" as ExplorerPanelType,
+            label: "Cari",
+            icon: Search,
+            title: "Pencarian Spasial Global"
+        },
+        {
+            type: "seleksi-opd" as ExplorerPanelType,
+            label: "OPD",
+            icon: Building2,
+            title: "Katalog Data Instansi / OPD"
+        },
+        {
+            type: "katalog-aset" as ExplorerPanelType,
+            label: "Aset",
+            icon: MapPin,
+            title: "Katalog Sebaran Aset Fisik"
+        },
+        {
+            type: "katalog-wilayah" as ExplorerPanelType,
+            label: "Wilayah",
+            icon: Map,
+            title: "Eksplorasi Wilayah Distrik"
+        },
+        {
+            type: "konfigurasi" as ExplorerPanelType,
+            label: "Basemap",
+            icon: Layers,
+            title: "Konfigurasi Lapisan Peta"
+        }
+    ];
+
+    const isPanelActive = (type: ExplorerPanelType) => {
+        return activePanels.some(p => p.type === type);
+    };
+
+    const handleNavClick = (item: typeof navigationItems[0]) => {
+        if (item.type) {
+            closePanelsToTheRight(-1);
+            openPanel(item.type, item.title);
+        }
+    };
+
+    return (
+        <aside className={`fixed bottom-0 left-0 w-full h-16 md:static md:w-16 md:h-full flex flex-row md:flex-col items-center bg-white border-t md:border-t-0 md:border-r border-slate-200 z-50 transition-all duration-300 ease-in-out
+            ${isTheaterMode ? "opacity-40 pointer-events-none grayscale" : "opacity-100"}
+        `}>
+
+            {/* BAGIAN UTAMA: Menu Navigasi */}
+            <div className="flex-1 flex flex-row md:flex-col justify-around md:justify-start items-center w-full">
+                {navigationItems.map((item, index) => {
+                    const isActive = item.type ? isPanelActive(item.type) : false;
+
+                    return (
+                        <div key={index} className="relative group w-full flex justify-center">
+                            <button
+                                onClick={() => handleNavClick(item)}
+                                className={`w-full h-16 flex flex-col items-center justify-center gap-1 transition-colors relative active:bg-slate-100 rounded-none
+                                    ${isActive
+                                        ? "bg-teal-50 text-teal-700 md:border-l-[3px] border-b-[3px] md:border-b-0 border-teal-600"
+                                        : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-[3px] border-transparent"
+                                    }`}
+                            >
+                                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+
+                                <span className={`text-[9px] font-bold uppercase tracking-widest
+                                    ${isActive ? "opacity-100" : "opacity-70"}`}>
+                                    {item.label}
+                                </span>
+                            </button>
+
+                            {/* Tooltip Label (Desktop Only - Sharp Edges) */}
+                            <div className="hidden md:block absolute top-1/2 left-full -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                                {item.title}
+                                {/* Panah Tooltip yang lebih tajam */}
+                                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 rounded-none" />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* BAGIAN BAWAH: Info & Branding */}
+            <div className="hidden md:flex flex-col items-center w-full mt-auto">
+                <div className="w-8 h-px bg-slate-200 mb-2" />
+
+                <div className="relative group w-full flex justify-center">
+                    <button
+                        onClick={() => {
+                            closePanelsToTheRight(-1);
+                            openPanel("tentang", "Tentang Mimika DataHub");
+                        }}
+                        className="w-full h-16 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors active:bg-slate-100 rounded-none border-l-[3px] border-transparent"
+                    >
+                        <Info size={20} />
+                    </button>
+                    {/* Tooltip Info - Sharp Edges */}
+                    <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800 text-white text-[10px] font-bold rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        Tentang DataHub
+                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 rounded-none" />
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    );
+}
+
+--- FILE: src/components/ui/ImageCarousel.tsx ---
+// src/components/ui/ImageCarousel.tsx
+"use client";
+
+import React, { useState, useRef } from "react";
+import Image from "next/image";
+import { Layers, Maximize2 } from "lucide-react"; // [REFACTOR] Icon disesuaikan
+
+import { useExplorerStore } from "@/src/app/store/useExplorerStore"; // [REFACTOR] Injeksi Controller
+
+interface ImageCarouselProps {
+    images: string[];
+    altText?: string;
+}
+
+/**
+ * ImageCarousel - Pure Fabrication Pattern
+ * Komponen independen untuk merender slider media horizontal menggunakan 
+ * CSS Scroll Snap murni. Kini difokuskan sebagai "Pemantik" (Trigger) Mode Teater.
+ */
+export default function ImageCarousel({ images, altText = "Media Aset" }: ImageCarouselProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    // [REFACTOR] Menarik aksi Buka Teater dari Global Store
+    const { openGallery } = useExplorerStore();
+
+    // Fallback: 0 Gambar
+    if (!images || images.length === 0) {
+        return (
+            <div className="w-full aspect-video bg-slate-100 flex flex-col items-center justify-center border-b border-slate-200 shrink-0">
+                <Layers size={24} className="text-slate-300 mb-2" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Tidak Ada Visualisasi
+                </span>
+            </div>
+        );
+    }
+
+    // Fallback: 1 Gambar (Klik langsung buka Teater)
+    if (images.length === 1) {
+        return (
+            <button
+                onClick={() => openGallery(images, 0, altText)}
+                className="relative w-full aspect-video border-b border-slate-200 bg-slate-100 shrink-0 group block cursor-pointer overflow-hidden"
+            >
+                <Image
+                    src={images[0]}
+                    alt={altText}
+                    fill
+                    sizes="280px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors pointer-events-none" />
+
+                {/* Overlay Trigger Perbesar */}
+                <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md px-2.5 py-1.5 flex items-center gap-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity border border-white/20">
+                    <Maximize2 size={12} strokeWidth={2.5} />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Perbesar</span>
+                </div>
+            </button>
+        );
+    }
+
+    // Logika sinkronisasi indikator titik dengan posisi scroll aktual
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const scrollPosition = scrollContainerRef.current.scrollLeft;
+        const width = scrollContainerRef.current.clientWidth;
+        const newIndex = Math.round(scrollPosition / width);
+        setActiveIndex(newIndex);
+    };
+
+    return (
+        <div className="relative w-full aspect-video border-b border-slate-200 bg-slate-900 shrink-0 group">
+
+            {/* CONTAINER SCROLL SNAP (Clean UI - Tanpa Panah) */}
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex w-full h-full overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
+                {images.map((src, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => openGallery(images, idx, altText)} // Klik gambar manapun untuk buka Teater
+                        className="w-full h-full shrink-0 snap-center relative block cursor-pointer"
+                    >
+                        <Image
+                            src={src}
+                            alt={`${altText} - ${idx + 1}`}
+                            fill
+                            sizes="280px"
+                            className="object-cover hover:scale-105 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-slate-900/70 via-transparent to-transparent pointer-events-none" />
+                    </button>
+                ))}
+            </div>
+
+            {/* [REFACTOR] TRIGGER TEATER MODE - Pojok Kanan Bawah */}
+            <button
+                onClick={() => openGallery(images, activeIndex, altText)}
+                className="absolute bottom-2 right-2 z-10 bg-slate-900/80 hover:bg-teal-600 backdrop-blur-md px-2.5 py-1.5 flex items-center gap-1.5 text-white transition-all border border-white/20 shadow-md group-hover:scale-105"
+            >
+                <Maximize2 size={12} strokeWidth={2.5} />
+                <span className="text-[9px] font-bold uppercase tracking-widest">Lihat {images.length} Foto</span>
+            </button>
+
+            {/* INDIKATOR TITIK (PAGINATION) - Digeser ke Kiri Bawah agar seimbang */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10 pointer-events-none">
+                {images.map((_, idx) => (
+                    <div
+                        key={idx}
+                        className={`transition-all duration-300 rounded-none ${idx === activeIndex
+                            ? "w-4 h-1.5 bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)]"
+                            : "w-1.5 h-1.5 bg-white/40"
+                            }`}
+                    />
+                ))}
+            </div>
+
+        </div>
+    );
+}

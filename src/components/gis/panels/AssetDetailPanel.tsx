@@ -5,11 +5,11 @@ import React from "react";
 import { X, MapPin, Info } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 
-// [REFACTOR] FASE 3: Import komponen Pure Fabrication untuk Slider Media
+// Komponen Pure Fabrication untuk Slider Media
 import ImageCarousel from "@/src/components/ui/ImageCarousel";
 
 interface AssetDetailPanelProps {
-    assetData: any; // Menerima payload marker seutuhnya dari mockAssets
+    assetData: any; // Menerima payload marker aktual dari Database (AssetOut)
     panelId: string;
 }
 
@@ -22,9 +22,10 @@ export default function AssetDetailPanel({ assetData, panelId }: AssetDetailPane
     const details = assetData.details || {};
     const hasDetails = Object.keys(details).length > 0;
 
-    // [REFACTOR] FASE 3: Adaptor Data Media
-    // Menangani skema baru (array 'images') sekaligus backward compatibility skema lama (string 'image_url')
-    const mediaList: string[] = assetData.images
+    // [REFACTOR FASE 4.1] Adaptor Data Media Aktual
+    // Menggunakan array 'images' dari database. Jika kosong, fallback ke array kosong.
+    // Menjamin Carousel selalu menerima array string yang valid.
+    const mediaList: string[] = (assetData.images && assetData.images.length > 0)
         ? assetData.images
         : (assetData.image_url ? [assetData.image_url] : []);
 

@@ -52,7 +52,7 @@ export default function ExplorerSidebar() {
         },
         {
             type: "konfigurasi" as ExplorerPanelType,
-            label: "Layers",
+            label: "Basemap",
             icon: Layers,
             title: "Konfigurasi Lapisan Peta"
         }

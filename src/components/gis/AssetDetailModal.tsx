@@ -2,16 +2,17 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import {
     X,
     MapPin,
-    Layers,
     Info,
     Calendar,
     Building2,
     Tag
 } from "lucide-react";
+
+// [FIX DARI QA] Import ImageCarousel agar mendukung Multi-Foto di Dashboard
+import ImageCarousel from "@/src/components/ui/ImageCarousel";
 
 interface AssetDetailModalProps {
     asset: any; // Menerima raw data object dari tabel (AssetOut)
@@ -24,6 +25,12 @@ export default function AssetDetailModal({ asset, onClose }: AssetDetailModalPro
     // Memastikan objek details aman untuk di-looping
     const details = asset.details || {};
     const hasDetails = Object.keys(details).length > 0;
+
+    // [FIX DARI QA] Adaptor Data Media
+    // Menarik array 'images' jika ada, atau fallback ke 'image_url' lama
+    const mediaList: string[] = (asset.images && asset.images.length > 0)
+        ? asset.images
+        : (asset.image_url ? [asset.image_url] : []);
 
     return (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-800">
@@ -60,24 +67,10 @@ export default function AssetDetailModal({ asset, onClose }: AssetDetailModalPro
 
                         {/* KOLOM KIRI: FOTO & DESKRIPSI */}
                         <div className="flex flex-col gap-6">
-                            {/* Hero Image */}
-                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
-                                {asset.image_url ? (
-                                    <Image
-                                        src={asset.image_url}
-                                        alt={asset.name}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, 50vw"
-                                        className="object-cover hover:scale-105 transition-transform duration-700"
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center w-full h-full opacity-40">
-                                        <Layers size={40} className="text-slate-400 mb-2" />
-                                        <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                                            Tanpa Dokumentasi Visual
-                                        </span>
-                                    </div>
-                                )}
+
+                            {/* [FIX DARI QA] Hero Image Carousel diganti dari Image tunggal */}
+                            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                                <ImageCarousel images={mediaList} altText={asset.name} />
                             </div>
 
                             {/* Deskripsi */}
@@ -156,7 +149,7 @@ export default function AssetDetailModal({ asset, onClose }: AssetDetailModalPro
                                     </div>
                                 ) : (
                                     <div className="px-5 py-10 text-center text-slate-400 flex flex-col items-center justify-center">
-                                        <Layers size={24} className="mb-2 opacity-50" />
+                                        <Info size={24} className="mb-2 opacity-50" />
                                         <p className="text-[10px] font-bold uppercase tracking-widest italic">
                                             Belum ada atribut khusus
                                         </p>

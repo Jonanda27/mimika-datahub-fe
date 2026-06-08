@@ -4,7 +4,7 @@ import { API_BASE_URL } from "../lib/config";
 
 /**
  * Interface Payload untuk mengirim data aset baru (FormData).
- * Mengapa FormData? Karena kita mendukung upload file gambar fisik.
+ * [REFACTOR FASE 4] Mengganti image tunggal menjadi array images (File[]).
  */
 export interface CreateAssetPayload {
     name: string;
@@ -14,7 +14,7 @@ export interface CreateAssetPayload {
     lat: number;
     lng: number;
     description: string;
-    image: File | null;
+    images: File[]; // [REFACTOR] Mendukung multiple upload
     details: Record<string, string>; // Dynamic metadata (contoh: {"Kapasitas": "100", "Status": "Aktif"})
 }
 
@@ -71,7 +71,7 @@ export const assetService = {
 
     /**
      * Mendaftarkan Aset Fisik / Hasil GeoTagging baru.
-     * Menggunakan FormData karena melibatkan file gambar.
+     * [REFACTOR FASE 4] Melakukan looping untuk menyisipkan Array of Files ke FormData.
      */
     async createAsset(payload: CreateAssetPayload) {
         const formData = new FormData();
@@ -84,7 +84,13 @@ export const assetService = {
 
         if (payload.district_id) formData.append("district_id", payload.district_id.toString());
         if (payload.description) formData.append("description", payload.description);
-        if (payload.image) formData.append("image", payload.image);
+
+        // [REFACTOR] Looping untuk append banyak foto sekaligus
+        if (payload.images && payload.images.length > 0) {
+            payload.images.forEach((file) => {
+                formData.append("images", file); // Key 'images' harus sama persis dengan argumen FastAPI
+            });
+        }
 
         if (Object.keys(payload.details).length > 0) {
             formData.append("details", JSON.stringify(payload.details));
@@ -118,9 +124,11 @@ export const assetService = {
         if (payload.district_id) formData.append("district_id", payload.district_id.toString());
         if (payload.description) formData.append("description", payload.description);
 
-        // Hanya append image jika user memilih foto baru
-        if (payload.image) {
-            formData.append("image", payload.image);
+        // [REFACTOR] Looping untuk append banyak foto baru (Jika ada)
+        if (payload.images && payload.images.length > 0) {
+            payload.images.forEach((file) => {
+                formData.append("images", file);
+            });
         }
 
         if (Object.keys(payload.details).length > 0) {
@@ -136,6 +144,26 @@ export const assetService = {
         if (!response.ok) {
             const error = await response.json().catch(() => null);
             throw new Error(error?.detail || "Gagal memperbarui data aset di server");
+        }
+        return response.json();
+    },
+
+    /**
+     * [NEW - FASE 4] Fungsi Khusus Admin untuk Mengubah Status Aset (Approve/Reject)
+     */
+    async moderateAsset(assetId: number, status: "approved" | "rejected" | "pending") {
+        const formData = new FormData();
+        formData.append("status", status);
+
+        const response = await fetch(`${API_BASE_URL}/v1/assets/${assetId}/moderate`, {
+            method: "PATCH",
+            headers: this.getAuthHeaders(),
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => null);
+            throw new Error(error?.detail || "Gagal memproses status moderasi aset.");
         }
         return response.json();
     },
