@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Search, Bell, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/src/app/store/useAuthStore";
-import { UserProfile } from "@/src/app/types/auth";
+import { UserProfile } from "@/src/app/types/auth"; // Type safety dari branch 'nau'
 
 interface PageHeaderProps {
   title: string;
@@ -14,23 +14,29 @@ interface PageHeaderProps {
 }
 
 export default function PageHeader({ title, subtitle, withSearch, onSearch }: PageHeaderProps) {
-  // Integrasi Store Auth untuk data profil real-time
+  // 1. Integrasi dengan Auth Store untuk data profil real-time (Gabungan)
   const { profile, fetchProfile, isLoading } = useAuthStore();
 
   useEffect(() => {
-    // Ambil data profil jika belum ada di store untuk menjaga persistensi komponen
+    // Ambil data profil jika belum ada di store (Logic dari branch 'nau')
     if (!profile) {
       fetchProfile();
     }
   }, [profile, fetchProfile]);
 
-  // Fungsi helper untuk inisial nama dengan handling null-safety
+  // Fungsi helper untuk inisial nama (Proteksi null dari branch 'nau')
   const getInitials = (name: string) => {
-    return name?.split(" ").map((n) => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   return (
-    <div className="rounded-2xl p-5 md:p-7 mb-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-md relative overflow-hidden min-h-[140px] gap-5">
+    <div className="rounded-2xl p-5 md:p-7 mb-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-md relative overflow-hidden min-h-35 gap-5">
 
       {/* 1. Background Image Layer */}
       <div className="absolute inset-0 z-0">
@@ -39,16 +45,16 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
           alt="Background Papua"
           fill
           priority
-          className="object-cover object-center grayscale-[20%]"
+          className="object-cover object-center grayscale-20"
         />
-        {/* Menggunakan bg-linear-to-r (Update HEAD) dengan opasitas dari (Update origin/fix) agar gambar lebih jelas */}
-        <div className="absolute inset-0 bg-linear-to-r from-[#1e61d0]/50 to-[#0b3370]/60"></div>
+        {/* Menggunakan sintaks Tailwind yang stabil dengan opacity optimal */}
+        <div className="absolute inset-0 bg-linear-to-r from-[#1e61d0]/80 to-[#0b3370]/70"></div>
       </div>
 
       {/* 2. Content Layer (Title & Subtitle) */}
       <div className="relative z-10 w-full md:w-auto">
         <h2 className="text-xl md:text-2xl font-bold mb-1 drop-shadow-md">{title}</h2>
-        {/* Menggunakan canonical class max-w-62.5 (250px) */}
+        {/* Lebar teks direnggangkan maksimal untuk responsivitas */}
         <p className="text-blue-100 text-[10px] md:text-xs tracking-wide font-medium max-w-62.5 md:max-w-none drop-shadow-md">
           {subtitle}
         </p>
@@ -57,7 +63,7 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
       {/* 3. Action Layer (Search, Notifications & Profile) */}
       <div className="flex items-center justify-between md:justify-end gap-3 md:gap-5 relative z-10 w-full md:w-auto">
 
-        {/* Search Input - Menggabungkan styling canonical dari HEAD dan visual dari origin/fix */}
+        {/* Search Input - Responsive Width */}
         {withSearch && (
           <div className="relative flex-1 md:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
@@ -83,15 +89,16 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : profile ? (
+                /* TypeScript Safety - Casting profil menggunakan tipe dari 'nau' */
                 getInitials((profile as UserProfile).full_name)
               ) : (
                 <UserIcon size={16} />
               )}
             </div>
 
-            {/* Nama User (Hanya tampil di Desktop/iPad Landscape) */}
+            {/* Nama User (Hanya tampil di Desktop/Tablet) */}
             <div className="hidden lg:flex flex-col items-start leading-tight">
-              <span className="text-[11px] font-bold text-white truncate max-w-[100px]">
+              <span className="text-[11px] font-bold text-white truncate max-w-25">
                 {profile?.full_name || "Guest"}
               </span>
               <span className="text-[9px] text-blue-200 uppercase font-black tracking-tighter">

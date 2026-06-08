@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Info, Plus, Send, Image as ImageIcon, X } from "lucide-react";
-// Menggunakan resolusi modul ke Domain Layer untuk memutus Circular Dependency
+
+// [FIX] Mengubah resolusi modul ke Domain Layer untuk memutus Circular Dependency (TS 2614)
 import { Item } from "@/src/app/types/dataset";
 import { SourceType } from "@/src/app/types/source-type";
 
@@ -50,12 +51,13 @@ export default function DatasetForm({
 }: DatasetFormProps) {
 
   // ======================================================================
-  // STATE & LOGIC: GIS District
+  // STATE & LOGIC: GIS District (Spasial)
   // ======================================================================
   const [districtId, setDistrictId] = useState<number | null>(null);
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
+    // Logika Nullable: Konversi string kosong ke null, selain itu ke Number
     setDistrictId(value === "" ? null : Number(value));
   };
 
@@ -204,13 +206,14 @@ export default function DatasetForm({
               <option value="Semester">Semester</option>
               <option value="Tahunan">Tahunan</option>
             </select>
+            <p className="pt-1 italic text-[10px] text-gray-400">* Pastikan format file sesuai standar template</p>
           </div>
 
-          {/* INTERVENSI GIS: Distrik / Wilayah (Controlled Component) */}
+          {/* INTERVENSI GIS: Distrik / Wilayah (Dipotong oleh merge conflict, kini dikembalikan) */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between">
               Distrik / Wilayah
-              <span className="text-[9px] text-[#ef4444] normal-case tracking-normal italic">*Opsional (Level Kab)</span>
+              <span className="text-[9px] text-[#ef4444] normal-case tracking-normal italic">*Opsional (Level Kabupaten)</span>
             </label>
             <select
               name="district_id"

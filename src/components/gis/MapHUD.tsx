@@ -1,0 +1,47 @@
+// src/components/gis/MapHUD.tsx
+"use client";
+
+import React from "react";
+import { Plus, Minus, Maximize } from "lucide-react";
+
+/**
+ * MapHUD - Fokus murni pada Navigasi (Zoom & Center)
+ * Terletak di Kanan Bawah.
+ * Desain frameless: sudut siku (sharp edges), flat, dan tanpa shadow tebal.
+ */
+export default function MapHUD() {
+    const triggerZoomIn = () => window.dispatchEvent(new Event('map-zoom-in'));
+    const triggerZoomOut = () => window.dispatchEvent(new Event('map-zoom-out'));
+    const triggerResetView = () => window.dispatchEvent(new Event('map-reset-view'));
+
+    return (
+        <div className="flex flex-col items-end justify-end pointer-events-none w-full select-none">
+            {/* Kontainer Frameless: Menghilangkan radius dan shadow */}
+            <div className="pointer-events-auto flex flex-col bg-white border border-slate-300 shadow-none rounded-none overflow-hidden divide-y divide-slate-200">
+                <button
+                    onClick={triggerZoomIn}
+                    className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 rounded-none"
+                    title="Perbesar"
+                >
+                    <Plus size={18} strokeWidth={2.5} />
+                </button>
+
+                <button
+                    onClick={triggerResetView}
+                    className="w-10 h-9 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 group rounded-none"
+                    title="Reset Fokus"
+                >
+                    <Maximize size={14} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                </button>
+
+                <button
+                    onClick={triggerZoomOut}
+                    className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-teal-700 transition-colors active:bg-slate-200 rounded-none"
+                    title="Perkecil"
+                >
+                    <Minus size={18} strokeWidth={2.5} />
+                </button>
+            </div>
+        </div>
+    );
+}

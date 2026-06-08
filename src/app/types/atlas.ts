@@ -15,19 +15,17 @@ export interface AtlasMetadata {
     unit: string;
     description: string;
     color_scheme: string; // Contoh: 'Reds', 'Blues', 'Greens'
+    source?: string;      // Institusi penyedia data (OPD)
 }
 
 /**
  * Kontrak data spasial utama untuk fitur Choropleth.
- * Memetakan slug distrik (lowercase, no space) langsung dengan nilai agregatnya.
- * Menggunakan Record/Hashmap agar pencarian di Frontend beroperasi pada O(1).
- * Contoh: { "mimikabaru": 12.5, "wania": 15.0 }
+ * Memetakan slug distrik langsung dengan nilai agregatnya.
  */
 export type AtlasSpatialData = Record<string, number>;
 
 /**
- * Response Data Transfer Object (DTO) utama dari API `/api/v1/atlas/indicators/{type}`.
- * Membungkus identitas, narasi, dan data spasial dalam satu payload.
+ * Response DTO utama dari API /api/v1/atlas/indicators/{type}
  */
 export interface AtlasIndicatorResponse {
     indicator: string;
@@ -36,10 +34,30 @@ export interface AtlasIndicatorResponse {
 }
 
 /**
- * Interface untuk ringkasan metadata.
- * Berguna saat memuat daftar indikator di awal tanpa harus menarik semua data nilainya.
+ * Interface untuk grup indikator berdasarkan kategori sektoral.
+ * Mendukung fitur filter multi-kategori (Fase 1 Activity).
+ */
+export interface AtlasCategoryGroup {
+    category_id: number;
+    category_name: string;
+    indicators: AtlasIndicatorBrief[];
+}
+
+/**
+ * Ringkasan indikator untuk daftar seleksi (Sidebar/Panel).
  */
 export interface AtlasIndicatorBrief {
-    key: string;
-    metadata: AtlasMetadata;
+    key: string;      // Key unik (slug) untuk fetching data detail
+    title: string;    // Nama tampilan indikator
+    category_id: number;
+}
+
+/**
+ * Parameter filter dinamis untuk Atlas & Explorer.
+ * Mendukung drill-down per tahun dan per kategori.
+ */
+export interface AtlasFilterParams {
+    year: number;
+    category_ids: number[]; // Array untuk mendukung multi-kategori
+    search?: string;
 }

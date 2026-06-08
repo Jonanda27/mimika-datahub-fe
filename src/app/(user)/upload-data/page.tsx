@@ -35,11 +35,10 @@ export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
-  // Store Integration
+  // Store Integration (Menggunakan refactoring executeUpload dari HEAD)
   const { isProcessing, executeUpload } = useIngestStore();
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
@@ -84,20 +83,23 @@ export default function UploadDataPage() {
   // --- Handlers ---
   const showAlert = (message: string, type: "success" | "danger" | "info") => {
     setAlert({ message, type });
+    // Info tidak hilang otomatis agar user bisa melihat progres
     if (type !== "info") {
       setTimeout(() => setAlert(null), 6000);
     }
   };
 
   const handleFileChange = (file: File) => {
-    const validTypes = [".xlsx", ".xls", ".csv", ".pdf", ".doc", ".docx"];
+    // Gabungan ekstensi dari kedua branch
+    const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
 
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan Excel, CSV, PDF, atau Word.", "danger");
+      showAlert("Format file tidak didukung. Gunakan Excel, CSV, JSON, atau Dokumen (PDF/Word)", "danger");
       return;
     }
 
+    // Mempertahankan batas 20MB dari branch HEAD
     if (file.size > 20 * 1024 * 1024) {
       showAlert("Ukuran file maksimal 20MB", "danger");
       return;
@@ -148,6 +150,8 @@ export default function UploadDataPage() {
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
 
+    const districtIdValue = formData.get("district_id");
+
     const requestData = {
       title: (formData.get("title") || formData.get("datasetName")) as string,
       dataset_type: formData.get("dataset_type") as string,
@@ -157,12 +161,12 @@ export default function UploadDataPage() {
       year: Number(formData.get("year")),
       period: formData.get("period") as string,
       description: formData.get("description") as string,
-      district_id: selectedDistrictId,
+      district_id: districtIdValue ? Number(districtIdValue) : null,
       file: selectedFile,
       image: selectedImage
     };
 
-    if (!requestData.title || !requestData.source_id || !requestData.category_id) {
+    if (!requestData.title || !requestData.source_id || !requestData.category_id || !requestData.source_type_id) {
       showAlert("Mohon lengkapi semua field wajib (*)", "danger");
       return;
     }
@@ -170,6 +174,7 @@ export default function UploadDataPage() {
     showAlert("Sedang memproses algoritma pembersihan data dan upload GIS...", "info");
 
     try {
+      // Eksekusi fungsi refactoring dari HEAD
       await executeUpload(requestData);
 
       showAlert("Data berhasil diolah dan dipetakan ke wilayah Mimika!", "success");
@@ -178,9 +183,10 @@ export default function UploadDataPage() {
 
       setSelectedFile(null);
       setSelectedImage(null);
-      setSelectedDistrictId(null);
       formElement.reset();
-      setAlert(null);
+
+      // Sembunyikan notif sukses setelah beberapa detik
+      setTimeout(() => setAlert(null), 4000);
 
     } catch (err: any) {
       showAlert(err.message || "Gagal mengupload data", "danger");
@@ -200,11 +206,12 @@ export default function UploadDataPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
+      {/* Normalisasi max-width mengikuti standar Dashboard */}
       <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
 
         <PageHeader
           title="Upload Data"
-          subtitle="Gunakan modul ini untuk mengunggah Dataset (Excel/CSV) atau Dokumen (PDF) ke sistem."
+          subtitle="Gunakan modul ini untuk mengunggah Dataset (Excel/CSV/JSON) atau Dokumen (PDF/Word) ke sistem."
         />
 
         {alert && (

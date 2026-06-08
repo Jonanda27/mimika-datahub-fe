@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Info, Layers, Calendar, Building2, Boxes, Tag, Table as TableIcon, FileDown } from "lucide-react";
+import { X, Info, Layers, Calendar, Building2, Boxes, Tag, FileText, Table as TableIcon, FileDown } from "lucide-react";
 import { Dataset, DatasetContent } from "@/src/app/types/dataset";
 import { Source } from "@/src/app/types/source";
 import { SourceType } from "@/src/app/types/source-type";
@@ -47,6 +47,20 @@ export default function NonPemerintahDetailModal({
               <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">Nama Dataset</p>
                 <h4 className="text-xl font-bold text-gray-900 leading-tight">{dataset.title}</h4>
+              </div>
+
+              {/* --- BLOK DESKRIPSI DATASET --- */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={12} className="text-[#1e61d0]" /> Deskripsi Dataset
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {dataset.description ? (
+                    dataset.description
+                  ) : (
+                    <span className="italic text-gray-400">Tidak ada deskripsi yang ditambahkan untuk dataset ini.</span>
+                  )}
+                </p>
               </div>
 
               {/* Info Grid */}

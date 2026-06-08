@@ -1,6 +1,9 @@
+// src/app/(user)/upload-data/components/DatasetForm.tsx
 "use client";
-import { Info, Plus, Send, Image as ImageIcon, X } from "lucide-react";
+
 import React, { useState, useEffect } from "react";
+import { Info, Plus, Send, Image as ImageIcon, X } from "lucide-react";
+
 // [FIX] Mengubah resolusi modul ke Domain Layer untuk memutus Circular Dependency (TS 2614)
 import { Item } from "@/src/app/types/dataset";
 import { SourceType } from "@/src/app/types/source-type";
@@ -47,9 +50,22 @@ export default function DatasetForm({
   onSubmit, onAddSource, onAddCategory, onAddSourceType
 }: DatasetFormProps) {
 
+  // ======================================================================
+  // STATE & LOGIC: GIS District (Spasial)
+  // ======================================================================
+  const [districtId, setDistrictId] = useState<number | null>(null);
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    // Logika Nullable: Konversi string kosong ke null, selain itu ke Number
+    setDistrictId(value === "" ? null : Number(value));
+  };
+
+  // ======================================================================
+  // STATE & LOGIC: Cover Image Upload
+  // ======================================================================
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Effect untuk mengelola URL Preview agar tidak memory leak
   useEffect(() => {
     if (!selectedImage) {
       setImagePreview(null);
@@ -58,6 +74,7 @@ export default function DatasetForm({
     const objectUrl = URL.createObjectURL(selectedImage);
     setImagePreview(objectUrl);
 
+    // Mencegah memory leak saat komponen di-unmount
     return () => URL.revokeObjectURL(objectUrl);
   }, [selectedImage]);
 
@@ -72,15 +89,6 @@ export default function DatasetForm({
     }
   };
 
-  // Local state untuk implementasi Controlled Component & Nullable Logic
-  const [districtId, setDistrictId] = useState<number | null>(null);
-
-  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    // Logika Nullable: Konversi string kosong ke null, selain itu ke Number
-    setDistrictId(value === "" ? null : Number(value));
-  };
-
   return (
     <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
       <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
@@ -88,7 +96,7 @@ export default function DatasetForm({
       </h3>
       <form onSubmit={onSubmit} className="space-y-5">
 
-        {/* --- BAGIAN UPLOAD GAMBAR [NEW] --- */}
+        {/* --- BAGIAN UPLOAD GAMBAR COVER --- */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Gambar Cover Dataset <span className="text-red-500">*</span></label>
 
@@ -106,6 +114,7 @@ export default function DatasetForm({
             </div>
           ) : (
             <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
               <button
                 type="button" onClick={() => onImageChange(null)}
@@ -121,8 +130,8 @@ export default function DatasetForm({
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Dataset <span className="text-red-500">*</span></label>
           <input
-            name="datasetName" type="text" placeholder="Contoh: Jumlah Penduduk Mimika 2025" required
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition-all text-black"
+            name="title" type="text" placeholder="Contoh: Jumlah Penduduk Mimika 2025" required
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition-all text-black placeholder:text-gray-400"
             disabled={isProcessing}
           />
         </div>
@@ -146,9 +155,9 @@ export default function DatasetForm({
           {/* Sumber Data */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data (OPD) <span className="text-red-500">*</span></label>
-            <select name="dataSource" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
-              <option value="">Pilih Sumber</option>
-              {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            <select name="source_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="" className="text-black">Pilih Sumber</option>
+              {sources.map(s => <option key={s.id} value={s.id} className="text-black">{s.name}</option>)}
             </select>
             <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
               <Plus size={12} /> Tambah Sumber Baru
@@ -172,9 +181,9 @@ export default function DatasetForm({
           {/* Kategori */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori <span className="text-red-500">*</span></label>
-            <select name="category" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
-              <option value="">Pilih Kategori</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <select name="category_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+              <option value="" className="text-black">Pilih Kategori</option>
+              {categories.map(c => <option key={c.id} value={c.id} className="text-black">{c.name}</option>)}
             </select>
             <button type="button" onClick={onAddCategory} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
               <Plus size={12} /> Tambah Kategori Baru
@@ -184,7 +193,7 @@ export default function DatasetForm({
           {/* Tahun */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tahun <span className="text-red-500">*</span></label>
-            <input name="year" type="number" defaultValue="2025" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] text-black" />
+            <input name="year" type="number" defaultValue="2025" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] text-black placeholder:text-gray-400" />
           </div>
         </div>
 
@@ -223,7 +232,7 @@ export default function DatasetForm({
 
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
-          <textarea name="description" rows={2} disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] resize-none text-black" placeholder="Jelaskan isi dataset ini..."></textarea>
+          <textarea name="description" rows={2} disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] resize-none text-black placeholder:text-gray-400" placeholder="Jelaskan isi dataset ini..."></textarea>
         </div>
 
         <button

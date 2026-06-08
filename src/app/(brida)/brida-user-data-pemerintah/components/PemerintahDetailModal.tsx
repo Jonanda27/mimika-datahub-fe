@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Info, Layers, Calendar, Building2, Boxes, Tag, Table as TableIcon, FileDown } from "lucide-react";
+import { X, Info, FileText, Eye, Calendar, Building2, Boxes, Tag, Table as TableIcon, FileDown } from "lucide-react";
 import { Dataset, DatasetContent } from "@/src/app/types/dataset";
 import { Source } from "@/src/app/types/source";
 import { SourceType } from "@/src/app/types/source-type";
@@ -16,15 +16,15 @@ interface DetailModalProps {
   onDownload: (dataset: Dataset) => void;
 }
 
-export default function PemerintahDetailModal({ 
-  dataset, content, sources, sourceTypes, categories, onClose, onDownload 
+export default function PemerintahDetailModal({
+  dataset, content, sources, sourceTypes, categories, onClose, onDownload
 }: DetailModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-black">
       <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <Info size={20} className="text-[#1e61d0]" /> 
+            <Info size={20} className="text-[#1e61d0]" />
             Detail & Preview Dataset
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
@@ -39,11 +39,26 @@ export default function PemerintahDetailModal({
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">Nama Dataset</p>
                 <h4 className="text-xl font-bold text-gray-900 leading-tight">{dataset.title}</h4>
               </div>
+
+              {/* --- BLOK DESKRIPSI DATASET --- */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={12} className="text-[#1e61d0]" /> Deskripsi Dataset
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {dataset.description ? (
+                    dataset.description
+                  ) : (
+                    <span className="italic text-gray-400">Tidak ada deskripsi yang ditambahkan untuk dataset ini.</span>
+                  )}
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <DetailInfoBox label="Sumber (OPD)" value={sources.find(s => s.id === dataset.source_id)?.name || "N/A"} icon={<Building2 size={12}/>} />
-                <DetailInfoBox label="Tipe Sumber" value={sourceTypes.find(st => st.id === dataset.source_type_id)?.name || "N/A"} icon={<Boxes size={12}/>} />
-                <DetailInfoBox label="Kategori" value={categories.find(c => c.id === dataset.category_id)?.name || "N/A"} icon={<Tag size={12}/>} />
-                <DetailInfoBox label="Tahun Data" value={dataset.year} icon={<Calendar size={12}/>} />
+                <DetailInfoBox label="Sumber (OPD)" value={sources.find(s => s.id === dataset.source_id)?.name || "N/A"} icon={<Building2 size={12} />} />
+                <DetailInfoBox label="Tipe Sumber" value={sourceTypes.find(st => st.id === dataset.source_type_id)?.name || "N/A"} icon={<Boxes size={12} />} />
+                <DetailInfoBox label="Kategori" value={categories.find(c => c.id === dataset.category_id)?.name || "N/A"} icon={<Tag size={12} />} />
+                <DetailInfoBox label="Tahun Data" value={dataset.year} icon={<Calendar size={12} />} />
                 <DetailInfoBox label="Periode" value={dataset.period} />
                 <DetailInfoBox label="Status" value={dataset.status} color="text-emerald-600" />
               </div>
@@ -57,11 +72,30 @@ export default function PemerintahDetailModal({
 
           <div className="space-y-4">
             <h4 className="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
-              <TableIcon size={16} className="text-gray-400" /> Data Preview (100 Baris)
+              <FileText size={16} className="text-gray-400" />
+              {content?.structure_type === "document" ? "Pratinjau Dokumen" : "Data Preview (100 Baris)"}
             </h4>
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-inner min-h-[300px]">
+
+            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-inner h-[600px]">
               {!content ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2 font-bold uppercase animate-pulse">Memuat Baris Data...</div>
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2 font-bold uppercase animate-pulse">
+                  Memuat Data...
+                </div>
+              ) : content.structure_type === "document" ? (
+                /* --- TAMPILAN PRATINJAU LANGSUNG UNTUK DOKUMEN --- */
+                <div className="w-full h-full">
+                  {content.view_url ? (
+                    <iframe
+                      src={`${content.view_url}#toolbar=0`}
+                      className="w-full h-full border-none"
+                      title="Document Preview"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400 font-bold">
+                      Gagal memuat pratinjau dokumen.
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="overflow-x-auto max-h-[400px]">
                   <table className="w-full text-left text-xs border-collapse">
@@ -89,10 +123,32 @@ export default function PemerintahDetailModal({
         </div>
 
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-3 shrink-0">
-          <button onClick={() => onDownload(dataset)} className="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95">
-            <FileDown size={18} /> Export Clean Data (Excel)
+          {content?.structure_type === "document" ? (
+            /* TOMBOL DOWNLOAD/BUKA UNTUK DOKUMEN */
+            <a
+              href={content.view_url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-[#1e61d0] hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <Eye size={18} /> Lihat & Download Dokumen Asli
+            </a>
+          ) : (
+            /* TOMBOL EXPORT UNTUK TABULAR/EXCEL */
+            <button
+              onClick={() => onDownload(dataset)}
+              className="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <FileDown size={18} /> Export Clean Data (Excel)
+            </button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="px-8 py-4 bg-white border border-gray-200 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all"
+          >
+            Tutup Preview
           </button>
-          <button onClick={onClose} className="px-8 py-4 bg-white border border-gray-200 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">Tutup Preview</button>
         </div>
       </div>
     </div>

@@ -1,15 +1,20 @@
 // src/components/gis/MimikaMap.tsx
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { MapContainer, TileLayer, GeoJSON, Popup, Polygon, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { gisService } from '@/src/app/services/gis.service';
 import { DistrictDrilldownResponse } from '@/src/app/types/gis';
+import { useExplorerStore } from '@/src/app/store/useExplorerStore';
+import AssetMarkers from "./AssetMarkers";
+
+import { getSemanticColor } from '@/src/app/lib/gisUtils';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
-// Static Hash Map O(1) untuk menjembatani GeoJSON (Name) dengan API Backend (ID)
 const DISTRICT_MAP: Record<string, number> = {
     "mimikabaru": 1, "kualakencana": 2, "tembagapura": 3, "wania": 4, "iwaka": 5,
     "kwamkinarama": 6, "mimikatimur": 7, "mimikatengah": 8, "mimikabarat": 9,
@@ -17,44 +22,174 @@ const DISTRICT_MAP: Record<string, number> = {
     "mimikabarattengah": 15, "amar": 16, "hoya": 17, "alama": 18
 };
 
+const DEFAULT_CENTER: LatLngExpression = [-4.5421, 136.8945];
+const DEFAULT_ZOOM = 8;
+
+interface MimikaMapProps {
+    isAtlasMode?: boolean;
+    isPreviewMode?: boolean;
+}
+
 // ============================================================================
-// FASE 4: Event Handler Khusus untuk memantau perubahan Zoom Kamera Peta
+// PURE FABRICATION: Kalkulator Gaya Poligon (Shared Logic)
 // ============================================================================
+function calculateLayerStyle(
+    districtName: string,
+    state: any,
+    indicatorValues: Record<string, number> | null,
+    maxValue: number,
+    zoomLevel: number
+): PathOptions {
+    const key = districtName.toLowerCase().replace(/\s/g, '');
+    const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+    let weight = zoomLevel >= 14 ? 0 : 1;
+    let color = state.activeBaseMap === 'dark' ? '#ffffff' : '#000000';
+    let dashArray: string | undefined = '2';
+    let fillOpacity = zoomLevel >= 14 ? 0 : (state.activeBaseMap === 'dark' ? 0.1 : 0);
+    let fillColor = state.activeBaseMap === 'dark' ? '#ffffff' : '#000000';
+
+    if (state.activeIndicator && indicatorValues && indicatorValues[key] !== undefined) {
+        fillColor = getSemanticColor(indicatorValues[key], maxValue, state.activeIndicator);
+        fillOpacity = zoomLevel >= 14 ? 0 : (state.mapOpacity / 100);
+        color = state.activeBaseMap === 'dark' ? '#000000' : '#ffffff';
+        dashArray = undefined;
+    }
+
+    if (isFocused) {
+        weight = 3;
+        color = '#14b8a6';
+        dashArray = undefined;
+        if (!state.activeIndicator) {
+            fillColor = '#14b8a6';
+            fillOpacity = 0.3;
+        } else {
+            fillOpacity = Math.min((state.mapOpacity / 100) + 0.3, 1);
+        }
+    } else if (state.focusedDistrict) {
+        fillOpacity = 0.05;
+        color = state.activeBaseMap === 'dark' ? '#334155' : '#cbd5e1';
+        weight = 1;
+    }
+
+    return { fillColor, color, weight, fillOpacity, dashArray };
+}
+
 function MapEventsHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
-    useMapEvents({
-        zoomend: (e) => {
-            onZoomChange(e.target.getZoom());
-        },
-    });
+    useMapEvents({ zoomend: (e) => onZoomChange(e.target.getZoom()) });
     return null;
 }
 
-export default function MimikaMap() {
-    // State Spasial & Render Peta
+function ExternalMapController() {
+    const map = useMap();
+    useEffect(() => {
+        const handleZoomIn = () => map.zoomIn();
+        const handleZoomOut = () => map.zoomOut();
+        const handleResetView = () => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true });
+
+        window.addEventListener('map-zoom-in', handleZoomIn);
+        window.addEventListener('map-zoom-out', handleZoomOut);
+        window.addEventListener('map-reset-view', handleResetView);
+
+        return () => {
+            window.removeEventListener('map-zoom-in', handleZoomIn);
+            window.removeEventListener('map-zoom-out', handleZoomOut);
+            window.removeEventListener('map-reset-view', handleResetView);
+        };
+    }, [map]);
+    return null;
+}
+
+// ============================================================================
+// CONTROLLER: Cinematic Spotlight & Imperative GeoJSON Updater
+// Terbagi menjadi dua entitas terpisah untuk mencegah Infinite Loop
+// ============================================================================
+function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, maxValue, zoomLevel }: any) {
+    const map = useMap();
+
+    // [FIX 1] Ekstraksi Primitif Murni: Menghindari error "getSnapshot should be cached"
+    const focusedDistrict = useExplorerStore((state) => state.focusedDistrict);
+    const activeIndicator = useExplorerStore((state) => state.activeIndicator);
+    const mapOpacity = useExplorerStore((state) => state.mapOpacity);
+    const activeBaseMap = useExplorerStore((state) => state.activeBaseMap);
+
+    // EFEK A: Mengurus murni STYLING (Warna, Garis Tepi, Opacity)
+    useEffect(() => {
+        if (!geoJsonRef.current || !geoData) return;
+
+        const stateSnapshot = { focusedDistrict, activeIndicator, mapOpacity, activeBaseMap };
+        const layers = geoJsonRef.current.getLayers();
+
+        layers.forEach((layer: any) => {
+            const districtName = layer.feature.properties?.district_name || "";
+            const isFocused = focusedDistrict && focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+            const newStyle = calculateLayerStyle(districtName, stateSnapshot, indicatorValues, maxValue, zoomLevel);
+            layer.setStyle(newStyle);
+
+            if (isFocused) {
+                layer.bringToFront();
+            }
+        });
+
+    }, [focusedDistrict, activeIndicator, mapOpacity, activeBaseMap, zoomLevel, geoData, indicatorValues, maxValue, geoJsonRef]);
+
+    // EFEK B: Mengurus murni KAMERA (Zoom/FlyTo)
+    // [FIX 2] Ketergantungan (Dependencies) Dibatasi secara ekstrim HANYA pada focusedDistrict.
+    // Menghilangkan zoomLevel dari array dependency agar tidak memicu infinite loop.
+    useEffect(() => {
+        if (!geoJsonRef.current || !geoData) return;
+
+        if (focusedDistrict) {
+            const layers = geoJsonRef.current.getLayers();
+            const targetLayer = layers.find((layer: any) => {
+                const districtName = layer.feature.properties?.district_name || "";
+                return districtName.toLowerCase() === focusedDistrict.toLowerCase();
+            });
+
+            if (targetLayer) {
+                map.flyToBounds(targetLayer.getBounds(), {
+                    paddingTopLeft: [380, 20],
+                    paddingBottomRight: [20, 20],
+                    duration: 1.5
+                });
+            }
+        } else {
+            map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 1.5 });
+        }
+    }, [focusedDistrict, geoData, geoJsonRef, map]); // <--- KUNCI ANTI INFINITE LOOP
+
+    return null;
+}
+
+export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }: MimikaMapProps) {
+    const router = useRouter();
+
+    const { openPanel, setFocusDistrict } = useExplorerStore();
+
+    const geoJsonRef = useRef<L.GeoJSON>(null);
+
     const [geoData, setGeoData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [zoomLevel, setZoomLevel] = useState(8);
-
-    // State Kunci Re-mount (Solusi Map Reuse)
+    const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
     const [mapKey, setMapKey] = useState(Date.now());
 
-    // Local State untuk Pop-up Profil Wilayah
+    const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
+    const [maxValue, setMaxValue] = useState<number>(100);
+
+    const indicatorValuesRef = useRef(indicatorValues);
+    const maxValueRef = useRef(maxValue);
+
+    useEffect(() => { indicatorValuesRef.current = indicatorValues; }, [indicatorValues]);
+    useEffect(() => { maxValueRef.current = maxValue; }, [maxValue]);
+
     const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
     const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
-
-    // State UX untuk interaksi Expandable Text
     const [isTextExpanded, setIsTextExpanded] = useState(false);
 
-    // Membersihkan instansi map sebelum unmount
-    useEffect(() => {
-        return () => {
-            // Ketika komponen mati, paksa reset key di memori agar instance Leaflet terputus
-            setMapKey(Date.now());
-        };
-    }, []);
+    useEffect(() => { return () => setMapKey(Date.now()); }, []);
 
-    // 1. Fetching Resource Peta (Hanya GeoJSON)
     useEffect(() => {
         const loadMapResources = async () => {
             setLoading(true);
@@ -63,45 +198,46 @@ export default function MimikaMap() {
                 setGeoData(geoRes);
             } catch (error) {
                 console.error("Gagal memuat sumber daya peta:", error);
-            } finally {
-                setLoading(false);
-            }
+            } finally { setLoading(false); }
         };
-
         loadMapResources();
     }, []);
 
-    // 2. Fetching Data Profil saat Poligon di-Klik
     useEffect(() => {
-        if (popupInfo && popupInfo.id > 0) {
+        if (!isAtlasMode && !isPreviewMode && popupInfo && popupInfo.id > 0) {
             let isMounted = true;
             setLoadingProfile(true);
-
             gisService.fetchDistrictDrilldown(popupInfo.id)
-                .then(data => {
-                    if (isMounted) setProfileData(data);
-                })
+                .then(data => { if (isMounted) setProfileData(data); })
                 .catch(err => console.error("Gagal memuat profil wilayah:", err))
-                .finally(() => {
-                    if (isMounted) setLoadingProfile(false);
-                });
-
+                .finally(() => { if (isMounted) setLoadingProfile(false); });
             return () => { isMounted = false; };
         }
-    }, [popupInfo]);
+    }, [popupInfo, isAtlasMode, isPreviewMode]);
 
-    // ============================================================================
-    // FASE 3: Logika Konstruksi Inverted Polygon Masking
-    // ============================================================================
+    useEffect(() => {
+        let isMounted = true;
+        if (useExplorerStore.getState().activeIndicator) {
+            const generateMockData = async () => {
+                await new Promise(res => setTimeout(res, 300));
+                if (!isMounted) return;
+                const mockData: Record<string, number> = {};
+                Object.keys(DISTRICT_MAP).forEach(k => {
+                    mockData[k] = Math.floor(Math.random() * 90) + 10;
+                });
+                setIndicatorValues(mockData);
+                setMaxValue(100);
+            };
+            generateMockData();
+        } else {
+            setIndicatorValues(null);
+        }
+        return () => { isMounted = false; };
+    }, [useExplorerStore.getState().activeIndicator]);
+
     const maskingPositions = useMemo(() => {
         if (!geoData) return [];
-
-        // 1. Buat Poligon Raksasa seukuran peta dunia (Outer Ring)
-        const worldBounds: [number, number][] = [
-            [90, -360], [90, 360], [-90, 360], [-90, -360]
-        ];
-
-        // 2. Ekstraksi koordinat batas Mimika untuk dijadikan "Lubang" (Inner Rings)
+        const worldBounds: [number, number][] = [[90, -360], [90, 360], [-90, 360], [-90, -360]];
         const holes: [number, number][][] = [];
         geoData.features.forEach((feature: any) => {
             if (feature.geometry.type === 'Polygon') {
@@ -114,200 +250,204 @@ export default function MimikaMap() {
                 });
             }
         });
-
         return [worldBounds, ...holes];
     }, [geoData]);
-
-
-    // ============================================================================
-    // FASE 3 & 4: Styling Dinamis & Fade Out
-    // ============================================================================
-    const districtStyle = (): PathOptions => {
-        const isZoomedIn = zoomLevel >= 14;
-        return {
-            fillColor: '#a7f3d0', // Warna Hijau Pastel
-            weight: isZoomedIn ? 0 : 1.5,
-            opacity: isZoomedIn ? 0 : 1,
-            color: 'white',
-            dashArray: '3',
-            fillOpacity: isZoomedIn ? 0 : 0.6,
-        };
-    };
 
     const onEachFeature = (feature: any, layer: Layer) => {
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
 
         layer.bindTooltip(
-            `<div class="font-sans text-xs font-bold text-gray-700">Distrik ${districtName}</div>`,
-            { sticky: true, direction: 'top', className: 'rounded-md shadow-sm border-none px-2 py-1' }
+            `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
+            { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
         );
 
         layer.on({
             mouseover: (e: any) => {
-                if (zoomLevel < 14) {
-                    const target = e.target;
-                    target.setStyle({ weight: 3, color: '#059669', fillOpacity: 0.8 });
-                    target.bringToFront();
+                const state = useExplorerStore.getState();
+                const target = e.target;
+                const currentZoom = target._map.getZoom();
+                if (currentZoom >= 14) return;
+
+                const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
+
+                if (isFocused) return;
+
+                if (state.focusedDistrict) {
+                    target.setStyle({ fillOpacity: 0.15, color: '#94a3b8', weight: 2 });
+                    return;
                 }
+
+                if (state.activeIndicator) {
+                    target.setStyle({ weight: 2.5, color: '#ffffff', fillOpacity: Math.min((state.mapOpacity / 100) + 0.15, 1) });
+                } else {
+                    const isDarkMode = state.activeBaseMap === 'dark';
+                    target.setStyle({ weight: 2, color: isDarkMode ? '#ffffff' : '#000000', fillOpacity: isDarkMode ? 0 : 0.15 });
+                }
+                target.bringToFront();
             },
             mouseout: (e: any) => {
-                if (zoomLevel < 14) {
-                    const target = e.target;
-                    target.setStyle({ weight: 1.5, color: 'white', fillOpacity: 0.6 });
-                }
+                const state = useExplorerStore.getState();
+                const target = e.target;
+                const currentZoom = target._map.getZoom();
+
+                const originalStyle = calculateLayerStyle(
+                    districtName,
+                    {
+                        focusedDistrict: state.focusedDistrict,
+                        activeIndicator: state.activeIndicator,
+                        mapOpacity: state.mapOpacity,
+                        activeBaseMap: state.activeBaseMap
+                    },
+                    indicatorValuesRef.current,
+                    maxValueRef.current,
+                    currentZoom
+                );
+                target.setStyle(originalStyle);
             },
             click: (e: any) => {
-                const target = e.target;
-                const map: LeafletMap = target._map;
-
-                // Auto-Focus/Zoom In Terbang mulus ke batas poligon
-                map.flyToBounds(target.getBounds(), {
-                    padding: [50, 50],
-                    duration: 1.2
-                });
+                if (isPreviewMode) {
+                    router.push('/explorer');
+                    return;
+                }
 
                 const distId = DISTRICT_MAP[key] || 0;
-                setProfileData(null);
-                setIsTextExpanded(false); // Pastikan state expander selalu kereset saat distrik baru diklik
 
-                setPopupInfo({
-                    name: districtName,
-                    latlng: target.getBounds().getCenter(),
-                    id: distId
-                });
+                setFocusDistrict(districtName);
+
+                if (isAtlasMode) {
+                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
+                        id: distId,
+                        name: districtName
+                    });
+                } else {
+                    setProfileData(null);
+                    setIsTextExpanded(false);
+                    setPopupInfo({ name: districtName, latlng: e.target.getBounds().getCenter(), id: distId });
+                }
             }
         });
     };
 
-    // PERBAIKAN WRAPPER: Mengganti h-112.5 menjadi h-full
-    if (loading) {
-        return (
-            <div className="h-full w-full flex items-center justify-center bg-white rounded-3xl border border-gray-100 animate-pulse">
-                <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Memuat Peta Wilayah...</p>
-                </div>
-            </div>
-        );
-    }
+    const getTileLayerUrl = () => {
+        const baseMapId = useExplorerStore.getState().activeBaseMap;
+        switch (baseMapId) {
+            case 'dark': return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+            case 'street': return "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+            case 'esri': return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+            case 'osm': return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+            case 'satellite': default: return "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+        }
+    };
 
-    const mapCenter: LatLngExpression = [-4.5421, 136.8945];
+    const getTileMaxZoom = () => useExplorerStore.getState().activeBaseMap === 'satellite' ? 22 : 20;
 
-    // Bypass Tipe Khusus React 19 / Next.js 15
+    if (loading) return null;
+
     const SafeMapContainer = MapContainer as any;
     const SafeTileLayer = TileLayer as any;
     const SafeGeoJSON = GeoJSON as any;
     const SafePopup = Popup as any;
     const SafePolygon = Polygon as any;
 
-    // Helper untuk merender isi pop-up
     const renderPopupContent = () => {
         if (loadingProfile) {
             return (
                 <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-none animate-spin"></div>
                 </div>
             );
         }
+        if (popupInfo?.id === 0) return <p className="text-xs text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
+        if (!profileData) return <p className="text-xs text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
 
-        if (popupInfo?.id === 0) {
-            return <p className="text-xs text-orange-500 py-4 text-center font-medium">Data master wilayah ini belum terdaftar di sistem Bappeda.</p>;
-        }
-
-        if (!profileData) {
-            return <p className="text-xs text-red-500 py-4 text-center font-medium">Koneksi ke server spasial terputus.</p>;
-        }
-
-        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia. Silakan hubungi administrator Bappeda untuk melengkapi narasi distrik ini.";
-        const isLongText = deskripsi.length > 150; // Threshold untuk memunculkan tombol expand
+        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
+        const isLongText = deskripsi.length > 150;
 
         return (
             <div className="space-y-4">
-                {/* Layer Profil Statis dengan Expandable Text */}
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-slate-700 space-y-1">
                     <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
-                        <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>
-                            {deskripsi}
-                        </p>
+                        <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>{deskripsi}</p>
                     </div>
-
-                    {/* Tombol Toggling Logis */}
                     {isLongText && (
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsTextExpanded(!isTextExpanded);
-                            }}
-                            className="text-[11px] font-bold text-[#0071bc] hover:text-[#005a96] hover:underline transition-colors mt-1 inline-block"
+                            onClick={(e) => { e.stopPropagation(); setIsTextExpanded(!isTextExpanded); }}
+                            className="text-[10px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
                         >
-                            {isTextExpanded ? "Tutup selengkapnya" : "Baca selengkapnya..."}
+                            {isTextExpanded ? "Tutup" : "Selengkapnya"}
                         </button>
                     )}
-
-                    {/* Grid Data Angka */}
-                    <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
-                        <div className="bg-emerald-50 p-2.5 rounded-lg border border-emerald-100">
-                            <span className="block text-[10px] text-emerald-600 font-bold uppercase mb-1">Luas Wilayah</span>
-                            <span className="font-extrabold text-gray-800 text-xs">
-                                {profileData.profile.luas_wilayah ? `${profileData.profile.luas_wilayah.toLocaleString('id-ID')} km²` : '-'}
-                            </span>
-                        </div>
-                        <div className="bg-blue-50 p-2.5 rounded-lg border border-blue-100">
-                            <span className="block text-[10px] text-blue-600 font-bold uppercase mb-1">Populasi</span>
-                            <span className="font-extrabold text-gray-800 text-xs">
-                                {profileData.profile.jumlah_penduduk?.toLocaleString('id-ID') || '-'}
-                            </span>
-                        </div>
-                    </div>
                 </div>
             </div>
         );
     };
 
+    const getMaskingOpacity = () => {
+        const state = useExplorerStore.getState();
+        if (zoomLevel >= 14) return 0;
+        if (state.activeBaseMap === 'dark') return 0.7;
+        if (state.activeBaseMap === 'street') return 0.4;
+        return 0.5;
+    };
+
     return (
-        <div className="h-full w-full rounded-3xl overflow-hidden border border-gray-100 shadow-sm relative z-10 bg-gray-50">
+        <div className={`h-full w-full overflow-hidden relative z-10 bg-slate-50 border-none`}>
             <SafeMapContainer
-                key={mapKey} // INJEKSI KUNCI: Mencegah Reuse Container oleh Leaflet
-                center={mapCenter}
-                zoom={8}
-                scrollWheelZoom={false}
-                className="h-full w-full z-0"
+                key={mapKey}
+                center={DEFAULT_CENTER}
+                zoom={DEFAULT_ZOOM}
+                minZoom={7}
+                scrollWheelZoom={!isPreviewMode}
+                dragging={!isPreviewMode}
+                doubleClickZoom={!isPreviewMode}
+                zoomControl={false}
+                attributionControl={!(isAtlasMode || isPreviewMode)}
+                className="h-full w-full z-0 outline-none"
             >
                 <MapEventsHandler onZoomChange={setZoomLevel} />
+                <ExternalMapController />
 
-                <SafeTileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                <CinematicSpotlightController
+                    geoData={geoData}
+                    geoJsonRef={geoJsonRef}
+                    indicatorValues={indicatorValues}
+                    maxValue={maxValue}
+                    zoomLevel={zoomLevel}
                 />
 
-                {/* Layer 1: Inverted Masking (Dunia gelap, Mimika terang) */}
+                <SafeTileLayer
+                    attribution='&copy; Mimika DataHub | Map data &copy; Google'
+                    url={getTileLayerUrl()}
+                    maxZoom={getTileMaxZoom()}
+                />
+
                 {maskingPositions.length > 0 && (
                     <SafePolygon
                         positions={maskingPositions}
                         pathOptions={{
-                            fillColor: '#1e293b',
-                            fillOpacity: zoomLevel >= 14 ? 0 : 0.5,
+                            fillColor: '#000000',
+                            fillOpacity: getMaskingOpacity(),
                             stroke: false
                         }}
                     />
                 )}
 
-                {/* Layer 2: Poligon Batas Distrik */}
                 {geoData && (
                     <SafeGeoJSON
+                        ref={geoJsonRef}
                         data={geoData}
-                        style={districtStyle}
                         onEachFeature={onEachFeature}
                     />
                 )}
 
-                {/* UI Pop-up: Eksklusif Profil Wilayah Bappeda */}
-                {popupInfo && (
+                <AssetMarkers />
+
+                {!isAtlasMode && !isPreviewMode && popupInfo && (
                     <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
-                        <div className="w-72 p-1 font-sans">
-                            <h3 className="text-lg font-extrabold text-gray-800 border-b border-gray-200 pb-2 mb-3">
-                                Distrik {popupInfo.name}
+                        <div className="w-72 p-2 font-sans rounded-none">
+                            <h3 className="text-[13px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
+                                {popupInfo.name}
                             </h3>
                             {renderPopupContent()}
                         </div>

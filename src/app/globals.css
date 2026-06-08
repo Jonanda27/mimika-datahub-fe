@@ -1,15 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-roboto-sans);
+  --font-mono: var(--font-roboto-mono);
+
+  /* MEMAKSA FRAMELESS: Menetralkan semua utility rounded bawaan tailwind */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  /* Radius full dipertahankan khusus untuk elemen bulat sempurna seperti radio button/avatar */
+  --radius-full: 9999px;
+
+  /* Menghilangkan shadow glass yang tebal */
+  --shadow-glass: none;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,22 +35,76 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* =========================================
-   CUSTOM OVERRIDES: LEAFLET MAP
-   ========================================= */
+/* ============================================================
+ * CUSTOM UTILITY LAYERS
+ * ============================================================
+ */
 
-/* Menghilangkan kotak hitam (browser default focus outline) saat elemen SVG peta diklik */
+@layer utilities {
+
+  /* 1. GLASSMORPHISM ENGINE (Frameless & Flat) */
+  .glass-morphism {
+    @apply bg-white/10 backdrop-blur-md border border-slate-200/50;
+    box-shadow: none;
+  }
+
+  .glass-morphism-dark {
+    @apply bg-slate-950/60 backdrop-blur-xl border border-slate-800;
+    box-shadow: none;
+  }
+
+  /* 2. SCROLLBAR HIDER */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 3. SLEEK CUSTOM SCROLLBAR (Sharp Edges) */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent border-l border-slate-100;
+  }
+
+  /* Rounded dihapus agar selaras dengan tema frameless */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 hover:bg-slate-400 transition-colors rounded-none;
+  }
+
+  /* 4. ANIMASI SHIFTING PANELS */
+  .panel-transition {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  }
+}
+
+/* ============================================================
+ * CUSTOM OVERRIDES: LEAFLET MAP
+ * ============================================================
+ */
+
 .leaflet-container *:focus,
 path.leaflet-interactive:focus,
 svg.leaflet-zoom-animated:focus {
   outline: none !important;
 }
 
-/* Kustomisasi tambahan: Menyembunyikan garis pinggir (stroke) pada poligon masking raksasa */
 .leaflet-overlay-pane path {
   pointer-events: auto;
-  /* Memastikan poligon tetap bisa diklik */
+}
+
+.leaflet-control-container {
+  @apply relative z-10;
+}
+
+.leaflet-popup {
+  @apply z-50;
 }

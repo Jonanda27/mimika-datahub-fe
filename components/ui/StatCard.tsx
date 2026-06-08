@@ -4,7 +4,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   icon: ReactNode;
-  iconBg: string; 
+  iconBg: string;
   valueColor?: string;
 }
 

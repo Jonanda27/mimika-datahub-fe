@@ -1,3 +1,4 @@
+// src/app/(user)/upload-data/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,13 +32,10 @@ export interface UploadLog {
   quality: number | null;
 }
 
-// Eksekusi penghapusan interface Item yang sebelumnya menimbulkan Circular Dependency (TS 2614)
-// Interface Item sekarang ditarik oleh komponen form secara independen dari src/app/types/dataset.ts
-
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null); // State Gambar (Gabungan dari branch teman)
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
@@ -46,6 +44,8 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+
+  // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
 
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -88,11 +88,12 @@ export default function UploadDataPage() {
   };
 
   const handleFileChange = (file: File) => {
-    const validTypes = [".xlsx", ".xls", ".csv", ".json"];
+    // [UPDATE] Mengadopsi format file yang lebih lengkap dari branch rekan Anda
+    const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
 
     if (!validTypes.includes(`.${fileExt.toLowerCase()}`)) {
-      showAlert("Format file tidak didukung. Gunakan .xlsx, .xls, .csv, atau .json", "danger");
+      showAlert("Format file tidak didukung. Gunakan Excel, CSV, JSON, atau Dokumen (PDF/Word)", "danger");
       return;
     }
 
@@ -119,6 +120,7 @@ export default function UploadDataPage() {
         await addSourceType({ name: newItemName });
         showAlert(`Tipe Sumber "${newItemName}" berhasil ditambahkan`, "success");
       }
+
       setShowSourceModal(false);
       setShowCategoryModal(false);
       setShowSourceTypeModal(false);
@@ -132,6 +134,7 @@ export default function UploadDataPage() {
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
       return;
@@ -144,15 +147,17 @@ export default function UploadDataPage() {
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
 
-    const title = formData.get("datasetName") as string;
+    const title = formData.get("title") as string;
     const datasetType = formData.get("dataset_type") as string;
-    const sourceId = formData.get("dataSource");
-    const categoryId = formData.get("category");
+    const sourceId = formData.get("source_id");
+    const categoryId = formData.get("category_id");
     const sourceTypeId = formData.get("source_type_id");
     const year = formData.get("year");
     const period = formData.get("period") as string;
+    const districtId = formData.get("district_id"); // Data spasial baru dari branch Anda
     const description = formData.get("description") as string;
 
+    // Validasi: pastikan field utama tidak kosong
     if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
       showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
       return;
@@ -173,7 +178,9 @@ export default function UploadDataPage() {
         period,
         description,
         file: selectedFile,
-        image: selectedImage
+        // Menggabungkan logika Image (nau) dan district_id (yessir)
+        image: selectedImage,
+        district_id: districtId === "" ? null : Number(districtId)
       });
 
       setResult(result);
@@ -183,11 +190,8 @@ export default function UploadDataPage() {
       setSelectedFile(null);
       setSelectedImage(null);
       formElement.reset();
-
     } catch (err: any) {
-      const msg = err.message || "Gagal mengupload dataset";
-      setError(msg);
-      showAlert(msg, "danger");
+      showAlert(err.message || "Gagal mengupload dataset", "danger");
     } finally {
       setProcessing(false);
     }
@@ -207,7 +211,11 @@ export default function UploadDataPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
-        <PageHeader title="Upload Data" subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON)" />
+
+        <PageHeader
+          title="Upload Data"
+          subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON/PDF)"
+        />
 
         {alert && (
           <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${alert.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' :

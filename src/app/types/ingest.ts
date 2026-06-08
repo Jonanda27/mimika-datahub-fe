@@ -18,10 +18,8 @@ export interface UploadRequest {
   year: number;
   period: string;
   description?: string;
-
-  // Injeksi Spasial (GIS) - Opsional sesuai backend Form(None)
+  // Injeksi Spasial (GIS)
   district_id?: number | null;
-
   file: File;
   image: File;
 }
@@ -31,5 +29,6 @@ export interface UploadResponse {
   dataset_id: number;
   headers_found: string[];
   message: string;
-  stats: IngestStats;
+  file_url?: string;
+  stats: IngestStats; // Struktur berubah menjadi nested object
 }
