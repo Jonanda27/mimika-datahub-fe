@@ -11,6 +11,8 @@ import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 import AssetMarkers from "./AssetMarkers";
 
+// [REFACTOR FASE 4.2] Impor data statis dari lokal untuk visualisasi instan bebas lag
+import { MOCK_DISTRICT_DRILLDOWN } from '@/src/app/lib/mocks/mockDistricts';
 import { getSemanticColor, getSectoralStatus } from '@/src/app/lib/gisUtils';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
@@ -204,12 +206,11 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         setMouseCoords({ x: e.clientX, y: e.clientY });
     };
 
+    // Event listener didaftarkan secara UNCONDITIONAL agar hover ter-render sempurna di seluruh mode halaman
     useEffect(() => {
-        if (!isAtlasMode && !isPreviewMode) {
-            window.addEventListener("mousemove", handleMouseMove);
-        }
+        window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, [isAtlasMode, isPreviewMode]);
+    }, []);
 
     useEffect(() => {
         const loadMapResources = async () => {
@@ -366,22 +367,27 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const getTileMaxZoom = () => useExplorerStore.getState().activeBaseMap === 'satellite' ? 22 : 20;
 
-    // Evaluasi Status Semantik untuk Rich Tooltip Wilayah yang di-Hover
-    const hoverDistrictStatus = useMemo(() => {
-        if (!hoveredDistrict || !activeIndicator || !indicatorValues) return null;
+    // Rekonstruksi Evaluator Tooltip Wilayah Hover agar tidak dikunci oleh Active Indicator 
+    // dan menarik profil statis cache murni O(1) di frontend untuk rendering foto wilayah
+    const hoveredDistrictData = useMemo(() => {
+        if (!hoveredDistrict) return null;
         const key = hoveredDistrict.toLowerCase().replace(/\s/g, '');
-        const rawValue = indicatorValues[key];
-        if (rawValue === undefined) return null;
+        const distId = DISTRICT_MAP[key];
+        const localProfile = distId ? MOCK_DISTRICT_DRILLDOWN[distId] : null;
+        const rawValue = (indicatorValues && key in indicatorValues) ? indicatorValues[key] : null;
 
         return {
+            id: distId,
+            name: hoveredDistrict,
+            profile: localProfile?.profile || null,
             value: rawValue,
-            status: getSectoralStatus(
+            status: (rawValue !== null && activeIndicator) ? getSectoralStatus(
                 rawValue,
                 minValue,
                 maxValue,
                 activeDirection || 'positive',
                 activeIndicator
-            )
+            ) : null
         };
     }, [hoveredDistrict, activeIndicator, indicatorValues, minValue, maxValue, activeDirection]);
 
@@ -456,50 +462,87 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
             </SafeMapContainer>
 
             {/* PORTAL RICH HOVER TOOLTIP (THEATER HUD OVERLAY) */}
-            {hoveredDistrict && hoverDistrictStatus && (
+            {hoveredDistrict && hoveredDistrictData && (
                 <div
-                    className="fixed pointer-events-none z-9999 bg-white border border-slate-200 shadow-2xl p-4 w-64 rounded-none animate-in fade-in zoom-in-95 duration-150 text-slate-800"
+                    className="fixed pointer-events-none z-9999 bg-white border border-slate-200 shadow-2xl p-0 w-64 rounded-none animate-in fade-in zoom-in-95 duration-150 text-slate-800 flex flex-col overflow-hidden"
                     style={{
                         left: `${mouseCoords.x + 15}px`,
                         top: `${mouseCoords.y + 15}px`
                     }}
                 >
-                    <div className="flex flex-col gap-2.5">
+                    {/* [FIX 3 - ASERSY AMAN] Merender Gambar Utama Wilayah dari Static Cache */}
+                    {hoveredDistrictData.profile && (hoveredDistrictData.profile as any).images?.[0] && (
+                        <div className="relative w-full h-20 shrink-0 bg-slate-100">
+                            <img
+                                src={(hoveredDistrictData.profile as any).images[0]}
+                                alt={hoveredDistrictData.name}
+                                className="w-full h-full object-cover"
+                                draggable={false}
+                            />
+                        </div>
+                    )}
+
+                    <div className="p-3.5 flex flex-col gap-2">
                         {/* Judul Distrik */}
-                        <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: hoverDistrictStatus.status.color }} />
+                        <div className="flex flex-col gap-0.5 border-b border-slate-100 pb-2">
                             <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                                Distrik {hoveredDistrict}
+                                Distrik {hoveredDistrictData.name}
                             </h3>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                                ID: {hoveredDistrictData.id ? hoveredDistrictData.id.toString().padStart(2, '0') : '--'}
+                            </span>
                         </div>
 
                         {/* Detail Konten Data Sektoral */}
-                        <div className="flex flex-col gap-1 text-[11px] font-bold">
-                            <div className="flex justify-between text-slate-400">
-                                <span>Indikator:</span>
-                                <span className="text-slate-600 truncate max-w-40 text-right uppercase tracking-tighter">
-                                    {activeIndicator?.replace(/_/g, ' ')}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-slate-400">
-                                <span>Nilai Aktual:</span>
-                                <span className="text-slate-800 font-mono">
-                                    {hoverDistrictStatus.value.toLocaleString('id-ID')}{activeUnit || ""}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center mt-1.5 pt-2 border-t border-slate-100">
-                                <span className="text-[10px] uppercase tracking-widest text-slate-400">Status Capaian:</span>
-                                <span
-                                    className="px-2 py-0.5 text-[9px] uppercase tracking-wider border font-black"
-                                    style={{
-                                        color: hoverDistrictStatus.status.color,
-                                        borderColor: `${hoverDistrictStatus.status.color}50`,
-                                        backgroundColor: `${hoverDistrictStatus.status.color}10`
-                                    }}
-                                >
-                                    {hoverDistrictStatus.status.label}
-                                </span>
-                            </div>
+                        <div className="flex flex-col gap-1 text-[10px] font-bold">
+                            {/* Kondisi A: Jika Ada Indikator Aktif (Render Data Sektoral + Status Semantik) [3] */}
+                            {activeIndicator && hoveredDistrictData.value !== null && hoveredDistrictData.status && (
+                                <>
+                                    <div className="flex justify-between text-slate-400">
+                                        <span>Indikator:</span>
+                                        <span className="text-slate-600 truncate max-w-32.5 text-right uppercase tracking-tighter">
+                                            {activeIndicator.replace(/_/g, ' ')}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-400">
+                                        <span>Nilai Aktual:</span>
+                                        <span className="text-slate-800 font-mono">
+                                            {hoveredDistrictData.value.toLocaleString('id-ID')}{activeUnit || ""}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1.5 pt-2 border-t border-slate-100">
+                                        <span className="text-[10px] uppercase tracking-widest text-slate-400">Status Capaian:</span>
+                                        <span
+                                            className="px-2 py-0.5 text-[8px] uppercase tracking-wider border font-black"
+                                            style={{
+                                                color: hoveredDistrictData.status.color,
+                                                borderColor: `${hoveredDistrictData.status.color}50`,
+                                                backgroundColor: `${hoveredDistrictData.status.color}10`
+                                            }}
+                                        >
+                                            {hoveredDistrictData.status.label}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Kondisi B: Jika TIDAK Ada Indikator Aktif (Render Statistik Demografi Dasar) [10] */}
+                            {!activeIndicator && hoveredDistrictData.profile && (
+                                <div className="space-y-1 text-[10px] text-slate-500 font-medium">
+                                    <div className="flex justify-between">
+                                        <span>Luas Wilayah:</span>
+                                        <span className="text-slate-800 font-bold font-mono">
+                                            {hoveredDistrictData.profile.luas_wilayah?.toLocaleString('id-ID') || '-'} km²
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Total Populasi:</span>
+                                        <span className="text-slate-800 font-bold font-mono">
+                                            {hoveredDistrictData.profile.jumlah_penduduk?.toLocaleString('id-ID') || '-'} Jiwa
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
