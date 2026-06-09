@@ -64,15 +64,19 @@ export const MOCK_ATLAS_CATEGORIES: AtlasCategoryGroup[] = [
 /**
  * MOCK DATA: DETAIL INDIKATOR OPD
  * Data persebaran kepadatan/jumlah data milik OPD untuk mewarnai Kanvas Spasial.
+ * [FIXED] Telah dilengkapi properti 'min_value', 'max_value', dan 'direction' secara utuh [2, 3].
  */
 export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
     "dinas_kesehatan": {
         indicator: "dinas_kesehatan",
+        min_value: 7,  // [FIXED] [2]
+        max_value: 85, // [FIXED] [2]
         metadata: {
             title: "Kepadatan Data Dinas Kesehatan",
             unit: "Total Dataset/Baris",
             description: "Intensitas distribusi publikasi dan pengumpulan data yang dilakukan oleh Dinas Kesehatan.",
             color_scheme: "Reds",
+            direction: "positive", // [FIXED] [3]
             source: "Sistem DataHub Mimika"
         },
         data: {
@@ -83,11 +87,14 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
     },
     "dinas_sosial": {
         indicator: "dinas_sosial",
+        min_value: 14, // [FIXED] [2]
+        max_value: 95, // [FIXED] [2]
         metadata: {
             title: "Kepadatan Data Dinas Sosial",
             unit: "Total Dataset/Baris",
             description: "Distribusi pelaporan program bantuan sosial dan pemberdayaan masyarakat.",
             color_scheme: "Oranges",
+            direction: "positive", // [FIXED] [3]
             source: "Sistem DataHub Mimika"
         },
         data: {
@@ -98,11 +105,14 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
     },
     "dinas_pupr": {
         indicator: "dinas_pupr",
+        min_value: 5,  // [FIXED] [2]
+        max_value: 88, // [FIXED] [2]
         metadata: {
             title: "Kepadatan Data Dinas PUPR",
             unit: "Total Dataset/Baris",
             description: "Intensitas laporan proyek infrastruktur dan sanitasi.",
             color_scheme: "Blues",
+            direction: "positive", // [FIXED] [3]
             source: "Sistem DataHub Mimika"
         },
         data: {
@@ -113,11 +123,14 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
     },
     "bappeda": {
         indicator: "bappeda",
+        min_value: 19,  // [FIXED] [2]
+        max_value: 100, // [FIXED] [2]
         metadata: {
             title: "Kepadatan Data BAPPEDA",
             unit: "Total Dataset/Baris",
             description: "Data perencanaan strategis, musrenbang, dan evaluasi pembangunan.",
             color_scheme: "Greens",
+            direction: "positive", // [FIXED] [3]
             source: "Sistem DataHub Mimika"
         },
         data: {

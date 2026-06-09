@@ -15,7 +15,7 @@ export interface AtlasMetadata {
     unit: string;
     description: string;
     color_scheme: string; // Contoh: 'Reds', 'Blues', 'Greens'
-    direction: 'positive' | 'negative'; // [REFACTOR] Ditambahkan untuk klasifikasi arah evaluasi data (Pilar 3) [3]
+    direction?: 'positive' | 'negative'; // [FIXED - PROTECTED VARIATIONS] Diubah ke opsional agar toleran terhadap data lama [3]
     source?: string;      // Institusi penyedia data (OPD)
 }
 
