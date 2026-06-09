@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import {
     MapPin, Save, Plus, Trash2, Image as ImageIcon,
     X, AlertCircle, Building2, Layers, CheckCircle2, List,
-    Eye, Edit2, Map
+    Eye, Edit2, Map, Info
 } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
@@ -16,6 +16,7 @@ import AssetDetailModal from "@/src/components/gis/AssetDetailModal";
 
 import { assetService } from "@/src/app/services/asset.service";
 import { useSourceStore } from "@/src/app/store/useSourceStore";
+import { useAuthStore } from "@/src/app/store/useAuthStore"; // [1] Untuk mengidentifikasi profil OPD yang aktif login
 
 // [REFACTOR FASE 4.3] Mengimpor MapPicker Gojek-Style secara Dinamis
 const MapPicker = dynamic(() => import("@/src/components/gis/MapPicker"), {
@@ -35,8 +36,9 @@ const MIMIKA_DISTRICTS = [
 ];
 
 export default function ManajemenAsetPage() {
-    // --- Master Data State ---
+    // --- Master Data & Auth Store State ---
     const { sources, fetchSources } = useSourceStore();
+    const { profile, fetchProfile } = useAuthStore(); // [1] Akses data login
     const [categories, setCategories] = useState<any[]>([]);
     const [myAssets, setMyAssets] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +51,6 @@ export default function ManajemenAsetPage() {
     // --- Form State ---
     const [editingAssetId, setEditingAssetId] = useState<number | null>(null);
     const [name, setName] = useState("");
-    const [sourceId, setSourceId] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [districtId, setDistrictId] = useState("");
     const [description, setDescription] = useState("");
@@ -71,10 +72,16 @@ export default function ManajemenAsetPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [alertMsg, setAlertMsg] = useState<{ message: string; type: "success" | "danger" } | null>(null);
 
+    // Hitung jumlah aset yang sedang dikarantina (status pending)
+    const pendingCount = myAssets.filter(a => a.status === "pending" || !a.status).length;
+
     // Initial Fetch
     useEffect(() => {
         const loadData = async () => {
             try {
+                if (!profile) {
+                    await fetchProfile(); // [1] Muat profil pengguna secara asinkronus
+                }
                 await fetchSources();
                 const cats = await assetService.getAssetCategories();
                 setCategories(cats);
@@ -87,7 +94,7 @@ export default function ManajemenAsetPage() {
             }
         };
         loadData();
-    }, [fetchSources]);
+    }, [fetchSources, profile, fetchProfile]);
 
     // [REFACTOR FASE 4.3] Cleanup object URL untuk array gambar
     useEffect(() => {
@@ -142,7 +149,7 @@ export default function ManajemenAsetPage() {
     // Fungsi membersihkan form (Cancel Edit)
     const resetForm = () => {
         setEditingAssetId(null);
-        setName(""); setCategoryId(""); setSourceId(""); setDescription(""); setDistrictId("");
+        setName(""); setCategoryId(""); setDescription(""); setDistrictId("");
         setSelectedImages([]); setImagePreviews([]); setLat(null); setLng(null); setFocusDistrict(null);
         setDetails([]);
     };
@@ -152,7 +159,6 @@ export default function ManajemenAsetPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setEditingAssetId(asset.id);
         setName(asset.name);
-        setSourceId(asset.source_id.toString());
         setCategoryId(asset.category_id.toString());
         setDistrictId(asset.district_id ? asset.district_id.toString() : "");
         setDescription(asset.description || "");
@@ -181,8 +187,20 @@ export default function ManajemenAsetPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name || !sourceId || !categoryId || !districtId || lat === null || lng === null) {
-            setAlertMsg({ message: "Nama, Sumber OPD, Kategori, Distrik, dan Titik Koordinat Peta WAJIB diisi!", type: "danger" });
+        // [INTEGRASI OPD-USER BINDING] Otomatisasi penguncian instansi berdasarkan data login operator [1]
+        const activeSourceId = profile?.source_id;
+
+        if (!activeSourceId) {
+            setAlertMsg({
+                message: "Akun Anda belum ditautkan ke instansi OPD manapun oleh Administrator. Harap hubungi Admin IT Bappeda.",
+                type: "danger"
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (!name || !categoryId || !districtId || lat === null || lng === null) {
+            setAlertMsg({ message: "Nama, Kategori, Distrik, dan Titik Koordinat Peta WAJIB diisi!", type: "danger" });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -197,10 +215,10 @@ export default function ManajemenAsetPage() {
             }
         });
 
-        // [REFACTOR FASE 4.3] Menyesuaikan dengan interface CreateAssetPayload (Multiple Images)
+        // [REFACTOR] Menyuntikkan source_id instansi secara mutlak tanpa dropdown pilihan [1]
         const payloadData = {
             name,
-            source_id: Number(sourceId),
+            source_id: Number(activeSourceId), // [1] Terisi otomatis secara terenkripsi
             category_id: Number(categoryId),
             district_id: Number(districtId),
             lat,
@@ -216,7 +234,7 @@ export default function ManajemenAsetPage() {
                 setAlertMsg({ message: "Aset berhasil diperbarui di database Geospasial!", type: "success" });
             } else {
                 await assetService.createAsset(payloadData);
-                setAlertMsg({ message: "Aset baru berhasil ditambahkan!", type: "success" });
+                setAlertMsg({ message: "Aset baru berhasil diajukan! Menunggu persetujuan Admin Bappeda untuk tayang di peta.", type: "success" });
             }
 
             const updatedAssets = await assetService.getMyAssets();
@@ -317,15 +335,18 @@ export default function ManajemenAsetPage() {
                                 <Plus size={12} /> Tambah Kategori Baru
                             </button>
                         </div>
+
+                        {/* [INTEGRASI OPD-USER BINDING] Menghapus dropdown manual "Kepemilikan (OPD)" [1] */}
+                        {/* Menggantinya dengan visualisasi profil instansi operator secara statis/read-only */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kepemilikan (OPD) <span className="text-red-500">*</span></label>
-                            <select
-                                value={sourceId} onChange={(e) => setSourceId(e.target.value)} required disabled={isSubmitting}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0071bc]"
-                            >
-                                <option value="">Pilih Instansi Pemilik</option>
-                                {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kepemilikan (Instansi / OPD)</label>
+                            <div className="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 text-sm font-black text-blue-900 flex items-center gap-2">
+                                <Building2 size={16} className="text-[#0071bc]" />
+                                <span>
+                                    {sources.find(s => s.id === profile?.source_id)?.name || "Mengidentifikasi instansi..."}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 italic ml-1">Teridentifikasi otomatis berdasarkan profil akun instansi Anda [1].</p>
                         </div>
                     </div>
 
@@ -535,6 +556,19 @@ export default function ManajemenAsetPage() {
                 </div>
 
                 <div className="overflow-x-auto w-full">
+                    {/* INFO BOX MODERASI (Awas Gap Informasi Spasial) */}
+                    {pendingCount > 0 && (
+                        <div className="mx-6 mt-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-xl flex items-start gap-3 text-amber-900">
+                            <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+                            <div>
+                                <p className="text-xs font-bold">Informasi Antrean Moderasi ({pendingCount} Aset)</p>
+                                <p className="text-[11px] font-medium leading-relaxed text-amber-700 mt-0.5">
+                                    Aset berstatus "Menunggu" telah tersimpan dengan aman di basis data, namun dalam status karantina sementara. Aset tersebut baru akan ditayangkan pada peta WebGIS publik setelah disetujui (Approved) oleh Admin Bappeda Kabupaten Mimika.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <table className="w-full text-left text-sm whitespace-nowrap min-w-200">
                         <thead className="bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
                             <tr>
@@ -572,17 +606,26 @@ export default function ManajemenAsetPage() {
                                     <td className="px-6 py-4 text-center">
                                         {/* Status Moderasi */}
                                         {a.status === "approved" ? (
-                                            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <CheckCircle2 size={12} /> Publik
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <CheckCircle2 size={12} /> Publik
+                                                </span>
+                                                <span className="text-[8px] text-emerald-600 font-bold uppercase mt-1">Tayang di WebGIS</span>
+                                            </div>
                                         ) : a.status === "rejected" ? (
-                                            <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <AlertCircle size={12} /> Ditolak
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <AlertCircle size={12} /> Ditolak
+                                                </span>
+                                                <span className="text-[8px] text-rose-500 font-bold uppercase mt-1">Ditolak Bappeda</span>
+                                            </div>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <AlertCircle size={12} /> Menunggu
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <AlertCircle size={12} /> Menunggu
+                                                </span>
+                                                <span className="text-[8px] text-amber-600 font-bold uppercase mt-1">Antrean Moderasi</span>
+                                            </div>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-center">

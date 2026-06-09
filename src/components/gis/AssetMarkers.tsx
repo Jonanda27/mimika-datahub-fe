@@ -7,16 +7,13 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { ArrowRight } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
-
-// [REFACTOR FASE 4.1] Hapus MOCK_ASSET_DATA, import assetService
 import { assetService } from "@/src/app/services/asset.service";
-import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 
 // ============================================================================
-// PURE FABRICATION: GENERATOR IKON KUSTOM DINAMIS
+// PURE FABRICATION: GENERATOR IKON KUSTOM DINAMIS (BE-Driven)
 // ============================================================================
 
-// A. Ikon untuk Titik Individual (Menggunakan Icon URL & Color dari Config)
+// Ikon untuk Titik Individual (Menggunakan Icon URL & Color dinamis dari Backend)
 const createCustomPin = (iconUrl: string, color: string) => {
     return L.divIcon({
         className: "custom-pin-icon bg-transparent border-none",
@@ -34,7 +31,7 @@ const createCustomPin = (iconUrl: string, color: string) => {
     });
 };
 
-// B. Ikon untuk Klaster (Saat di-zoom out) 
+// Ikon untuk Klaster Spasial
 const createClusterCustomIcon = function (cluster: any) {
     const count = cluster.getChildCount();
 
@@ -57,59 +54,39 @@ const createClusterCustomIcon = function (cluster: any) {
 // ============================================================================
 export default function AssetMarkers() {
     const { activeAssetLayers, openPanel } = useExplorerStore();
-
-    // [REFACTOR] State lokal untuk menyimpan data asli dari Database Backend
     const [dbAssets, setDbAssets] = useState<Record<string, any[]>>({});
 
-    // Fetch data saat komponen peta pertama kali di-render
+    // Memuat data aset aktif murni dari REST API Backend
     useEffect(() => {
         let isMounted = true;
 
         assetService.getPublicAssets()
             .then(data => {
-                if (isMounted) setDbAssets(data);
+                if (isMounted) setDbAssets(data || {});
             })
             .catch(err => {
-                console.error("Gagal mengambil data aset spasial dari server:", err);
+                console.error("Gagal memuat koordinat aset spasial dari server:", err);
             });
 
         return () => { isMounted = false; };
     }, []);
 
-    // 2. Mesin Filtering O(n) dengan Memoization
+    // Filter data koordinat O(M) berbasis taksonomi dinamis
     const visibleMarkers = useMemo(() => {
         if (!activeAssetLayers || activeAssetLayers.length === 0) return [];
-        if (Object.keys(dbAssets).length === 0) return []; // Render kosong jika API belum membalas
+        if (Object.keys(dbAssets).length === 0) return [];
 
         const markers: any[] = [];
 
-        // Buat Hash Map dari config lokal (SOT) untuk pencarian super cepat O(1)
-        const configMap = new Map<string, any>();
-        ASSET_TAXONOMY_CONFIG.forEach(opd => {
-            opd.categories.forEach(cat => {
-                configMap.set(`${opd.opdKey}::${cat.type}`, cat);
-            });
-        });
-
-        // Looping menggunakan data asli dari database (dbAssets)
         Object.keys(dbAssets).forEach(opdKey => {
-            const assets = dbAssets[opdKey];
+            const assets = dbAssets[opdKey] || [];
 
             assets.forEach(asset => {
                 const layerId = `${opdKey}::${asset.type}`;
 
-                // Cek apakah jenis aset spesifik ini sedang diaktifkan user
+                // Jika layer terpilih aktif pada Explorer Sidebar, muat koordinatnya
                 if (activeAssetLayers.includes(layerId)) {
-                    const localConfig = configMap.get(layerId);
-                    if (localConfig) {
-                        markers.push({
-                            ...asset,
-                            config: localConfig // Paksa pakai config lokal (UI) agar ikon selalu sinkron dengan Frontend
-                        });
-                    } else if (asset.config) {
-                        // Fallback ke config dari backend jika di frontend belum diregistrasi
-                        markers.push(asset);
-                    }
+                    markers.push(asset);
                 }
             });
         });
@@ -117,7 +94,6 @@ export default function AssetMarkers() {
         return markers;
     }, [activeAssetLayers, dbAssets]);
 
-    // Jika hasil filter kosong (Layer Mati), render null agar tidak membebani DOM
     if (visibleMarkers.length === 0) {
         return null;
     }
@@ -130,51 +106,56 @@ export default function AssetMarkers() {
             maxClusterRadius={50}
             spiderfyOnMaxZoom={true}
         >
-            {visibleMarkers.map((marker, index) => (
-                <Marker
-                    key={`${marker.id}-${index}`}
-                    position={[marker.lat, marker.lng]}
-                    icon={createCustomPin(marker.config.iconUrl, marker.config.color)}
-                >
-                    <Popup className="asset-popup">
-                        <div className="flex flex-col p-0.5 w-50">
+            {visibleMarkers.map((marker, index) => {
+                // Gunakan konfigurasi warna & ikon dari database / backend secara langsung
+                const markerColor = marker.config?.color || "#0071bc";
+                const markerIconUrl = marker.config?.iconUrl || "/icons/markers/office.svg";
 
-                            <span
-                                className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
-                                style={{ color: marker.config.color }}
-                            >
-                                {marker.type}
-                            </span>
+                return (
+                    <Marker
+                        key={`${marker.id}-${index}`}
+                        position={[marker.lat, marker.lng]}
+                        icon={createCustomPin(markerIconUrl, markerColor)}
+                    >
+                        <Popup className="asset-popup">
+                            <div className="flex flex-col p-0.5 w-50">
 
-                            <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
-                                {marker.name}
-                            </h4>
-
-                            <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
-                                <span className="text-[10px] text-slate-500">Koordinat:</span>
-                                <span className="text-[10px] font-medium text-slate-700 font-mono">
-                                    {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
+                                <span
+                                    className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
+                                    style={{ color: markerColor }}
+                                >
+                                    {marker.type}
                                 </span>
+
+                                <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
+                                    {marker.name}
+                                </h4>
+
+                                <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
+                                    <span className="text-[10px] text-slate-500 font-medium">Koordinat:</span>
+                                    <span className="text-[10px] font-medium text-slate-700 font-mono">
+                                        {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
+                                    </span>
+                                </div>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openPanel("detil-aset", marker.name, marker);
+                                    }}
+                                    className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
+                                >
+                                    <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
+                                        Analisis Detail
+                                    </span>
+                                    <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
+                                </button>
+
                             </div>
-
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Melempar data aktual dari database ke panel Detail
-                                    openPanel("detil-aset", marker.name, marker);
-                                }}
-                                className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
-                            >
-                                <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
-                                    Analisis Detail
-                                </span>
-                                <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
-                            </button>
-
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
+                        </Popup>
+                    </Marker>
+                );
+            })}
         </MarkerClusterGroup>
     );
 }

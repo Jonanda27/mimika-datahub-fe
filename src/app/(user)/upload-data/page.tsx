@@ -21,6 +21,7 @@ import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useAuthStore } from "./../../store/useAuthStore"; // [1] Tarik profil operator aktif
 
 // --- Types ---
 export interface UploadLog {
@@ -43,6 +44,7 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+  const { profile, fetchProfile } = useAuthStore(); // [1] Mengakses data login
 
   // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
@@ -57,6 +59,9 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
+        if (!profile) {
+          await fetchProfile(); // [1] Pastikan profil operator termuat
+        }
         await Promise.all([
           fetchSources(),
           fetchCategories(),
@@ -70,7 +75,7 @@ export default function UploadDataPage() {
       }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets, profile, fetchProfile]);
 
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
@@ -138,6 +143,14 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // [INTEGRASI OPD-USER BINDING] Menyelamatkan value source_id karena input dinonaktifkan di UI [1]
+    const activeSourceId = profile?.source_id;
+
+    if (profile?.role === "opd" && !activeSourceId) {
+      showAlert("Akun Anda belum ditautkan ke instansi OPD manapun oleh Administrator. Harap hubungi Admin Bappeda.", "danger");
+      return;
+    }
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset/dokumen terlebih dahulu", "danger");
       return;
@@ -155,7 +168,8 @@ export default function UploadDataPage() {
     const requestData = {
       title: (formData.get("title") || formData.get("datasetName")) as string,
       dataset_type: formData.get("dataset_type") as string,
-      source_id: Number(formData.get("source_id") || formData.get("dataSource")),
+      // [1] Gunakan source_id terikat jika ber-role OPD, jika admin gunakan nilai dropdown
+      source_id: Number(activeSourceId || formData.get("source_id") || formData.get("dataSource")),
       category_id: Number(formData.get("category_id") || formData.get("category")),
       source_type_id: Number(formData.get("source_type_id")),
       year: Number(formData.get("year")),
@@ -246,6 +260,7 @@ export default function UploadDataPage() {
             onAddSource={() => setShowSourceModal(true)}
             onAddCategory={() => setShowCategoryModal(true)}
             onAddSourceType={() => setShowSourceTypeModal(true)}
+            lockedSourceId={profile?.source_id} // [1] Mengunci masukan OPD di level form jika terikat
           />
         </div>
 

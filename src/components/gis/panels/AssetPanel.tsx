@@ -1,7 +1,7 @@
 // src/components/gis/panels/AssetPanel.tsx
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     Search,
     MapPin,
@@ -10,38 +10,110 @@ import {
     CheckSquare,
     Square
 } from "lucide-react";
-import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { assetService } from "@/src/app/services/asset.service";
+
+interface DynamicCategory {
+    type: string;
+    label: string;
+    color: string;
+}
+
+interface DynamicOpdTaxonomy {
+    opdKey: string;
+    opdName: string;
+    categories: DynamicCategory[];
+}
 
 /**
  * AssetPanel - GFW Paradigm (High-Density Data & Solid UI)
- * Bertindak sebagai antarmuka katalog Sebaran Aset Fisik (GeoTagging).
- * Menggunakan arsitektur Frameless Flush List yang menyatu dengan panel.
+ * Komponen Katalog Sebaran Aset Fisik berbasis Taksonomi Dinamis dari Database.
  */
 export default function AssetPanel() {
     const [searchQuery, setSearchQuery] = useState("");
-    const [expandedOpd, setExpandedOpd] = useState<string | null>("dinas_kesehatan");
+    const [expandedOpd, setExpandedOpd] = useState<string | null>(null);
+    const [dbAssets, setDbAssets] = useState<Record<string, any[]>>({});
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Atomic Selectors untuk reaktivitas array yang stabil di Next.js
+    // Atomic Selectors dari Explorer Store
     const activeAssetLayers = useExplorerStore((state) => state.activeAssetLayers);
     const toggleAssetLayer = useExplorerStore((state) => state.toggleAssetLayer);
     const toggleOpdAssets = useExplorerStore((state) => state.toggleOpdAssets);
 
     const safeActiveLayers = activeAssetLayers || [];
 
-    // Filter pencarian berdasarkan nama instansi atau jenis aset
+    // Mengambil data spasial aktif langsung dari API Publik Backend
+    useEffect(() => {
+        let isMounted = true;
+        setIsLoading(true);
+
+        assetService.getPublicAssets()
+            .then((data) => {
+                if (isMounted) {
+                    setDbAssets(data || {});
+                    // Secara default, buka akordion pertama yang bermuatan data
+                    const firstOpdKey = Object.keys(data || {})[0];
+                    if (firstOpdKey) {
+                        setExpandedOpd(firstOpdKey);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("Gagal memuat katalog aset dinamis:", err);
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Memetakan struktur database relasional menjadi taksonomi dinamis ter-agregasi
+    const dynamicTaxonomy = useMemo((): DynamicOpdTaxonomy[] => {
+        return Object.keys(dbAssets).map((opdKey) => {
+            const assets = dbAssets[opdKey] || [];
+
+            // Mengambil seluruh variasi kategori unik yang ada di dalam aset milik OPD ini
+            const categoryMap = new Map<string, DynamicCategory>();
+
+            assets.forEach((asset) => {
+                if (asset.type && !categoryMap.has(asset.type)) {
+                    categoryMap.set(asset.type, {
+                        type: asset.type,
+                        label: asset.type,
+                        color: asset.config?.color || "#0071bc"
+                    });
+                }
+            });
+
+            // Resolusi penamaan: Coba ambil nama asli OPD dari data model relasi Source di dalam aset
+            const resolvedOpdName = assets[0]?.owner?.name || opdKey.replace(/_/g, " ").toUpperCase();
+
+            return {
+                opdKey,
+                opdName: resolvedOpdName,
+                categories: Array.from(categoryMap.values())
+            };
+        });
+    }, [dbAssets]);
+
+    // Filter pencarian taksonomi dinamis berdasarkan nama OPD atau kategori aset
     const filteredTaxonomy = useMemo(() => {
-        if (!searchQuery) return ASSET_TAXONOMY_CONFIG;
+        if (!searchQuery) return dynamicTaxonomy;
         const lowerQuery = searchQuery.toLowerCase();
 
-        return ASSET_TAXONOMY_CONFIG.filter(opd =>
+        return dynamicTaxonomy.filter(opd =>
             opd.opdName.toLowerCase().includes(lowerQuery) ||
             opd.categories.some(cat => cat.label.toLowerCase().includes(lowerQuery))
         );
-    }, [searchQuery]);
+    }, [searchQuery, dynamicTaxonomy]);
 
     return (
-        <div className="flex flex-col h-full bg-white pb-10">
+        <div className="flex flex-col h-full bg-white pb-10 text-slate-800">
 
             {/* SECTION 1: SEARCH & FILTER (Solid & High-Density) */}
             <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10 shadow-sm">
@@ -60,10 +132,10 @@ export default function AssetPanel() {
                 </div>
             </div>
 
-            {/* SECTION 2: ASSET CATALOG LIST (Frameless Flush List) */}
+            {/* SECTION 2: ASSET CATALOG LIST */}
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
 
-                {/* Header Petunjuk (Konteks GeoTagging) */}
+                {/* Header Petunjuk */}
                 <div className="px-4 py-3 bg-teal-50/50 border-b border-slate-200 flex items-start gap-2.5">
                     <MapPin size={14} className="text-teal-600 mt-0.5 shrink-0" />
                     <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
@@ -71,7 +143,17 @@ export default function AssetPanel() {
                     </p>
                 </div>
 
-                {filteredTaxonomy.length > 0 ? (
+                {isLoading ? (
+                    /* Loading Skeletons */
+                    <div className="flex flex-col">
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30 animate-pulse">
+                                <div className="h-4 bg-slate-200 w-1/2 rounded-sm" />
+                                <div className="h-4 bg-slate-200 w-6 rounded-sm" />
+                            </div>
+                        ))}
+                    </div>
+                ) : filteredTaxonomy.length > 0 ? (
                     filteredTaxonomy.map((opd) => {
                         const isExpanded = expandedOpd === opd.opdKey;
                         const opdLayerIds = opd.categories.map(c => `${opd.opdKey}::${c.type}`);
@@ -80,9 +162,9 @@ export default function AssetPanel() {
                         const isSomeActive = opdLayerIds.some(id => safeActiveLayers.includes(id)) && !isAllActive;
 
                         return (
-                            <div key={opd.opdKey} className="flex flex-col">
+                            <div key={opd.opdKey} className="flex flex-col border-b border-slate-100">
 
-                                {/* Rumpun OPD Header (Frameless) */}
+                                {/* Rumpun OPD Header */}
                                 <div className="flex items-center justify-between bg-slate-50 px-4 py-2 border-b border-slate-200 transition-colors">
                                     <button
                                         className="flex items-center gap-2 flex-1 text-left"
@@ -125,7 +207,7 @@ export default function AssetPanel() {
 
                                 {/* Instansi List - Flush List */}
                                 {isExpanded && (
-                                    <div className="flex flex-col bg-white">
+                                    <div className="flex flex-col bg-white animate-in slide-in-from-top-1 duration-150">
                                         {opd.categories.map((cat) => {
                                             const layerId = `${opd.opdKey}::${cat.type}`;
                                             const isActive = safeActiveLayers.includes(layerId);
@@ -137,10 +219,10 @@ export default function AssetPanel() {
                                                         e.preventDefault();
                                                         toggleAssetLayer(opd.opdKey, cat.type);
                                                     }}
-                                                    className={`group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full ${isActive ? "bg-teal-50/20" : ""}`}
+                                                    className={`group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50/50 transition-colors text-left w-full ${isActive ? "bg-teal-50/10" : ""}`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        {/* Custom UI Toggle Switch Asli */}
+                                                        {/* Toggle Switch */}
                                                         <div
                                                             className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'}`}
                                                         >
@@ -160,8 +242,8 @@ export default function AssetPanel() {
                                                         </span>
                                                     </div>
 
-                                                    {/* Indikator Visual Ikon */}
-                                                    <div className="p-1 transition-colors flex items-center gap-2">
+                                                    {/* Penanda Warna */}
+                                                    <div className="p-1 flex items-center">
                                                         <div
                                                             className="w-3 h-3 rounded-full shadow-sm"
                                                             style={{ backgroundColor: cat.color }}
@@ -177,14 +259,14 @@ export default function AssetPanel() {
                         );
                     })
                 ) : (
-                    /* Empty State - High Density Typography */
+                    /* Empty State */
                     <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
                         <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
                             <Search size={20} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[12px] font-bold text-slate-700">Instansi Tidak Ditemukan</p>
-                            <p className="text-[11px] text-slate-500 font-normal">Coba kata kunci pencarian lain</p>
+                            <p className="text-[12px] font-bold text-slate-700">Aset Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Belum ada aset terdaftar yang disetujui</p>
                         </div>
                     </div>
                 )}

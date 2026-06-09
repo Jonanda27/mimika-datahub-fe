@@ -1,21 +1,21 @@
 // src/app/lib/assetConfig.ts
 
 /**
- * Asset Taxonomy Configuration
- * Single Source of Truth untuk pemetaan hierarki OPD, jenis aset, dan properti visual (icon, warna).
- * Konfigurasi ini menjamin Zero Hardcoding pada komponen UI dan Spatial Engine.
+ * Asset Taxonomy Configuration (Fallback Registry)
+ * Bertindak sebagai taksonomi visual cadangan (fallback) untuk menjamin toleransi kesalahan
+ * jika ada data kategori atau warna yang tidak dikonfigurasi dengan benar di database.
  */
 
 export interface AssetCategoryMetadata {
-    type: string;      // Identifier unik yang harus sama persis (exact match) dengan key 'type' di mock data atau database
-    label: string;     // Nama ramah pembaca untuk ditampilkan di UI Accordion
+    type: string;      // Identifier unik untuk pencarian (exact match)
+    label: string;     // Nama ramah pembaca untuk ditampilkan di UI
     iconUrl: string;   // Path relatif menuju aset statis icon marker
-    color: string;     // Kode warna HEX untuk fallback visual atau styling UI layer
+    color: string;     // Kode warna HEX default
 }
 
 export interface OpdAssetTaxonomy {
     opdKey: string;    // Slug unik OPD, misal: "dinas_kesehatan"
-    opdName: string;   // Nama instansi lengkap untuk Header Accordion
+    opdName: string;   // Nama instansi lengkap
     categories: AssetCategoryMetadata[];
 }
 
@@ -56,3 +56,21 @@ export const ASSET_TAXONOMY_CONFIG: OpdAssetTaxonomy[] = [
         ]
     }
 ];
+
+/**
+ * Utilitas Pencarian Cadangan (Pure Fabrication)
+ * Mengambil properti visual default berdasarkan nama kategori jika data DB tidak lengkap.
+ */
+export function getFallbackAssetMetadata(categoryName: string): AssetCategoryMetadata | null {
+    if (!categoryName) return null;
+    const normalized = categoryName.toLowerCase().trim();
+
+    for (const opd of ASSET_TAXONOMY_CONFIG) {
+        for (const cat of opd.categories) {
+            if (cat.type.toLowerCase().trim() === normalized) {
+                return cat;
+            }
+        }
+    }
+    return null;
+}

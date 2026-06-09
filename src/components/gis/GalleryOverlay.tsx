@@ -43,7 +43,7 @@ export default function GalleryOverlay() {
     return (
         // [REFACTOR] LAYER UTAMA: Z-[35] 
         // Berada persis di atas Panel Analisis & MapHUD (z-30), tapi di bawah Sidebar (z-40) & Navbar (z-50)
-        <div className="absolute inset-0 z-[35] flex flex-col pt-16 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-35 flex flex-col pt-16 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
 
             {/* 
                 [REFACTOR] STATIC OFFSET PADDING

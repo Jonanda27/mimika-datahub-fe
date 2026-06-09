@@ -1,17 +1,19 @@
+// src/app/(admin)/akun-management/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  UserPlus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  Shield, 
+import {
+  UserPlus,
+  Search,
+  Edit2,
+  Trash2,
+  Shield,
   User as UserIcon,
   X,
   AlertCircle,
   Mail,
-  Lock
+  Lock,
+  Database
 } from "lucide-react";
 
 // Import Komponen Global
@@ -20,30 +22,34 @@ import LoadingState from "@/components/ui/LoadingState";
 
 // Integrasi Store & Types
 import { useUserStore } from "@/src/app/store/useUserStore";
+import { useSourceStore } from "@/src/app/store/useSourceStore"; // [1] Tarik daftar OPD
 import { User, UserCreate, UserUpdate } from "@/src/app/types/user";
 
 export default function AkunManagementPage() {
   const { users, isLoading, error, fetchUsers, addUser, editUser, removeUser } = useUserStore();
+  const { sources, fetchSources } = useSourceStore(); // [1] Mengakses store OPD
 
   // --- States ---
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setSelectedUser] = useState<User | null>(null);
-  
-  // Form State
+
+  // Form State dengan tambahan source_id [1]
   const [formData, setFormData] = useState<UserCreate>({
     username: "",
     email: "",
     full_name: "",
     password: "",
     role: "opd", // Default role diperbarui
-    is_active: true
+    is_active: true,
+    source_id: null // [1] Default tanpa OPD
   });
 
   // --- Initial Fetch ---
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSources(); // [1] Ambil daftar OPD saat inisialisasi halaman
+  }, [fetchUsers, fetchSources]);
 
   // --- Handlers ---
   const handleOpenModal = (user: User | null = null) => {
@@ -53,9 +59,10 @@ export default function AkunManagementPage() {
         username: user.username,
         email: user.email,
         full_name: user.full_name,
-        password: "", 
+        password: "",
         role: user.role,
-        is_active: user.is_active
+        is_active: user.is_active,
+        source_id: user.source_id || null // [1] Sinkronisasi ID OPD jika ada
       });
     } else {
       setSelectedUser(null);
@@ -65,7 +72,8 @@ export default function AkunManagementPage() {
         full_name: "",
         password: "",
         role: "opd", // Default role diperbarui
-        is_active: true
+        is_active: true,
+        source_id: null // [1] Reset OPD
       });
     }
     setIsModalOpen(true);
@@ -73,15 +81,28 @@ export default function AkunManagementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi penautan OPD: Jika role OPD terpilih, source_id wajib diisi [1]
+    if (formData.role === "opd" && !formData.source_id) {
+      alert("Wajib memilih Instansi OPD terkait untuk role OPD!");
+      return;
+    }
+
     try {
+      // Netralkan source_id jika role bukan "opd" [1]
+      const finalFormData = {
+        ...formData,
+        source_id: formData.role === "opd" ? formData.source_id : null
+      };
+
       if (editingUser) {
-        const updatePayload: UserUpdate = { ...formData };
+        const updatePayload: UserUpdate = { ...finalFormData };
         if (!updatePayload.password) delete updatePayload.password;
-        
+
         await editUser(editingUser.id, updatePayload);
         alert("User berhasil diperbarui");
       } else {
-        await addUser(formData);
+        await addUser(finalFormData);
         alert("User berhasil ditambahkan");
       }
       setIsModalOpen(false);
@@ -101,8 +122,8 @@ export default function AkunManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = users.filter(u =>
+    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -122,7 +143,7 @@ export default function AkunManagementPage() {
   if (isLoading && users.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Manajemen Akun" subtitle="Memuat daftar pengguna..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
         </div>
@@ -133,11 +154,11 @@ export default function AkunManagementPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       {/* Wrapper Utama sesuai standar UploadDataPage */}
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-        
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
+
         {/* 1. HEADER */}
-        <PageHeader 
-          title="Manajemen Akun" 
+        <PageHeader
+          title="Manajemen Akun"
           subtitle="Kelola akses pengguna, peran, dan status aktivasi sistem"
           withSearch
           onSearch={(val) => setSearchTerm(val)}
@@ -146,11 +167,11 @@ export default function AkunManagementPage() {
         {/* 2. ACTION BAR */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-             <p className="text-sm text-gray-500 font-medium ">
-               Ditemukan <span className="text-blue-600 font-bold">{filteredUsers.length}</span> dari {users.length} user terdaftar
-             </p>
+            <p className="text-sm text-gray-500 font-medium ">
+              Ditemukan <span className="text-blue-600 font-bold">{filteredUsers.length}</span> dari {users.length} user terdaftar
+            </p>
           </div>
-          <button 
+          <button
             onClick={() => handleOpenModal()}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm shadow-xl shadow-blue-100 transition-all active:scale-95"
           >
@@ -178,35 +199,44 @@ export default function AkunManagementPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0 ${getAvatarColor(user.role)}`}>
                           {user.full_name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="truncate max-w-[200px]">
+                        <div className="truncate max-w-50">
                           <p className="font-bold text-gray-800">{user.full_name}</p>
                           <p className="text-xs text-gray-400 truncate">@{user.username}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getBadgeStyle(user.role)}`}>
-                        <Shield size={12} /> {user.role}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getBadgeStyle(user.role)}`}>
+                          <Shield size={12} /> {user.role}
+                        </span>
+                        {/* [1] Menampilkan OPD terikat jika role-nya adalah opd */}
+                        {user.role === "opd" && user.source_id && (
+                          <span className="text-[10px] text-slate-400 font-bold mt-1 max-w-45 truncate flex items-center gap-1">
+                            <Database size={10} />
+                            {sources.find(s => s.id === user.source_id)?.name || `OPD ID: #${user.source_id}`}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                         <div className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
-                         <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-red-500'}`}>
-                           {user.is_active ? 'Aktif' : 'Non-aktif'}
-                         </span>
+                        <div className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
+                        <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {user.is_active ? 'Aktif' : 'Non-aktif'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleOpenModal(user)}
                           className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                           title="Edit User"
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(user.id, user.username)}
                           className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           title="Hapus User"
@@ -231,7 +261,7 @@ export default function AkunManagementPage() {
 
         {/* 4. MODAL */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/20 overflow-hidden">
               <form onSubmit={handleSubmit}>
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -249,9 +279,9 @@ export default function AkunManagementPage() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
                     <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="text" required value={formData.full_name} 
-                        onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                      <input
+                        type="text" required value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="Contoh: Budi Santoso"
                       />
@@ -261,21 +291,20 @@ export default function AkunManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Username</label>
-                      <input 
-                        type="text" required value={formData.username} 
-                        onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      <input
+                        type="text" required value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="budisantoso"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Role</label>
-                      <select 
-                        value={formData.role} 
-                        onChange={(e) => setFormData({...formData, role: e.target.value})}
+                      <select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
                       >
-                        {/* UPDATE: Pilihan Role */}
                         <option value="opd">OPD</option>
                         <option value="brida">BRIDA</option>
                         <option value="admin">Administrator</option>
@@ -283,13 +312,31 @@ export default function AkunManagementPage() {
                     </div>
                   </div>
 
+                  {/* [1] DROPDOWN SELEKSI OPD: Hanya tampil jika role terpilih adalah "opd" */}
+                  {formData.role === "opd" && (
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Penautan Lembaga / OPD <span className="text-red-500">*</span></label>
+                      <select
+                        required
+                        value={formData.source_id || ""}
+                        onChange={(e) => setFormData({ ...formData, source_id: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                      >
+                        <option value="">Pilih Instansi OPD (Wajib)</option>
+                        {sources.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="email" required value={formData.email} 
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      <input
+                        type="email" required value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="nama@mimikakab.go.id"
                       />
@@ -302,9 +349,9 @@ export default function AkunManagementPage() {
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="password" required={!editingUser} value={formData.password} 
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      <input
+                        type="password" required={!editingUser} value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="••••••••"
                       />
@@ -312,9 +359,9 @@ export default function AkunManagementPage() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">
-                    <input 
-                      type="checkbox" id="active-check" checked={formData.is_active} 
-                      onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                    <input
+                      type="checkbox" id="active-check" checked={formData.is_active}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <label htmlFor="active-check" className="text-sm font-bold text-gray-600 cursor-pointer">Akun ini aktif</label>
@@ -322,7 +369,7 @@ export default function AkunManagementPage() {
                 </div>
 
                 <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
-                  <button 
+                  <button
                     type="submit"
                     disabled={isLoading}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"

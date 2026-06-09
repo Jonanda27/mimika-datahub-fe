@@ -1,4 +1,4 @@
-// src/app/(user)/upload-data/page.tsx
+// src/app/(brida)/brida-upload-data/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,6 +22,7 @@ import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useAuthStore } from "./../../store/useAuthStore"; // [1] Akses data login
 
 // --- Types ---
 export interface UploadLog {
@@ -35,7 +36,7 @@ export interface UploadLog {
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null); // State Gambar (Gabungan dari branch teman)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
@@ -44,6 +45,7 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+  const { profile, fetchProfile } = useAuthStore(); // [1] Tarik profil login
 
   // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
@@ -58,6 +60,9 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
+        if (!profile) {
+          await fetchProfile(); // [1] Muat profil login BRIDA
+        }
         await Promise.all([
           fetchSources(),
           fetchCategories(),
@@ -71,7 +76,7 @@ export default function UploadDataPage() {
       }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets, profile, fetchProfile]);
 
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
@@ -88,7 +93,7 @@ export default function UploadDataPage() {
   };
 
   const handleFileChange = (file: File) => {
-    // [UPDATE] Mengadopsi format file yang lebih lengkap dari branch rekan Anda
+    // [UPDATE] Mengadopsi format file yang lebih lengkap
     const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
 
@@ -135,6 +140,9 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // [INTEGRASI OPD-USER BINDING] Menghindari bypass form karena input ter-disable di UI [1]
+    const activeSourceId = profile?.source_id;
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
       return;
@@ -149,7 +157,10 @@ export default function UploadDataPage() {
 
     const title = formData.get("title") as string;
     const datasetType = formData.get("dataset_type") as string;
-    const sourceId = formData.get("source_id");
+
+    // [1] Jika ber-role BRIDA/OPD dan memiliki source_id terikat, injeksikan secara aman
+    const finalSourceId = activeSourceId || formData.get("source_id");
+
     const categoryId = formData.get("category_id");
     const sourceTypeId = formData.get("source_type_id");
     const year = formData.get("year");
@@ -158,7 +169,7 @@ export default function UploadDataPage() {
     const description = formData.get("description") as string;
 
     // Validasi: pastikan field utama tidak kosong
-    if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
+    if (!title || !finalSourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
       showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
       return;
     }
@@ -171,14 +182,14 @@ export default function UploadDataPage() {
       const result = await ingestService.uploadProcess({
         title,
         dataset_type: datasetType,
-        source_id: Number(sourceId),
+        source_id: Number(finalSourceId), // [1] Terisi dinamis berbasis hak login
         category_id: Number(categoryId),
         source_type_id: Number(sourceTypeId),
         year: Number(year),
         period,
         description,
         file: selectedFile,
-        // Menggabungkan logika Image (nau) dan district_id (yessir)
+        // Menggabungkan logika Image (print) dan district_id
         image: selectedImage,
         district_id: districtId === "" ? null : Number(districtId)
       });
@@ -223,7 +234,7 @@ export default function UploadDataPage() {
               'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
             }`}>
             <AlertCircle size={20} />
-            <span className="text-sm font-medium">{alert.message}</span>
+            <span className="text-sm font-semibold">{alert.message}</span>
           </div>
         )}
 
@@ -246,6 +257,7 @@ export default function UploadDataPage() {
             onAddSource={() => setShowSourceModal(true)}
             onAddCategory={() => setShowCategoryModal(true)}
             onAddSourceType={() => setShowSourceTypeModal(true)}
+            lockedSourceId={profile?.source_id} // [1] Kunci OPD di UI form jika user terikat
           />
         </div>
 

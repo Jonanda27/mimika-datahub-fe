@@ -42,12 +42,16 @@ interface DatasetFormProps {
   onAddSource: () => void;
   onAddCategory: () => void;
   onAddSourceType: () => void;
+
+  // [INTEGRASI OPD-USER BINDING] Menambahkan deklarasi prop opsional baru untuk type safety [1]
+  lockedSourceId?: number | null; // [1]
 }
 
 export default function DatasetForm({
   sources, categories, sourceTypes, isProcessing,
   selectedImage, onImageChange,
-  onSubmit, onAddSource, onAddCategory, onAddSourceType
+  onSubmit, onAddSource, onAddCategory, onAddSourceType,
+  lockedSourceId // [1] Tangkap prop pengunci OPD
 }: DatasetFormProps) {
 
   // ======================================================================
@@ -90,7 +94,7 @@ export default function DatasetForm({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-slate-800">
       <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
         <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
       </h3>
@@ -155,13 +159,26 @@ export default function DatasetForm({
           {/* Sumber Data */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data (OPD) <span className="text-red-500">*</span></label>
-            <select name="source_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+
+            {/* [INTEGRASI OPD-USER BINDING] Otomatis mengunci value & menonaktifkan select jika operator ber-role OPD [1] */}
+            <select
+              name="source_id"
+              required
+              disabled={isProcessing || (lockedSourceId !== undefined && lockedSourceId !== null)}
+              value={lockedSourceId !== undefined && lockedSourceId !== null ? lockedSourceId : undefined}
+              onChange={lockedSourceId ? () => { } : undefined} // Dummy onChange untuk membungkam warning React
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black disabled:opacity-85"
+            >
               <option value="" className="text-black">Pilih Sumber</option>
               {sources.map(s => <option key={s.id} value={s.id} className="text-black">{s.name}</option>)}
             </select>
-            <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
-              <Plus size={12} /> Tambah Sumber Baru
-            </button>
+
+            {/* Sembunyikan tombol tambah sumber baru jika input terkunci [1] */}
+            {!(lockedSourceId !== undefined && lockedSourceId !== null) && (
+              <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+                <Plus size={12} /> Tambah Sumber Baru
+              </button>
+            )}
           </div>
 
           {/* Source Type */}
@@ -209,7 +226,7 @@ export default function DatasetForm({
             <p className="pt-1 italic text-[10px] text-gray-400">* Pastikan format file sesuai standar template</p>
           </div>
 
-          {/* INTERVENSI GIS: Distrik / Wilayah (Controlled Component) */}
+          {/* INTERVENSI GIS: Distrik / Wilayah */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between">
               Distrik / Wilayah
