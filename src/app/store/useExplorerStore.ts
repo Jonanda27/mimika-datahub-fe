@@ -13,6 +13,14 @@ export interface GalleryPayload {
     title: string;
 }
 
+// [REFACTOR] Metadata Indikator Aktif untuk Legenda & Tooltip
+export interface ActiveIndicatorMetadata {
+    min: number;
+    max: number;
+    direction: 'positive' | 'negative';
+    unit: string;
+}
+
 interface ExplorerState {
     // ==========================================
     // 1. STATE: Manajemen Panel (UI Layout)
@@ -24,13 +32,23 @@ interface ExplorerState {
     // 2. STATE: Konteks Eksplorasi Spasial
     // ==========================================
     activeIndicator: string | null;
+
+    // [REFACTOR] Properti Jangkar Spasial Dinamis & Arah Data (Pilar 1 & 2)
+    activeMin: number | null;
+    activeMax: number | null;
+    activeDirection: 'positive' | 'negative' | null;
+    activeUnit: string | null;
+
     activeAssetLayers: string[]; // <--- MULTI-SELECTION STATE (Format: "opdKey::assetType")
     mapOpacity: number;
     activeBaseMap: string;
 
     // Controller State untuk Peta
-    // Berisi nama distrik yang sedang di-highlight dari Sidebar
     focusedDistrict: string | null;
+
+    // [REFACTOR] State Manajemen Hover Real-Time (Pilar 3)
+    hoveredDistrict: string | null;
+    hoveredAsset: any | null;
 
     // [REFACTOR] THEATER MODE: State untuk Cinematic Gallery Overlay
     galleryState: GalleryPayload | null;
@@ -47,7 +65,12 @@ interface ExplorerState {
     // ==========================================
     // ACTIONS: Konteks Eksplorasi Spasial
     // ==========================================
-    setActiveIndicator: (indicatorKey: string | null) => void;
+    // [REFACTOR] Mutator Indikator Aktif yang disempurnakan untuk mengikat Metadata Dinamis
+    setActiveIndicator: (
+        indicatorKey: string | null,
+        meta?: ActiveIndicatorMetadata | null
+    ) => void;
+
     toggleAssetLayer: (opdKey: string, assetType: string) => void;
     toggleOpdAssets: (opdKey: string, assetTypes: string[], isTurnOn: boolean) => void;
     setMapOpacity: (opacity: number) => void;
@@ -55,6 +78,10 @@ interface ExplorerState {
 
     // Mutator Controller Distrik
     setFocusDistrict: (districtName: string | null) => void;
+
+    // [REFACTOR] Mutator State Hover
+    setHoveredDistrict: (districtName: string | null) => void;
+    setHoveredAsset: (asset: any | null) => void;
 
     // [REFACTOR] THEATER MODE: Actions
     openGallery: (images: string[], startIndex: number, title?: string) => void;
@@ -66,19 +93,31 @@ interface ExplorerState {
 
 export const useExplorerStore = create<ExplorerState>()(
     devtools(
-        (set) => ({
+        (set, get) => ({
             // Inisialisasi State Default
             activePanels: [],
             activeDetailTab: "umum",
             activeIndicator: null,
+            activeMin: null,
+            activeMax: null,
+            activeDirection: null,
+            activeUnit: null,
             activeAssetLayers: [],
             mapOpacity: 70,
             activeBaseMap: "satellite",
-            focusedDistrict: null, // Default null (Tampilan seluruh Mimika)
-            galleryState: null,    // Default null (Mode Teater mati)
+            focusedDistrict: null,
+            hoveredDistrict: null,
+            hoveredAsset: null,
+            galleryState: null,
 
-            // Mutator: Konteks Eksplorasi
-            setActiveIndicator: (indicatorKey) => set({ activeIndicator: indicatorKey }),
+            // [REFACTOR] Mutator Indikator: Menetapkan Key sekaligus mengunci parameter range dinamis
+            setActiveIndicator: (indicatorKey, meta = null) => set({
+                activeIndicator: indicatorKey,
+                activeMin: meta ? meta.min : null,
+                activeMax: meta ? meta.max : null,
+                activeDirection: meta ? meta.direction : null,
+                activeUnit: meta ? meta.unit : null
+            }),
 
             toggleAssetLayer: (opdKey, assetType) => set((state) => {
                 const layerId = `${opdKey}::${assetType}`;
@@ -103,12 +142,13 @@ export const useExplorerStore = create<ExplorerState>()(
             setMapOpacity: (opacity) => set({ mapOpacity: opacity }),
             setActiveBaseMap: (baseMapId) => set({ activeBaseMap: baseMapId }),
 
-            // Mutator untuk state highlight distrik
             setFocusDistrict: (districtName) => set({ focusedDistrict: districtName }),
 
-            // ======================================================================
+            // [REFACTOR] Mutator Hover
+            setHoveredDistrict: (districtName) => set({ hoveredDistrict: districtName }),
+            setHoveredAsset: (asset) => set({ hoveredAsset: asset }),
+
             // [REFACTOR] THEATER MODE MUTATORS
-            // ======================================================================
             openGallery: (images, startIndex, title = "Visualisasi Data") =>
                 set({
                     galleryState: {
@@ -127,28 +167,28 @@ export const useExplorerStore = create<ExplorerState>()(
                     : null
             })),
 
-            // Mutator: Manajemen Panel Tab Detail
             setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
 
-            // Mutator: Reset Data Peta (Jalan Keluar Analisis)
+            // [REFACTOR] Reset Peta dibersihkan total dari variabel sisa hover
             resetMapData: () =>
                 set((state) => ({
                     activeIndicator: null,
+                    activeMin: null,
+                    activeMax: null,
+                    activeDirection: null,
+                    activeUnit: null,
                     activeAssetLayers: [],
                     focusedDistrict: null,
-                    galleryState: null, // Paksa teater mati jika peta direset
+                    hoveredDistrict: null,
+                    hoveredAsset: null,
+                    galleryState: null,
                     activePanels: state.activePanels.filter((p) => p.type !== "detil-distrik" && p.type !== "detil-aset"),
                     activeDetailTab: "umum",
                 })),
 
-            // ======================================================================
-            // LOGIKA MUTUALLY EXCLUSIVE (CLEAN IMMUTABLE APPROACH)
-            // ======================================================================
             openPanel: (type, title, data = null) =>
                 set((state) => {
                     const isDetailPanel = type === "detil-distrik" || type === "detil-aset";
-
-                    // 1. Bersihkan array panel yang ada (Filtering)
                     let nextPanels = [...state.activePanels];
 
                     if (isDetailPanel) {
@@ -157,7 +197,6 @@ export const useExplorerStore = create<ExplorerState>()(
                         nextPanels = nextPanels.filter(p => p.type !== type);
                     }
 
-                    // 2. Buat panel baru dengan ID unik
                     const newPanel: ExplorerPanel = {
                         id: `${type}-${Date.now()}`,
                         type,
@@ -166,10 +205,7 @@ export const useExplorerStore = create<ExplorerState>()(
                         data,
                     };
 
-                    // 3. Tambahkan ke tumpukan paling atas (stack)
                     nextPanels.push(newPanel);
-
-                    // 4. Reset tab
                     const resetTabObj = type === "detil-distrik" ? { activeDetailTab: "umum" as DetailTabType } : {};
 
                     return { activePanels: nextPanels, ...resetTabObj };
@@ -182,11 +218,12 @@ export const useExplorerStore = create<ExplorerState>()(
 
                     return {
                         activePanels: filteredPanels,
-                        // Jika panel detail ditutup, paksa hapus juga fokus distrik dan Teater Galeri
                         ...(isDetailClosed && {
                             activeDetailTab: "umum",
                             focusedDistrict: null,
-                            galleryState: null // Garbage Collection Teater
+                            hoveredDistrict: null,
+                            hoveredAsset: null,
+                            galleryState: null
                         })
                     };
                 }),
@@ -198,11 +235,12 @@ export const useExplorerStore = create<ExplorerState>()(
 
                     return {
                         activePanels: slicedPanels,
-                        // Jika panel detail tertutup karena aksi ini, bersihkan state kamera & Teater
                         ...(!isDetailStillOpen && {
                             activeDetailTab: "umum",
                             focusedDistrict: null,
-                            galleryState: null // Garbage Collection Teater
+                            hoveredDistrict: null,
+                            hoveredAsset: null,
+                            galleryState: null
                         })
                     };
                 }),
@@ -211,7 +249,9 @@ export const useExplorerStore = create<ExplorerState>()(
                 activePanels: [],
                 activeDetailTab: "umum",
                 focusedDistrict: null,
-                galleryState: null // Garbage Collection Teater
+                hoveredDistrict: null,
+                hoveredAsset: null,
+                galleryState: null
             }),
         }),
         { name: "ExplorerStore" }

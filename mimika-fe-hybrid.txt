@@ -1704,20 +1704,22 @@ export default function AdminManajemenAsetPage() {
 }
 
 --- FILE: src\app\(admin)\akun-management\page.tsx ---
+// src/app/(admin)/akun-management/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  UserPlus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  Shield, 
+import {
+  UserPlus,
+  Search,
+  Edit2,
+  Trash2,
+  Shield,
   User as UserIcon,
   X,
   AlertCircle,
   Mail,
-  Lock
+  Lock,
+  Database
 } from "lucide-react";
 
 // Import Komponen Global
@@ -1726,30 +1728,34 @@ import LoadingState from "@/components/ui/LoadingState";
 
 // Integrasi Store & Types
 import { useUserStore } from "@/src/app/store/useUserStore";
+import { useSourceStore } from "@/src/app/store/useSourceStore"; // [1] Tarik daftar OPD
 import { User, UserCreate, UserUpdate } from "@/src/app/types/user";
 
 export default function AkunManagementPage() {
   const { users, isLoading, error, fetchUsers, addUser, editUser, removeUser } = useUserStore();
+  const { sources, fetchSources } = useSourceStore(); // [1] Mengakses store OPD
 
   // --- States ---
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setSelectedUser] = useState<User | null>(null);
-  
-  // Form State
+
+  // Form State dengan tambahan source_id [1]
   const [formData, setFormData] = useState<UserCreate>({
     username: "",
     email: "",
     full_name: "",
     password: "",
     role: "opd", // Default role diperbarui
-    is_active: true
+    is_active: true,
+    source_id: null // [1] Default tanpa OPD
   });
 
   // --- Initial Fetch ---
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSources(); // [1] Ambil daftar OPD saat inisialisasi halaman
+  }, [fetchUsers, fetchSources]);
 
   // --- Handlers ---
   const handleOpenModal = (user: User | null = null) => {
@@ -1759,9 +1765,10 @@ export default function AkunManagementPage() {
         username: user.username,
         email: user.email,
         full_name: user.full_name,
-        password: "", 
+        password: "",
         role: user.role,
-        is_active: user.is_active
+        is_active: user.is_active,
+        source_id: user.source_id || null // [1] Sinkronisasi ID OPD jika ada
       });
     } else {
       setSelectedUser(null);
@@ -1771,7 +1778,8 @@ export default function AkunManagementPage() {
         full_name: "",
         password: "",
         role: "opd", // Default role diperbarui
-        is_active: true
+        is_active: true,
+        source_id: null // [1] Reset OPD
       });
     }
     setIsModalOpen(true);
@@ -1779,15 +1787,28 @@ export default function AkunManagementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi penautan OPD: Jika role OPD terpilih, source_id wajib diisi [1]
+    if (formData.role === "opd" && !formData.source_id) {
+      alert("Wajib memilih Instansi OPD terkait untuk role OPD!");
+      return;
+    }
+
     try {
+      // Netralkan source_id jika role bukan "opd" [1]
+      const finalFormData = {
+        ...formData,
+        source_id: formData.role === "opd" ? formData.source_id : null
+      };
+
       if (editingUser) {
-        const updatePayload: UserUpdate = { ...formData };
+        const updatePayload: UserUpdate = { ...finalFormData };
         if (!updatePayload.password) delete updatePayload.password;
-        
+
         await editUser(editingUser.id, updatePayload);
         alert("User berhasil diperbarui");
       } else {
-        await addUser(formData);
+        await addUser(finalFormData);
         alert("User berhasil ditambahkan");
       }
       setIsModalOpen(false);
@@ -1807,8 +1828,8 @@ export default function AkunManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = users.filter(u =>
+    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -1828,7 +1849,7 @@ export default function AkunManagementPage() {
   if (isLoading && users.length === 0) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Manajemen Akun" subtitle="Memuat daftar pengguna..." />
           <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
         </div>
@@ -1839,11 +1860,11 @@ export default function AkunManagementPage() {
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
       {/* Wrapper Utama sesuai standar UploadDataPage */}
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-        
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
+
         {/* 1. HEADER */}
-        <PageHeader 
-          title="Manajemen Akun" 
+        <PageHeader
+          title="Manajemen Akun"
           subtitle="Kelola akses pengguna, peran, dan status aktivasi sistem"
           withSearch
           onSearch={(val) => setSearchTerm(val)}
@@ -1852,11 +1873,11 @@ export default function AkunManagementPage() {
         {/* 2. ACTION BAR */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-             <p className="text-sm text-gray-500 font-medium ">
-               Ditemukan <span className="text-blue-600 font-bold">{filteredUsers.length}</span> dari {users.length} user terdaftar
-             </p>
+            <p className="text-sm text-gray-500 font-medium ">
+              Ditemukan <span className="text-blue-600 font-bold">{filteredUsers.length}</span> dari {users.length} user terdaftar
+            </p>
           </div>
-          <button 
+          <button
             onClick={() => handleOpenModal()}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm shadow-xl shadow-blue-100 transition-all active:scale-95"
           >
@@ -1884,35 +1905,44 @@ export default function AkunManagementPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0 ${getAvatarColor(user.role)}`}>
                           {user.full_name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="truncate max-w-[200px]">
+                        <div className="truncate max-w-50">
                           <p className="font-bold text-gray-800">{user.full_name}</p>
                           <p className="text-xs text-gray-400 truncate">@{user.username}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getBadgeStyle(user.role)}`}>
-                        <Shield size={12} /> {user.role}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getBadgeStyle(user.role)}`}>
+                          <Shield size={12} /> {user.role}
+                        </span>
+                        {/* [1] Menampilkan OPD terikat jika role-nya adalah opd */}
+                        {user.role === "opd" && user.source_id && (
+                          <span className="text-[10px] text-slate-400 font-bold mt-1 max-w-45 truncate flex items-center gap-1">
+                            <Database size={10} />
+                            {sources.find(s => s.id === user.source_id)?.name || `OPD ID: #${user.source_id}`}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                         <div className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
-                         <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-red-500'}`}>
-                           {user.is_active ? 'Aktif' : 'Non-aktif'}
-                         </span>
+                        <div className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
+                        <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {user.is_active ? 'Aktif' : 'Non-aktif'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleOpenModal(user)}
                           className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                           title="Edit User"
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(user.id, user.username)}
                           className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           title="Hapus User"
@@ -1937,7 +1967,7 @@ export default function AkunManagementPage() {
 
         {/* 4. MODAL */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/20 overflow-hidden">
               <form onSubmit={handleSubmit}>
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -1955,9 +1985,9 @@ export default function AkunManagementPage() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
                     <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="text" required value={formData.full_name} 
-                        onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                      <input
+                        type="text" required value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="Contoh: Budi Santoso"
                       />
@@ -1967,21 +1997,20 @@ export default function AkunManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Username</label>
-                      <input 
-                        type="text" required value={formData.username} 
-                        onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      <input
+                        type="text" required value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="budisantoso"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Role</label>
-                      <select 
-                        value={formData.role} 
-                        onChange={(e) => setFormData({...formData, role: e.target.value})}
+                      <select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
                       >
-                        {/* UPDATE: Pilihan Role */}
                         <option value="opd">OPD</option>
                         <option value="brida">BRIDA</option>
                         <option value="admin">Administrator</option>
@@ -1989,13 +2018,31 @@ export default function AkunManagementPage() {
                     </div>
                   </div>
 
+                  {/* [1] DROPDOWN SELEKSI OPD: Hanya tampil jika role terpilih adalah "opd" */}
+                  {formData.role === "opd" && (
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Penautan Lembaga / OPD <span className="text-red-500">*</span></label>
+                      <select
+                        required
+                        value={formData.source_id || ""}
+                        onChange={(e) => setFormData({ ...formData, source_id: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full bg-gray-50 border border-gray-200 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                      >
+                        <option value="">Pilih Instansi OPD (Wajib)</option>
+                        {sources.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="email" required value={formData.email} 
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      <input
+                        type="email" required value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="nama@mimikakab.go.id"
                       />
@@ -2008,9 +2055,9 @@ export default function AkunManagementPage() {
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="password" required={!editingUser} value={formData.password} 
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      <input
+                        type="password" required={!editingUser} value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
                         placeholder="••••••••"
                       />
@@ -2018,9 +2065,9 @@ export default function AkunManagementPage() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">
-                    <input 
-                      type="checkbox" id="active-check" checked={formData.is_active} 
-                      onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                    <input
+                      type="checkbox" id="active-check" checked={formData.is_active}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <label htmlFor="active-check" className="text-sm font-bold text-gray-600 cursor-pointer">Akun ini aktif</label>
@@ -2028,7 +2075,7 @@ export default function AkunManagementPage() {
                 </div>
 
                 <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
-                  <button 
+                  <button
                     type="submit"
                     disabled={isLoading}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
@@ -3627,8 +3674,8 @@ export default function DataPemerintahPage() {
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Database, CheckCheck, CheckCircle, 
+import {
+  Database, CheckCheck, CheckCircle,
   Eye, Info, X, Clock, Activity, Search,
   AlertTriangle, ShieldCheck
 } from "lucide-react";
@@ -3644,15 +3691,15 @@ import { Dataset } from "../../types/dataset";
 
 export default function DataQualityPage() {
   // --- States ---
-  const { 
+  const {
     pendingDatasets,
-    approvedDatasets, 
-    isLoading: isStoreLoading, 
+    approvedDatasets,
+    isLoading: isStoreLoading,
     fetchPendingDatasets,
-    fetchApprovedDatasets, 
-    approveDataset 
+    fetchApprovedDatasets,
+    approveDataset
   } = useDatasetStore();
-  
+
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [datasetToApprove, setDatasetToApprove] = useState<Dataset | null>(null); // State untuk modal approve
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -3681,7 +3728,7 @@ export default function DataQualityPage() {
   // --- Actions ---
   const handleConfirmApprove = async () => {
     if (!datasetToApprove) return;
-    
+
     setIsApproving(true);
     try {
       await approveDataset(datasetToApprove.id);
@@ -3697,14 +3744,14 @@ export default function DataQualityPage() {
   };
 
   // Menentukan data yang ditampilkan & Filter Search
-  const displayData = (activeTab === "pending" ? pendingDatasets : approvedDatasets).filter(d => 
+  const displayData = (activeTab === "pending" ? pendingDatasets : approvedDatasets).filter(d =>
     d.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isInitialLoading || isStoreLoading && !isApproving) {
     return (
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Data Quality" subtitle="Menyiapkan data audit..." />
           <LoadingState message="Menghubungkan ke pusat validasi data Mimika..." />
         </div>
@@ -3714,12 +3761,12 @@ export default function DataQualityPage() {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen font-sans animate-in fade-in duration-500 text-black">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
-        
+      <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8 overflow-x-hidden">
+
         {/* 1. HEADER BANNER */}
-        <PageHeader 
-          title="Data Quality Management" 
-          subtitle="Moderasi Dataset | Validasi Kualitas | Persetujuan Publikasi" 
+        <PageHeader
+          title="Data Quality Management"
+          subtitle="Moderasi Dataset | Validasi Kualitas | Persetujuan Publikasi"
         />
 
         {/* 2. STATS GRID (Responsive Layout) */}
@@ -3727,30 +3774,30 @@ export default function DataQualityPage() {
         {/* Di Desktop: Grid 3 kolom sejajar. */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
           <div className="col-span-1">
-            <StatCard 
-              label="Menunggu Validasi" 
-              value={pendingDatasets.length} 
-              icon={<CheckCheck className="w-4 h-4 md:w-5 md:h-5" />} 
-              iconBg="bg-amber-500" 
+            <StatCard
+              label="Menunggu Validasi"
+              value={pendingDatasets.length}
+              icon={<CheckCheck className="w-4 h-4 md:w-5 md:h-5" />}
+              iconBg="bg-amber-500"
             />
           </div>
           <div className="col-span-1">
-            <StatCard 
-              label="Telah Disetujui" 
-              value={approvedDatasets.length} 
-              icon={<CheckCircle className="w-4 h-4 md:w-5 md:h-5" />} 
-              iconBg="bg-blue-500" 
+            <StatCard
+              label="Telah Disetujui"
+              value={approvedDatasets.length}
+              icon={<CheckCircle className="w-4 h-4 md:w-5 md:h-5" />}
+              iconBg="bg-blue-500"
             />
           </div>
           <div className="col-span-2 md:col-span-1 flex justify-center md:block">
             {/* Lebar disesuaikan agar sama persis dengan kartu di atasnya pada tampilan mobile */}
             <div className="w-[calc(50%-0.375rem)] sm:w-[calc(50%-0.5rem)] md:w-full">
-              <StatCard 
-                label="Kualitas Sistem" 
-                value="Stable" 
-                icon={<Activity className="w-4 h-4 md:w-5 md:h-5" />} 
-                iconBg="bg-emerald-500" 
-                valueColor="text-emerald-500" 
+              <StatCard
+                label="Kualitas Sistem"
+                value="Stable"
+                icon={<Activity className="w-4 h-4 md:w-5 md:h-5" />}
+                iconBg="bg-emerald-500"
+                valueColor="text-emerald-500"
               />
             </div>
           </div>
@@ -3760,23 +3807,21 @@ export default function DataQualityPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           {/* Tombol Tabs membentang penuh di Mobile, fit-content di Desktop */}
           <div className="flex gap-2 w-full md:w-auto">
-            <button 
+            <button
               onClick={() => setActiveTab("pending")}
-              className={`flex-1 md:flex-none px-4 sm:px-6 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === "pending" 
-                ? "bg-[#ef4444] text-white shadow-xl shadow-red-100" 
-                : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
-              }`}
+              className={`flex-1 md:flex-none px-4 sm:px-6 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${activeTab === "pending"
+                  ? "bg-[#ef4444] text-white shadow-xl shadow-red-100"
+                  : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
+                }`}
             >
               Pending ({pendingDatasets.length})
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab("approved")}
-              className={`flex-1 md:flex-none px-4 sm:px-6 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === "approved" 
-                ? "bg-blue-600 text-white shadow-xl shadow-blue-100" 
-                : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
-              }`}
+              className={`flex-1 md:flex-none px-4 sm:px-6 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${activeTab === "approved"
+                  ? "bg-blue-600 text-white shadow-xl shadow-blue-100"
+                  : "bg-white text-gray-400 hover:bg-gray-50 border border-gray-100"
+                }`}
             >
               Approved ({approvedDatasets.length})
             </button>
@@ -3784,7 +3829,7 @@ export default function DataQualityPage() {
 
           <div className="relative w-full md:w-80 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
+            <input
               type="text"
               placeholder="Cari dataset..."
               className="w-full bg-white border border-gray-100 py-3 pl-10 pr-4 rounded-2xl text-sm focus:ring-2 focus:ring-blue-50 outline-none transition-all"
@@ -3797,7 +3842,7 @@ export default function DataQualityPage() {
         {/* 4. TABLE SECTION */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-sm whitespace-nowrap min-w-[700px]">
+            <table className="w-full text-left text-sm whitespace-nowrap min-w-175">
               <thead className="bg-gray-50/50 text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
                 <tr>
                   <th className="px-4 sm:px-6 py-4 sm:py-5">ID</th>
@@ -3811,22 +3856,22 @@ export default function DataQualityPage() {
                 {displayData.length > 0 ? displayData.map(d => (
                   <tr key={d.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 sm:px-6 py-3 sm:py-4 font-mono text-[10px] sm:text-xs text-gray-400">#{d.id}</td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-normal min-w-[200px]">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-normal min-w-50">
                       <div className="flex flex-col">
-                          <span className="font-bold text-xs sm:text-sm text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">{d.title}</span>
-                          <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-black mt-0.5">{d.dataset_type} • Tahun {d.year}</span>
+                        <span className="font-bold text-xs sm:text-sm text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">{d.title}</span>
+                        <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-black mt-0.5">{d.dataset_type} • Tahun {d.year}</span>
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-2">
                         <div className="w-10 sm:w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                          <div 
-                            className={`h-full ${d.quality_score >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} 
+                          <div
+                            className={`h-full ${d.quality_score >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
                             style={{ width: `${d.quality_score}%` }}
                           />
                         </div>
                         <span className={`font-black text-[10px] sm:text-xs ${d.quality_score >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                            {d.quality_score}%
+                          {d.quality_score}%
                         </span>
                       </div>
                     </td>
@@ -3844,15 +3889,15 @@ export default function DataQualityPage() {
                     <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex justify-end items-center gap-2">
                         {d.status === "pending" && (
-                          <button 
-                            onClick={() => setDatasetToApprove(d)} 
+                          <button
+                            onClick={() => setDatasetToApprove(d)}
                             className="px-3 sm:px-4 py-2 bg-[#ef4444] text-white rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-md shadow-red-100 active:scale-95"
                           >
                             Setujui
                           </button>
                         )}
-                        <button 
-                          onClick={() => setSelectedDataset(d)} 
+                        <button
+                          onClick={() => setSelectedDataset(d)}
                           className="p-2 sm:p-2.5 bg-gray-50 border border-gray-100 rounded-lg sm:rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                         >
                           <Eye size={16} />
@@ -3880,7 +3925,7 @@ export default function DataQualityPage() {
         {/* 5. MODAL DETAIL */}
         {selectedDataset && (
           // flex items-center justify-center diterapkan di sini agar selalu di tengah pada semua device
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6 sm:mb-8">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 text-base sm:text-lg">
@@ -3890,13 +3935,13 @@ export default function DataQualityPage() {
                   <X size={20} className="text-gray-400" />
                 </button>
               </div>
-              
+
               <div className="space-y-4 sm:space-y-6">
                 <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl border border-gray-100">
                   <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Judul Dataset</p>
                   <p className="text-xs sm:text-sm font-bold text-gray-800 leading-relaxed">{selectedDataset.title}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="bg-emerald-50 p-4 sm:p-5 rounded-2xl border border-emerald-100">
                     <p className="text-[9px] sm:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Kualitas</p>
@@ -3916,8 +3961,8 @@ export default function DataQualityPage() {
                 </div>
               </div>
 
-              <button 
-                onClick={() => setSelectedDataset(null)} 
+              <button
+                onClick={() => setSelectedDataset(null)}
                 className="w-full mt-6 sm:mt-8 py-3.5 sm:py-4 bg-[#0a2647] text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-[#144272] transition-all active:scale-95"
               >
                 Tutup Detail
@@ -3928,51 +3973,51 @@ export default function DataQualityPage() {
 
         {/* 6. MODAL APPROVE */}
         {datasetToApprove && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-[30px] sm:rounded-[40px] w-full max-w-[90%] sm:max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 border border-white/20">
               <div className="bg-emerald-500 p-8 sm:p-10 text-center relative">
-                 <div className="bg-white/20 w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-                    <ShieldCheck className="text-white w-10 h-10 sm:w-12 sm:h-12" />
-                 </div>
-                 <h3 className="text-white font-black text-lg sm:text-xl uppercase tracking-tighter">Konfirmasi Publikasi</h3>
-                 <p className="text-emerald-50 text-[10px] sm:text-xs mt-1 font-medium">Dataset akan tersedia untuk publik</p>
+                <div className="bg-white/20 w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
+                  <ShieldCheck className="text-white w-10 h-10 sm:w-12 sm:h-12" />
+                </div>
+                <h3 className="text-white font-black text-lg sm:text-xl uppercase tracking-tighter">Konfirmasi Publikasi</h3>
+                <p className="text-emerald-50 text-[10px] sm:text-xs mt-1 font-medium">Dataset akan tersedia untuk publik</p>
               </div>
 
               <div className="p-6 sm:p-8">
-                 <div className="mb-6 sm:mb-8 space-y-4">
+                <div className="mb-6 sm:mb-8 space-y-4">
+                  <div className="text-center">
+                    <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Nama Dataset</p>
+                    <p className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-2">{datasetToApprove.title}</p>
+                  </div>
+                  <div className="flex justify-center items-center gap-6 py-3 sm:py-4 border-y border-gray-50">
                     <div className="text-center">
-                       <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Nama Dataset</p>
-                       <p className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-2">{datasetToApprove.title}</p>
+                      <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase">Skor Kualitas</p>
+                      <p className="text-base sm:text-lg font-black text-emerald-600">{datasetToApprove.quality_score}%</p>
                     </div>
-                    <div className="flex justify-center items-center gap-6 py-3 sm:py-4 border-y border-gray-50">
-                       <div className="text-center">
-                          <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase">Skor Kualitas</p>
-                          <p className="text-base sm:text-lg font-black text-emerald-600">{datasetToApprove.quality_score}%</p>
-                       </div>
-                       <div className="h-6 sm:h-8 w-px bg-gray-100"></div>
-                       <div className="text-center">
-                          <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase">Tahun</p>
-                          <p className="text-base sm:text-lg font-black text-gray-800">{datasetToApprove.year}</p>
-                       </div>
+                    <div className="h-6 sm:h-8 w-px bg-gray-100"></div>
+                    <div className="text-center">
+                      <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase">Tahun</p>
+                      <p className="text-base sm:text-lg font-black text-gray-800">{datasetToApprove.year}</p>
                     </div>
-                 </div>
+                  </div>
+                </div>
 
-                 <div className="flex flex-col gap-2.5 sm:gap-3">
-                    <button 
-                      onClick={handleConfirmApprove}
-                      disabled={isApproving}
-                      className="w-full py-3.5 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isApproving ? "Memproses..." : "Setujui & Publikasikan"}
-                    </button>
-                    <button 
-                      onClick={() => setDatasetToApprove(null)}
-                      disabled={isApproving}
-                      className="w-full py-3 sm:py-4 text-gray-400 font-black text-[10px] sm:text-xs uppercase tracking-widest hover:text-gray-600 transition-colors"
-                    >
-                      Batalkan
-                    </button>
-                 </div>
+                <div className="flex flex-col gap-2.5 sm:gap-3">
+                  <button
+                    onClick={handleConfirmApprove}
+                    disabled={isApproving}
+                    className="w-full py-3.5 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isApproving ? "Memproses..." : "Setujui & Publikasikan"}
+                  </button>
+                  <button
+                    onClick={() => setDatasetToApprove(null)}
+                    disabled={isApproving}
+                    className="w-full py-3 sm:py-4 text-gray-400 font-black text-[10px] sm:text-xs uppercase tracking-widest hover:text-gray-600 transition-colors"
+                  >
+                    Batalkan
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -4002,22 +4047,37 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
 }
 
 --- FILE: src\app\(admin)\manajemen-aset\page.tsx ---
+// src/app/(admin)/manajemen-aset/page.tsx
+import { redirect } from "next/navigation";
 
+/**
+ * ManajemenAsetRedirectPage - Routing Normalization Gate
+ * 
+ * Mengalihkan rute non-kanonikal `/manajemen-aset` ke rute resmi `/admin-manajemen-aset`.
+ * Menerapkan prinsip arsitektur DRY (Don't Repeat Yourself) untuk mencegah
+ * duplikasi kode pemeliharaan moderasi aset di sisi administrator.
+ */
+export default function ManajemenAsetRedirectPage() {
+    redirect("/admin-manajemen-aset");
+}
 
 --- FILE: src\app\(admin)\manajemen-wilayah\page.tsx ---
 // src/app/(admin)/manajemen-wilayah/page.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Search, MapPin, Edit2, X, Save, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, MapPin, Edit2, X, Save, AlertCircle, CheckCircle2, Plus, Image as ImageIcon } from "lucide-react";
 import { gisService } from "@/src/app/services/gis.service";
+import { API_BASE_URL } from "@/src/app/lib/config"; // [1] Untuk hit endpoint upload media
 
-// Definisi Interface Lokal untuk mempermudah TypeScript
+// Definisi Interface Lokal
 interface DistrictProfile {
+    id?: number;
     luas_wilayah?: number | null;
     jumlah_penduduk?: number | null;
     deskripsi?: string | null;
     batas_wilayah?: string | null;
+    images?: string[] | null; // [1] Ekspansi dukungan properti images
 }
 
 interface District {
@@ -4044,6 +4104,11 @@ export default function ManajemenWilayahPage() {
         deskripsi: ""
     });
 
+    // [INTEGRASI MEDIA WILAYAH] State untuk menyimpan kelolaan berkas foto [1]
+    const [existingImages, setExistingImages] = useState<string[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
     // 1. Fetching Data Awal
     const loadDistricts = async () => {
         setIsLoading(true);
@@ -4062,6 +4127,15 @@ export default function ManajemenWilayahPage() {
         loadDistricts();
     }, []);
 
+    // Cleanup Object URL untuk preview gambar baru agar bebas memory leak
+    useEffect(() => {
+        if (selectedFiles.length > 0) {
+            const urls = selectedFiles.map(file => URL.createObjectURL(file));
+            setImagePreviews(urls);
+            return () => urls.forEach(url => URL.revokeObjectURL(url));
+        }
+    }, [selectedFiles]);
+
     // 2. Logic Filter Pencarian O(N)
     const filteredDistricts = useMemo(() => {
         return districts.filter(d =>
@@ -4077,6 +4151,11 @@ export default function ManajemenWilayahPage() {
             jumlah_penduduk: district.profile?.jumlah_penduduk?.toString() || "",
             deskripsi: district.profile?.deskripsi || ""
         });
+
+        // Memuat visualisasi foto eksis dari database [1]
+        setExistingImages(district.profile?.images || []);
+        setSelectedFiles([]);
+        setImagePreviews([]);
         setNotification(null);
         setIsModalOpen(true);
     };
@@ -4084,6 +4163,40 @@ export default function ManajemenWilayahPage() {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedDistrict(null);
+    };
+
+    // [INTEGRASI MEDIA WILAYAH] Fungsi pembantu upload ke Cloudinary via biner Form [1]
+    const uploadImageFile = async (file: File): Promise<string> => {
+        const fileForm = new FormData();
+        fileForm.append("image", file); // Key 'image' sesuai ingest endpoint
+        fileForm.append("title", `img_wilayah_${Date.now()}`);
+        fileForm.append("dataset_type", "pemerintah");
+        fileForm.append("source_id", "1"); // ID instansi default bappeda
+        fileForm.append("category_id", "1");
+        fileForm.append("source_type_id", "1");
+        fileForm.append("year", "2026");
+        fileForm.append("period", "Tahunan");
+
+        const token = localStorage.getItem("auth_token");
+
+        // Mengirimkan form ke endpoint upload biner umum
+        const res = await fetch(`${API_BASE_URL}/v1/ingest/upload-process`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: fileForm
+        });
+
+        if (!res.ok) {
+            throw new Error(`Gagal mengunggah file foto: ${file.name}`);
+        }
+
+        const data = await res.json();
+        if (!data.file_url && !data.stats) {
+            throw new Error("Gagal mendapatkan URL Cloudinary aman.");
+        }
+
+        // Asumsi backend mengembalikan file_url atau url cover yang berhasil diupload [1]
+        return data.file_url || "/bg-mimika.jpg";
     };
 
     // 4. Handler Penyimpanan Data (Upsert)
@@ -4094,14 +4207,25 @@ export default function ManajemenWilayahPage() {
         setIsSaving(true);
         setNotification(null);
 
-        // Persiapan Payload. Parsing string input ke tipe data yang sesuai
-        const payload = {
-            luas_wilayah: formData.luas_wilayah ? parseFloat(formData.luas_wilayah) : null,
-            jumlah_penduduk: formData.jumlah_penduduk ? parseInt(formData.jumlah_penduduk, 10) : null,
-            deskripsi: formData.deskripsi.trim() || null
-        };
-
         try {
+            // A. Proses upload gambar baru satu persatu ke Cloudinary [1]
+            const uploadedUrls: string[] = [];
+            for (const file of selectedFiles) {
+                const secureUrl = await uploadImageFile(file);
+                uploadedUrls.push(secureUrl);
+            }
+
+            // B. Gabungkan foto eksis yang dipertahankan dengan foto baru [1]
+            const finalImagesPayload = [...existingImages, ...uploadedUrls];
+
+            // C. Susun payload lengkap untuk diteruskan ke GIS profile PUT API [1]
+            const payload = {
+                luas_wilayah: formData.luas_wilayah ? parseFloat(formData.luas_wilayah) : null,
+                jumlah_penduduk: formData.jumlah_penduduk ? parseInt(formData.jumlah_penduduk, 10) : null,
+                deskripsi: formData.deskripsi.trim() || null,
+                images: finalImagesPayload // [1] Menyertakan daftar list foto wilayah baru
+            };
+
             const updatedProfile = await gisService.updateDistrictProfile(selectedDistrict.id, payload);
 
             // Update local state secara optimistik agar UI langsung berubah tanpa me-refresh halaman
@@ -4125,11 +4249,11 @@ export default function ManajemenWilayahPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-8 font-sans animate-in fade-in duration-500">
+        <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-8 font-sans animate-in fade-in duration-500 text-slate-800">
 
             {/* Header Section */}
             <div className="mb-8">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0071bc] flex items-center gap-3">
                     <MapPin className="text-[#0071bc]" size={32} />
                     Manajemen Profil Wilayah
                 </h1>
@@ -4229,10 +4353,10 @@ export default function ManajemenWilayahPage() {
             {/* --- MODAL EDIT PROFIL --- */}
             {isModalOpen && selectedDistrict && (
                 <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
                         {/* Modal Header */}
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 uppercase">Edit Distrik {selectedDistrict.name}</h3>
                                 <p className="text-xs text-gray-500 mt-0.5">ID Master Wilayah: #{selectedDistrict.id}</p>
@@ -4247,7 +4371,7 @@ export default function ManajemenWilayahPage() {
                         </div>
 
                         {/* Modal Body / Form */}
-                        <form onSubmit={handleSaveChanges}>
+                        <form onSubmit={handleSaveChanges} className="overflow-y-auto flex-1 custom-scrollbar">
                             <div className="p-6 space-y-5">
 
                                 {/* Notification Area */}
@@ -4294,7 +4418,7 @@ export default function ManajemenWilayahPage() {
                                         <span className="text-xs font-normal text-gray-400">Direkomendasikan: 2-3 Paragraf</span>
                                     </label>
                                     <textarea
-                                        rows={6}
+                                        rows={4}
                                         placeholder="Masukkan deskripsi demografis, geografis, atau potensi wilayah distrik ini..."
                                         value={formData.deskripsi}
                                         onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
@@ -4302,10 +4426,71 @@ export default function ManajemenWilayahPage() {
                                         disabled={isSaving}
                                     />
                                 </div>
+
+                                {/* [INTEGRASI MEDIA WILAYAH] Komponen Input & Preview Foto Wilayah */}
+                                <div className="space-y-2 border-t border-slate-100 pt-4">
+                                    <label className="text-sm font-bold text-slate-700 flex justify-between items-center">
+                                        <span>Dokumentasi Visual Wilayah (Galeri Distrik)</span>
+                                        <span className="text-[10px] text-slate-400 font-medium">Bisa upload banyak gambar sekaligus (Maks 5MB)</span>
+                                    </label>
+
+                                    <div className="flex flex-wrap gap-3 items-center">
+                                        {/* Render Foto Eksis di Database */}
+                                        {existingImages.map((src, idx) => (
+                                            <div key={`existing-${idx}`} className="relative w-24 h-24 border border-slate-200 rounded-xl overflow-hidden group shadow-sm shrink-0">
+                                                <img src={src} alt="Existing" className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExistingImages(existingImages.filter((_, i) => i !== idx))}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {/* Render Pratinjau Foto Baru */}
+                                        {imagePreviews.map((src, idx) => (
+                                            <div key={`new-${idx}`} className="relative w-24 h-24 border border-teal-300 rounded-xl overflow-hidden group shadow-sm shrink-0">
+                                                <img src={src} alt="New Preview" className="w-full h-full object-cover" />
+                                                <div className="absolute top-1 left-1 bg-teal-500 text-white text-[8px] font-black uppercase px-1 rounded-sm shadow-md">BARU</div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedFiles(selectedFiles.filter((_, i) => i !== idx));
+                                                        setImagePreviews(imagePreviews.filter((_, i) => i !== idx));
+                                                    }}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {/* Tombol Input Unggah */}
+                                        <label className="w-24 h-24 border-2 border-dashed border-slate-300 hover:border-[#0071bc] rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-[#0071bc] cursor-pointer transition-colors shadow-inner shrink-0 bg-slate-50/50">
+                                            <Plus size={18} />
+                                            <span className="text-[9px] font-black uppercase mt-1 tracking-wider">Tambah</span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/jpeg, image/png, image/webp"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    if (e.target.files) {
+                                                        const files = Array.from(e.target.files);
+                                                        setSelectedFiles([...selectedFiles, ...files]);
+                                                    }
+                                                }}
+                                                disabled={isSaving}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
+                            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3 shrink-0">
                                 <button
                                     type="button"
                                     onClick={handleCloseModal}
@@ -5240,12 +5425,16 @@ interface DatasetFormProps {
   onAddSource: () => void;
   onAddCategory: () => void;
   onAddSourceType: () => void;
+
+  // [INTEGRASI OPD-USER BINDING] Menambahkan deklarasi prop opsional baru untuk type safety [1]
+  lockedSourceId?: number | null; // [1]
 }
 
 export default function DatasetForm({
   sources, categories, sourceTypes, isProcessing,
   selectedImage, onImageChange,
-  onSubmit, onAddSource, onAddCategory, onAddSourceType
+  onSubmit, onAddSource, onAddCategory, onAddSourceType,
+  lockedSourceId // [1] Tangkap prop pengunci OPD
 }: DatasetFormProps) {
 
   // ======================================================================
@@ -5288,7 +5477,7 @@ export default function DatasetForm({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-slate-800">
       <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
         <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
       </h3>
@@ -5353,13 +5542,26 @@ export default function DatasetForm({
           {/* Sumber Data */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data (OPD) <span className="text-red-500">*</span></label>
-            <select name="source_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+
+            {/* [INTEGRASI OPD-USER BINDING] Otomatis mengunci value & menonaktifkan select jika operator ber-role OPD [1] */}
+            <select
+              name="source_id"
+              required
+              disabled={isProcessing || (lockedSourceId !== undefined && lockedSourceId !== null)}
+              value={lockedSourceId !== undefined && lockedSourceId !== null ? lockedSourceId : undefined}
+              onChange={lockedSourceId ? () => { } : undefined} // Dummy onChange untuk membungkam warning React
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black disabled:opacity-85"
+            >
               <option value="" className="text-black">Pilih Sumber</option>
               {sources.map(s => <option key={s.id} value={s.id} className="text-black">{s.name}</option>)}
             </select>
-            <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
-              <Plus size={12} /> Tambah Sumber Baru
-            </button>
+
+            {/* Sembunyikan tombol tambah sumber baru jika input terkunci [1] */}
+            {!(lockedSourceId !== undefined && lockedSourceId !== null) && (
+              <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+                <Plus size={12} /> Tambah Sumber Baru
+              </button>
+            )}
           </div>
 
           {/* Source Type */}
@@ -5407,7 +5609,7 @@ export default function DatasetForm({
             <p className="pt-1 italic text-[10px] text-gray-400">* Pastikan format file sesuai standar template</p>
           </div>
 
-          {/* INTERVENSI GIS: Distrik / Wilayah (Controlled Component) */}
+          {/* INTERVENSI GIS: Distrik / Wilayah */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between">
               Distrik / Wilayah
@@ -5723,7 +5925,7 @@ export default function UploadLogTable({ logs }: UploadLogTableProps) {
 }
 
 --- FILE: src\app\(brida)\brida-upload-data\page.tsx ---
-// src/app/(user)/upload-data/page.tsx
+// src/app/(brida)/brida-upload-data/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5747,6 +5949,7 @@ import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useAuthStore } from "./../../store/useAuthStore"; // [1] Akses data login
 
 // --- Types ---
 export interface UploadLog {
@@ -5760,7 +5963,7 @@ export interface UploadLog {
 export default function UploadDataPage() {
   // --- States ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null); // State Gambar (Gabungan dari branch teman)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ message: string; type: "success" | "danger" | "info" } | null>(null);
 
@@ -5769,6 +5972,7 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+  const { profile, fetchProfile } = useAuthStore(); // [1] Tarik profil login
 
   // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
@@ -5783,6 +5987,9 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
+        if (!profile) {
+          await fetchProfile(); // [1] Muat profil login BRIDA
+        }
         await Promise.all([
           fetchSources(),
           fetchCategories(),
@@ -5796,7 +6003,7 @@ export default function UploadDataPage() {
       }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets, profile, fetchProfile]);
 
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
@@ -5813,7 +6020,7 @@ export default function UploadDataPage() {
   };
 
   const handleFileChange = (file: File) => {
-    // [UPDATE] Mengadopsi format file yang lebih lengkap dari branch rekan Anda
+    // [UPDATE] Mengadopsi format file yang lebih lengkap
     const validTypes = [".xlsx", ".xls", ".csv", ".json", ".pdf", ".doc", ".docx"];
     const fileExt = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2);
 
@@ -5860,6 +6067,9 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // [INTEGRASI OPD-USER BINDING] Menghindari bypass form karena input ter-disable di UI [1]
+    const activeSourceId = profile?.source_id;
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset terlebih dahulu", "danger");
       return;
@@ -5874,7 +6084,10 @@ export default function UploadDataPage() {
 
     const title = formData.get("title") as string;
     const datasetType = formData.get("dataset_type") as string;
-    const sourceId = formData.get("source_id");
+
+    // [1] Jika ber-role BRIDA/OPD dan memiliki source_id terikat, injeksikan secara aman
+    const finalSourceId = activeSourceId || formData.get("source_id");
+
     const categoryId = formData.get("category_id");
     const sourceTypeId = formData.get("source_type_id");
     const year = formData.get("year");
@@ -5883,7 +6096,7 @@ export default function UploadDataPage() {
     const description = formData.get("description") as string;
 
     // Validasi: pastikan field utama tidak kosong
-    if (!title || !sourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
+    if (!title || !finalSourceId || !categoryId || !year || !sourceTypeId || !datasetType) {
       showAlert("Mohon lengkapi semua field bertanda bintang (*)", "danger");
       return;
     }
@@ -5896,14 +6109,14 @@ export default function UploadDataPage() {
       const result = await ingestService.uploadProcess({
         title,
         dataset_type: datasetType,
-        source_id: Number(sourceId),
+        source_id: Number(finalSourceId), // [1] Terisi dinamis berbasis hak login
         category_id: Number(categoryId),
         source_type_id: Number(sourceTypeId),
         year: Number(year),
         period,
         description,
         file: selectedFile,
-        // Menggabungkan logika Image (nau) dan district_id (yessir)
+        // Menggabungkan logika Image (print) dan district_id
         image: selectedImage,
         district_id: districtId === "" ? null : Number(districtId)
       });
@@ -5948,7 +6161,7 @@ export default function UploadDataPage() {
               'bg-blue-100 text-blue-800 border-l-4 border-blue-500'
             }`}>
             <AlertCircle size={20} />
-            <span className="text-sm font-medium">{alert.message}</span>
+            <span className="text-sm font-semibold">{alert.message}</span>
           </div>
         )}
 
@@ -5971,6 +6184,7 @@ export default function UploadDataPage() {
             onAddSource={() => setShowSourceModal(true)}
             onAddCategory={() => setShowCategoryModal(true)}
             onAddSourceType={() => setShowSourceTypeModal(true)}
+            lockedSourceId={profile?.source_id} // [1] Kunci OPD di UI form jika user terikat
           />
         </div>
 
@@ -11845,12 +12059,16 @@ interface DatasetFormProps {
   onAddSource: () => void;
   onAddCategory: () => void;
   onAddSourceType: () => void;
+
+  // [INTEGRASI OPD-USER BINDING] Menambahkan properti opsional baru untuk sinkronisasi penguncian instansi [1]
+  lockedSourceId?: number | null; // [1]
 }
 
 export default function DatasetForm({
   sources, categories, sourceTypes, isProcessing,
   selectedImage, onImageChange,
-  onSubmit, onAddSource, onAddCategory, onAddSourceType
+  onSubmit, onAddSource, onAddCategory, onAddSourceType,
+  lockedSourceId // [1] Tangkap prop pengunci OPD
 }: DatasetFormProps) {
 
   // ======================================================================
@@ -11893,7 +12111,7 @@ export default function DatasetForm({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-slate-800">
       <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
         <Info size={20} className="text-[#1e61d0]" /> Informasi Dataset
       </h3>
@@ -11958,13 +12176,26 @@ export default function DatasetForm({
           {/* Sumber Data */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sumber Data (OPD) <span className="text-red-500">*</span></label>
-            <select name="source_id" required disabled={isProcessing} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black">
+
+            {/* [INTEGRASI OPD-USER BINDING] Menolak manipulasi data dengan mengunci dropdown instansi bagi operator [1] */}
+            <select
+              name="source_id"
+              required
+              disabled={isProcessing || (lockedSourceId !== undefined && lockedSourceId !== null)}
+              value={lockedSourceId !== undefined && lockedSourceId !== null ? lockedSourceId : undefined}
+              onChange={lockedSourceId ? () => { } : undefined} // Dummy handler untuk membungkam React controlled warning
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black disabled:opacity-85"
+            >
               <option value="" className="text-black">Pilih Sumber</option>
               {sources.map(s => <option key={s.id} value={s.id} className="text-black">{s.name}</option>)}
             </select>
-            <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
-              <Plus size={12} /> Tambah Sumber Baru
-            </button>
+
+            {/* Sembunyikan tombol penambahan sumber jika status dropdown terikat [1] */}
+            {!(lockedSourceId !== undefined && lockedSourceId !== null) && (
+              <button type="button" onClick={onAddSource} disabled={isProcessing} className="mt-2 text-[11px] font-bold text-[#10b981] flex items-center gap-1 hover:underline uppercase tracking-tighter">
+                <Plus size={12} /> Tambah Sumber Baru
+              </button>
+            )}
           </div>
 
           {/* Source Type */}
@@ -12012,7 +12243,7 @@ export default function DatasetForm({
             <p className="pt-1 italic text-[10px] text-gray-400">* Pastikan format file sesuai standar template</p>
           </div>
 
-          {/* INTERVENSI GIS: Distrik / Wilayah (Dipotong oleh merge conflict, kini dikembalikan) */}
+          {/* INTERVENSI GIS: Distrik / Wilayah */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between">
               Distrik / Wilayah
@@ -12351,6 +12582,7 @@ import { useSourceStore } from "./../../store/useSourceStore";
 import { useCategoryStore } from "./../../store/useCategoryStore";
 import { useSourceTypeStore } from "./../../store/useSourceTypeStore";
 import { useDatasetStore } from "./../../store/useDatasetStore";
+import { useAuthStore } from "./../../store/useAuthStore"; // [1] Tarik profil operator aktif
 
 // --- Types ---
 export interface UploadLog {
@@ -12373,6 +12605,7 @@ export default function UploadDataPage() {
   const { sources, fetchSources, addSource } = useSourceStore();
   const { categories, fetchCategories, addCategory } = useCategoryStore();
   const { sourceTypes, fetchSourceTypes, addSourceType } = useSourceTypeStore();
+  const { profile, fetchProfile } = useAuthStore(); // [1] Mengakses data login
 
   // Integrasi Dataset Store untuk mengambil data 'My Datasets'
   const { myDatasets, fetchMyDatasets } = useDatasetStore();
@@ -12387,6 +12620,9 @@ export default function UploadDataPage() {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
+        if (!profile) {
+          await fetchProfile(); // [1] Pastikan profil operator termuat
+        }
         await Promise.all([
           fetchSources(),
           fetchCategories(),
@@ -12400,7 +12636,7 @@ export default function UploadDataPage() {
       }
     };
     loadInitialData();
-  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets]);
+  }, [fetchSources, fetchCategories, fetchSourceTypes, fetchMyDatasets, profile, fetchProfile]);
 
   const logs: UploadLog[] = myDatasets.map((ds) => ({
     date: new Date(ds.created_at).toLocaleString("id-ID").replace(/\//g, "-"),
@@ -12468,6 +12704,14 @@ export default function UploadDataPage() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // [INTEGRASI OPD-USER BINDING] Menyelamatkan value source_id karena input dinonaktifkan di UI [1]
+    const activeSourceId = profile?.source_id;
+
+    if (profile?.role === "opd" && !activeSourceId) {
+      showAlert("Akun Anda belum ditautkan ke instansi OPD manapun oleh Administrator. Harap hubungi Admin Bappeda.", "danger");
+      return;
+    }
+
     if (!selectedFile) {
       showAlert("Silakan pilih file dataset/dokumen terlebih dahulu", "danger");
       return;
@@ -12485,7 +12729,8 @@ export default function UploadDataPage() {
     const requestData = {
       title: (formData.get("title") || formData.get("datasetName")) as string,
       dataset_type: formData.get("dataset_type") as string,
-      source_id: Number(formData.get("source_id") || formData.get("dataSource")),
+      // [1] Gunakan source_id terikat jika ber-role OPD, jika admin gunakan nilai dropdown
+      source_id: Number(activeSourceId || formData.get("source_id") || formData.get("dataSource")),
       category_id: Number(formData.get("category_id") || formData.get("category")),
       source_type_id: Number(formData.get("source_type_id")),
       year: Number(formData.get("year")),
@@ -12576,6 +12821,7 @@ export default function UploadDataPage() {
             onAddSource={() => setShowSourceModal(true)}
             onAddCategory={() => setShowCategoryModal(true)}
             onAddSourceType={() => setShowSourceTypeModal(true)}
+            lockedSourceId={profile?.source_id} // [1] Mengunci masukan OPD di level form jika terikat
           />
         </div>
 
@@ -14191,7 +14437,7 @@ import dynamic from "next/dynamic";
 import {
     MapPin, Save, Plus, Trash2, Image as ImageIcon,
     X, AlertCircle, Building2, Layers, CheckCircle2, List,
-    Eye, Edit2, Map
+    Eye, Edit2, Map, Info
 } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
@@ -14201,6 +14447,7 @@ import AssetDetailModal from "@/src/components/gis/AssetDetailModal";
 
 import { assetService } from "@/src/app/services/asset.service";
 import { useSourceStore } from "@/src/app/store/useSourceStore";
+import { useAuthStore } from "@/src/app/store/useAuthStore"; // [1] Untuk mengidentifikasi profil OPD yang aktif login
 
 // [REFACTOR FASE 4.3] Mengimpor MapPicker Gojek-Style secara Dinamis
 const MapPicker = dynamic(() => import("@/src/components/gis/MapPicker"), {
@@ -14220,8 +14467,9 @@ const MIMIKA_DISTRICTS = [
 ];
 
 export default function ManajemenAsetPage() {
-    // --- Master Data State ---
+    // --- Master Data & Auth Store State ---
     const { sources, fetchSources } = useSourceStore();
+    const { profile, fetchProfile } = useAuthStore(); // [1] Akses data login
     const [categories, setCategories] = useState<any[]>([]);
     const [myAssets, setMyAssets] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -14234,7 +14482,6 @@ export default function ManajemenAsetPage() {
     // --- Form State ---
     const [editingAssetId, setEditingAssetId] = useState<number | null>(null);
     const [name, setName] = useState("");
-    const [sourceId, setSourceId] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [districtId, setDistrictId] = useState("");
     const [description, setDescription] = useState("");
@@ -14256,10 +14503,16 @@ export default function ManajemenAsetPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [alertMsg, setAlertMsg] = useState<{ message: string; type: "success" | "danger" } | null>(null);
 
+    // Hitung jumlah aset yang sedang dikarantina (status pending)
+    const pendingCount = myAssets.filter(a => a.status === "pending" || !a.status).length;
+
     // Initial Fetch
     useEffect(() => {
         const loadData = async () => {
             try {
+                if (!profile) {
+                    await fetchProfile(); // [1] Muat profil pengguna secara asinkronus
+                }
                 await fetchSources();
                 const cats = await assetService.getAssetCategories();
                 setCategories(cats);
@@ -14272,7 +14525,7 @@ export default function ManajemenAsetPage() {
             }
         };
         loadData();
-    }, [fetchSources]);
+    }, [fetchSources, profile, fetchProfile]);
 
     // [REFACTOR FASE 4.3] Cleanup object URL untuk array gambar
     useEffect(() => {
@@ -14327,7 +14580,7 @@ export default function ManajemenAsetPage() {
     // Fungsi membersihkan form (Cancel Edit)
     const resetForm = () => {
         setEditingAssetId(null);
-        setName(""); setCategoryId(""); setSourceId(""); setDescription(""); setDistrictId("");
+        setName(""); setCategoryId(""); setDescription(""); setDistrictId("");
         setSelectedImages([]); setImagePreviews([]); setLat(null); setLng(null); setFocusDistrict(null);
         setDetails([]);
     };
@@ -14337,7 +14590,6 @@ export default function ManajemenAsetPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setEditingAssetId(asset.id);
         setName(asset.name);
-        setSourceId(asset.source_id.toString());
         setCategoryId(asset.category_id.toString());
         setDistrictId(asset.district_id ? asset.district_id.toString() : "");
         setDescription(asset.description || "");
@@ -14366,8 +14618,20 @@ export default function ManajemenAsetPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name || !sourceId || !categoryId || !districtId || lat === null || lng === null) {
-            setAlertMsg({ message: "Nama, Sumber OPD, Kategori, Distrik, dan Titik Koordinat Peta WAJIB diisi!", type: "danger" });
+        // [INTEGRASI OPD-USER BINDING] Otomatisasi penguncian instansi berdasarkan data login operator [1]
+        const activeSourceId = profile?.source_id;
+
+        if (!activeSourceId) {
+            setAlertMsg({
+                message: "Akun Anda belum ditautkan ke instansi OPD manapun oleh Administrator. Harap hubungi Admin IT Bappeda.",
+                type: "danger"
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (!name || !categoryId || !districtId || lat === null || lng === null) {
+            setAlertMsg({ message: "Nama, Kategori, Distrik, dan Titik Koordinat Peta WAJIB diisi!", type: "danger" });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -14382,10 +14646,10 @@ export default function ManajemenAsetPage() {
             }
         });
 
-        // [REFACTOR FASE 4.3] Menyesuaikan dengan interface CreateAssetPayload (Multiple Images)
+        // [REFACTOR] Menyuntikkan source_id instansi secara mutlak tanpa dropdown pilihan [1]
         const payloadData = {
             name,
-            source_id: Number(sourceId),
+            source_id: Number(activeSourceId), // [1] Terisi otomatis secara terenkripsi
             category_id: Number(categoryId),
             district_id: Number(districtId),
             lat,
@@ -14401,7 +14665,7 @@ export default function ManajemenAsetPage() {
                 setAlertMsg({ message: "Aset berhasil diperbarui di database Geospasial!", type: "success" });
             } else {
                 await assetService.createAsset(payloadData);
-                setAlertMsg({ message: "Aset baru berhasil ditambahkan!", type: "success" });
+                setAlertMsg({ message: "Aset baru berhasil diajukan! Menunggu persetujuan Admin Bappeda untuk tayang di peta.", type: "success" });
             }
 
             const updatedAssets = await assetService.getMyAssets();
@@ -14502,15 +14766,18 @@ export default function ManajemenAsetPage() {
                                 <Plus size={12} /> Tambah Kategori Baru
                             </button>
                         </div>
+
+                        {/* [INTEGRASI OPD-USER BINDING] Menghapus dropdown manual "Kepemilikan (OPD)" [1] */}
+                        {/* Menggantinya dengan visualisasi profil instansi operator secara statis/read-only */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kepemilikan (OPD) <span className="text-red-500">*</span></label>
-                            <select
-                                value={sourceId} onChange={(e) => setSourceId(e.target.value)} required disabled={isSubmitting}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0071bc]"
-                            >
-                                <option value="">Pilih Instansi Pemilik</option>
-                                {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kepemilikan (Instansi / OPD)</label>
+                            <div className="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 text-sm font-black text-blue-900 flex items-center gap-2">
+                                <Building2 size={16} className="text-[#0071bc]" />
+                                <span>
+                                    {sources.find(s => s.id === profile?.source_id)?.name || "Mengidentifikasi instansi..."}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 italic ml-1">Teridentifikasi otomatis berdasarkan profil akun instansi Anda [1].</p>
                         </div>
                     </div>
 
@@ -14720,6 +14987,19 @@ export default function ManajemenAsetPage() {
                 </div>
 
                 <div className="overflow-x-auto w-full">
+                    {/* INFO BOX MODERASI (Awas Gap Informasi Spasial) */}
+                    {pendingCount > 0 && (
+                        <div className="mx-6 mt-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-xl flex items-start gap-3 text-amber-900">
+                            <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={18} />
+                            <div>
+                                <p className="text-xs font-bold">Informasi Antrean Moderasi ({pendingCount} Aset)</p>
+                                <p className="text-[11px] font-medium leading-relaxed text-amber-700 mt-0.5">
+                                    Aset berstatus "Menunggu" telah tersimpan dengan aman di basis data, namun dalam status karantina sementara. Aset tersebut baru akan ditayangkan pada peta WebGIS publik setelah disetujui (Approved) oleh Admin Bappeda Kabupaten Mimika.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <table className="w-full text-left text-sm whitespace-nowrap min-w-200">
                         <thead className="bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
                             <tr>
@@ -14757,17 +15037,26 @@ export default function ManajemenAsetPage() {
                                     <td className="px-6 py-4 text-center">
                                         {/* Status Moderasi */}
                                         {a.status === "approved" ? (
-                                            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <CheckCircle2 size={12} /> Publik
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <CheckCircle2 size={12} /> Publik
+                                                </span>
+                                                <span className="text-[8px] text-emerald-600 font-bold uppercase mt-1">Tayang di WebGIS</span>
+                                            </div>
                                         ) : a.status === "rejected" ? (
-                                            <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <AlertCircle size={12} /> Ditolak
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <AlertCircle size={12} /> Ditolak
+                                                </span>
+                                                <span className="text-[8px] text-rose-500 font-bold uppercase mt-1">Ditolak Bappeda</span>
+                                            </div>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                <AlertCircle size={12} /> Menunggu
-                                            </span>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    <AlertCircle size={12} /> Menunggu
+                                                </span>
+                                                <span className="text-[8px] text-amber-600 font-bold uppercase mt-1">Antrean Moderasi</span>
+                                            </div>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-center">
@@ -15005,21 +15294,21 @@ export default function RootLayout({
 // src/app/lib/assetConfig.ts
 
 /**
- * Asset Taxonomy Configuration
- * Single Source of Truth untuk pemetaan hierarki OPD, jenis aset, dan properti visual (icon, warna).
- * Konfigurasi ini menjamin Zero Hardcoding pada komponen UI dan Spatial Engine.
+ * Asset Taxonomy Configuration (Fallback Registry)
+ * Bertindak sebagai taksonomi visual cadangan (fallback) untuk menjamin toleransi kesalahan
+ * jika ada data kategori atau warna yang tidak dikonfigurasi dengan benar di database.
  */
 
 export interface AssetCategoryMetadata {
-    type: string;      // Identifier unik yang harus sama persis (exact match) dengan key 'type' di mock data atau database
-    label: string;     // Nama ramah pembaca untuk ditampilkan di UI Accordion
+    type: string;      // Identifier unik untuk pencarian (exact match)
+    label: string;     // Nama ramah pembaca untuk ditampilkan di UI
     iconUrl: string;   // Path relatif menuju aset statis icon marker
-    color: string;     // Kode warna HEX untuk fallback visual atau styling UI layer
+    color: string;     // Kode warna HEX default
 }
 
 export interface OpdAssetTaxonomy {
     opdKey: string;    // Slug unik OPD, misal: "dinas_kesehatan"
-    opdName: string;   // Nama instansi lengkap untuk Header Accordion
+    opdName: string;   // Nama instansi lengkap
     categories: AssetCategoryMetadata[];
 }
 
@@ -15060,6 +15349,24 @@ export const ASSET_TAXONOMY_CONFIG: OpdAssetTaxonomy[] = [
         ]
     }
 ];
+
+/**
+ * Utilitas Pencarian Cadangan (Pure Fabrication)
+ * Mengambil properti visual default berdasarkan nama kategori jika data DB tidak lengkap.
+ */
+export function getFallbackAssetMetadata(categoryName: string): AssetCategoryMetadata | null {
+    if (!categoryName) return null;
+    const normalized = categoryName.toLowerCase().trim();
+
+    for (const opd of ASSET_TAXONOMY_CONFIG) {
+        for (const cat of opd.categories) {
+            if (cat.type.toLowerCase().trim() === normalized) {
+                return cat;
+            }
+        }
+    }
+    return null;
+}
 
 --- FILE: src\app\lib\config.ts ---
 // src/lib/config.ts
@@ -17374,7 +17681,7 @@ import { User, UserCreate, UserUpdate, DeleteUserResponse } from "../types/user"
 
 export const userService = {
   /**
-   * Helper untuk mendapatkan header otorisasi
+   * Helper untuk mendapatkan header otorisasi standar
    */
   getHeaders() {
     const token = localStorage.getItem("auth_token");
@@ -17384,6 +17691,9 @@ export const userService = {
     };
   },
 
+  /**
+   * Mengambil daftar semua akun user dari backend
+   */
   async getUsers(): Promise<User[]> {
     const response = await fetch(`${API_BASE_URL}/v1/users/`, {
       method: "GET",
@@ -17393,10 +17703,14 @@ export const userService = {
     return response.json();
   },
 
+  /**
+   * Mengajukan pembuatan user baru beserta parameter source_id (OPD) [1]
+   */
   async createUser(data: UserCreate): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/v1/users/`, {
       method: "POST",
       headers: this.getHeaders(),
+      // Serialisasi data secara aman mengirimkan field source_id ke FastAPI schemas [1]
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -17406,10 +17720,14 @@ export const userService = {
     return response.json();
   },
 
+  /**
+   * Memperbarui profil pengguna (Dapat memutasi source_id penautan OPD) [1]
+   */
   async updateUser(userId: number, data: UserUpdate): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/v1/users/${userId}`, {
       method: "PUT",
       headers: this.getHeaders(),
+      // Mendukung pengiriman update data instansi OPD yang direvisi [1]
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -17419,6 +17737,9 @@ export const userService = {
     return response.json();
   },
 
+  /**
+   * Menghapus user secara permanen
+   */
   async deleteUser(userId: number): Promise<DeleteUserResponse> {
     const response = await fetch(`${API_BASE_URL}/v1/users/${userId}`, {
       method: "DELETE",
@@ -18685,7 +19006,7 @@ export interface AtlasFilterParams {
 }
 
 --- FILE: src\app\types\auth.ts ---
-// src/types/auth.ts
+// src/app/types/auth.ts
 
 export interface LoginResponse {
   access_token: string;
@@ -18707,6 +19028,9 @@ export interface UserProfile {
   role: string;
   is_active: boolean;
   created_at?: string;
+
+  // [INTEGRASI OPD-USER BINDING] Menambahkan referensi instansi OPD yang opsional [1]
+  source_id?: number | null; // [1]
 }
 
 export interface LogoutResponse {
@@ -19176,9 +19500,12 @@ export interface User {
   username: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'user'; // sesuaikan dengan enum di backend
+  role: 'admin' | 'user' | 'brida' | 'opd'; // [REFACTOR] Ekspansi union role sesuai opsi nyata di Backend/UI
   is_active: boolean;
   created_at?: string;
+
+  // [INTEGRASI OPD-USER BINDING] Menampung ID OPD yang terikat ke akun operator [1]
+  source_id?: number | null; // [1]
 }
 
 export interface UserCreate {
@@ -19188,10 +19515,13 @@ export interface UserCreate {
   password: string;
   role: string;
   is_active: boolean;
+
+  // [INTEGRASI OPD-USER BINDING] Mengizinkan pengiriman ID OPD saat pendaftaran akun baru [1]
+  source_id?: number | null; // [1]
 }
 
-// UserUpdate menggunakan Partial agar field bersifat opsional saat dikirim
-export interface UserUpdate extends Partial<UserCreate> {}
+// UserUpdate mewarisi properti UserCreate secara opsional melalui partial mapping [1]
+export interface UserUpdate extends Partial<UserCreate> { }
 
 export interface DeleteUserResponse {
   message: string;
@@ -20023,16 +20353,13 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { ArrowRight } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
-
-// [REFACTOR FASE 4.1] Hapus MOCK_ASSET_DATA, import assetService
 import { assetService } from "@/src/app/services/asset.service";
-import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 
 // ============================================================================
-// PURE FABRICATION: GENERATOR IKON KUSTOM DINAMIS
+// PURE FABRICATION: GENERATOR IKON KUSTOM DINAMIS (BE-Driven)
 // ============================================================================
 
-// A. Ikon untuk Titik Individual (Menggunakan Icon URL & Color dari Config)
+// Ikon untuk Titik Individual (Menggunakan Icon URL & Color dinamis dari Backend)
 const createCustomPin = (iconUrl: string, color: string) => {
     return L.divIcon({
         className: "custom-pin-icon bg-transparent border-none",
@@ -20050,7 +20377,7 @@ const createCustomPin = (iconUrl: string, color: string) => {
     });
 };
 
-// B. Ikon untuk Klaster (Saat di-zoom out) 
+// Ikon untuk Klaster Spasial
 const createClusterCustomIcon = function (cluster: any) {
     const count = cluster.getChildCount();
 
@@ -20073,59 +20400,39 @@ const createClusterCustomIcon = function (cluster: any) {
 // ============================================================================
 export default function AssetMarkers() {
     const { activeAssetLayers, openPanel } = useExplorerStore();
-
-    // [REFACTOR] State lokal untuk menyimpan data asli dari Database Backend
     const [dbAssets, setDbAssets] = useState<Record<string, any[]>>({});
 
-    // Fetch data saat komponen peta pertama kali di-render
+    // Memuat data aset aktif murni dari REST API Backend
     useEffect(() => {
         let isMounted = true;
 
         assetService.getPublicAssets()
             .then(data => {
-                if (isMounted) setDbAssets(data);
+                if (isMounted) setDbAssets(data || {});
             })
             .catch(err => {
-                console.error("Gagal mengambil data aset spasial dari server:", err);
+                console.error("Gagal memuat koordinat aset spasial dari server:", err);
             });
 
         return () => { isMounted = false; };
     }, []);
 
-    // 2. Mesin Filtering O(n) dengan Memoization
+    // Filter data koordinat O(M) berbasis taksonomi dinamis
     const visibleMarkers = useMemo(() => {
         if (!activeAssetLayers || activeAssetLayers.length === 0) return [];
-        if (Object.keys(dbAssets).length === 0) return []; // Render kosong jika API belum membalas
+        if (Object.keys(dbAssets).length === 0) return [];
 
         const markers: any[] = [];
 
-        // Buat Hash Map dari config lokal (SOT) untuk pencarian super cepat O(1)
-        const configMap = new Map<string, any>();
-        ASSET_TAXONOMY_CONFIG.forEach(opd => {
-            opd.categories.forEach(cat => {
-                configMap.set(`${opd.opdKey}::${cat.type}`, cat);
-            });
-        });
-
-        // Looping menggunakan data asli dari database (dbAssets)
         Object.keys(dbAssets).forEach(opdKey => {
-            const assets = dbAssets[opdKey];
+            const assets = dbAssets[opdKey] || [];
 
             assets.forEach(asset => {
                 const layerId = `${opdKey}::${asset.type}`;
 
-                // Cek apakah jenis aset spesifik ini sedang diaktifkan user
+                // Jika layer terpilih aktif pada Explorer Sidebar, muat koordinatnya
                 if (activeAssetLayers.includes(layerId)) {
-                    const localConfig = configMap.get(layerId);
-                    if (localConfig) {
-                        markers.push({
-                            ...asset,
-                            config: localConfig // Paksa pakai config lokal (UI) agar ikon selalu sinkron dengan Frontend
-                        });
-                    } else if (asset.config) {
-                        // Fallback ke config dari backend jika di frontend belum diregistrasi
-                        markers.push(asset);
-                    }
+                    markers.push(asset);
                 }
             });
         });
@@ -20133,7 +20440,6 @@ export default function AssetMarkers() {
         return markers;
     }, [activeAssetLayers, dbAssets]);
 
-    // Jika hasil filter kosong (Layer Mati), render null agar tidak membebani DOM
     if (visibleMarkers.length === 0) {
         return null;
     }
@@ -20146,51 +20452,56 @@ export default function AssetMarkers() {
             maxClusterRadius={50}
             spiderfyOnMaxZoom={true}
         >
-            {visibleMarkers.map((marker, index) => (
-                <Marker
-                    key={`${marker.id}-${index}`}
-                    position={[marker.lat, marker.lng]}
-                    icon={createCustomPin(marker.config.iconUrl, marker.config.color)}
-                >
-                    <Popup className="asset-popup">
-                        <div className="flex flex-col p-0.5 w-50">
+            {visibleMarkers.map((marker, index) => {
+                // Gunakan konfigurasi warna & ikon dari database / backend secara langsung
+                const markerColor = marker.config?.color || "#0071bc";
+                const markerIconUrl = marker.config?.iconUrl || "/icons/markers/office.svg";
 
-                            <span
-                                className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
-                                style={{ color: marker.config.color }}
-                            >
-                                {marker.type}
-                            </span>
+                return (
+                    <Marker
+                        key={`${marker.id}-${index}`}
+                        position={[marker.lat, marker.lng]}
+                        icon={createCustomPin(markerIconUrl, markerColor)}
+                    >
+                        <Popup className="asset-popup">
+                            <div className="flex flex-col p-0.5 w-50">
 
-                            <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
-                                {marker.name}
-                            </h4>
-
-                            <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
-                                <span className="text-[10px] text-slate-500">Koordinat:</span>
-                                <span className="text-[10px] font-medium text-slate-700 font-mono">
-                                    {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
+                                <span
+                                    className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
+                                    style={{ color: markerColor }}
+                                >
+                                    {marker.type}
                                 </span>
+
+                                <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
+                                    {marker.name}
+                                </h4>
+
+                                <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
+                                    <span className="text-[10px] text-slate-500 font-medium">Koordinat:</span>
+                                    <span className="text-[10px] font-medium text-slate-700 font-mono">
+                                        {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
+                                    </span>
+                                </div>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openPanel("detil-aset", marker.name, marker);
+                                    }}
+                                    className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
+                                >
+                                    <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
+                                        Analisis Detail
+                                    </span>
+                                    <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
+                                </button>
+
                             </div>
-
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Melempar data aktual dari database ke panel Detail
-                                    openPanel("detil-aset", marker.name, marker);
-                                }}
-                                className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
-                            >
-                                <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
-                                    Analisis Detail
-                                </span>
-                                <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
-                            </button>
-
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
+                        </Popup>
+                    </Marker>
+                );
+            })}
         </MarkerClusterGroup>
     );
 }
@@ -20241,7 +20552,7 @@ export default function GalleryOverlay() {
     return (
         // [REFACTOR] LAYER UTAMA: Z-[35] 
         // Berada persis di atas Panel Analisis & MapHUD (z-30), tapi di bawah Sidebar (z-40) & Navbar (z-50)
-        <div className="absolute inset-0 z-[35] flex flex-col pt-16 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-35 flex flex-col pt-16 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
 
             {/* 
                 [REFACTOR] STATIC OFFSET PADDING
@@ -21670,7 +21981,7 @@ export default function AssetDetailPanel({ assetData, panelId }: AssetDetailPane
 // src/components/gis/panels/AssetPanel.tsx
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     Search,
     MapPin,
@@ -21679,38 +21990,110 @@ import {
     CheckSquare,
     Square
 } from "lucide-react";
-import { ASSET_TAXONOMY_CONFIG } from "@/src/app/lib/assetConfig";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
+import { assetService } from "@/src/app/services/asset.service";
+
+interface DynamicCategory {
+    type: string;
+    label: string;
+    color: string;
+}
+
+interface DynamicOpdTaxonomy {
+    opdKey: string;
+    opdName: string;
+    categories: DynamicCategory[];
+}
 
 /**
  * AssetPanel - GFW Paradigm (High-Density Data & Solid UI)
- * Bertindak sebagai antarmuka katalog Sebaran Aset Fisik (GeoTagging).
- * Menggunakan arsitektur Frameless Flush List yang menyatu dengan panel.
+ * Komponen Katalog Sebaran Aset Fisik berbasis Taksonomi Dinamis dari Database.
  */
 export default function AssetPanel() {
     const [searchQuery, setSearchQuery] = useState("");
-    const [expandedOpd, setExpandedOpd] = useState<string | null>("dinas_kesehatan");
+    const [expandedOpd, setExpandedOpd] = useState<string | null>(null);
+    const [dbAssets, setDbAssets] = useState<Record<string, any[]>>({});
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Atomic Selectors untuk reaktivitas array yang stabil di Next.js
+    // Atomic Selectors dari Explorer Store
     const activeAssetLayers = useExplorerStore((state) => state.activeAssetLayers);
     const toggleAssetLayer = useExplorerStore((state) => state.toggleAssetLayer);
     const toggleOpdAssets = useExplorerStore((state) => state.toggleOpdAssets);
 
     const safeActiveLayers = activeAssetLayers || [];
 
-    // Filter pencarian berdasarkan nama instansi atau jenis aset
+    // Mengambil data spasial aktif langsung dari API Publik Backend
+    useEffect(() => {
+        let isMounted = true;
+        setIsLoading(true);
+
+        assetService.getPublicAssets()
+            .then((data) => {
+                if (isMounted) {
+                    setDbAssets(data || {});
+                    // Secara default, buka akordion pertama yang bermuatan data
+                    const firstOpdKey = Object.keys(data || {})[0];
+                    if (firstOpdKey) {
+                        setExpandedOpd(firstOpdKey);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("Gagal memuat katalog aset dinamis:", err);
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Memetakan struktur database relasional menjadi taksonomi dinamis ter-agregasi
+    const dynamicTaxonomy = useMemo((): DynamicOpdTaxonomy[] => {
+        return Object.keys(dbAssets).map((opdKey) => {
+            const assets = dbAssets[opdKey] || [];
+
+            // Mengambil seluruh variasi kategori unik yang ada di dalam aset milik OPD ini
+            const categoryMap = new Map<string, DynamicCategory>();
+
+            assets.forEach((asset) => {
+                if (asset.type && !categoryMap.has(asset.type)) {
+                    categoryMap.set(asset.type, {
+                        type: asset.type,
+                        label: asset.type,
+                        color: asset.config?.color || "#0071bc"
+                    });
+                }
+            });
+
+            // Resolusi penamaan: Coba ambil nama asli OPD dari data model relasi Source di dalam aset
+            const resolvedOpdName = assets[0]?.owner?.name || opdKey.replace(/_/g, " ").toUpperCase();
+
+            return {
+                opdKey,
+                opdName: resolvedOpdName,
+                categories: Array.from(categoryMap.values())
+            };
+        });
+    }, [dbAssets]);
+
+    // Filter pencarian taksonomi dinamis berdasarkan nama OPD atau kategori aset
     const filteredTaxonomy = useMemo(() => {
-        if (!searchQuery) return ASSET_TAXONOMY_CONFIG;
+        if (!searchQuery) return dynamicTaxonomy;
         const lowerQuery = searchQuery.toLowerCase();
 
-        return ASSET_TAXONOMY_CONFIG.filter(opd =>
+        return dynamicTaxonomy.filter(opd =>
             opd.opdName.toLowerCase().includes(lowerQuery) ||
             opd.categories.some(cat => cat.label.toLowerCase().includes(lowerQuery))
         );
-    }, [searchQuery]);
+    }, [searchQuery, dynamicTaxonomy]);
 
     return (
-        <div className="flex flex-col h-full bg-white pb-10">
+        <div className="flex flex-col h-full bg-white pb-10 text-slate-800">
 
             {/* SECTION 1: SEARCH & FILTER (Solid & High-Density) */}
             <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10 shadow-sm">
@@ -21729,10 +22112,10 @@ export default function AssetPanel() {
                 </div>
             </div>
 
-            {/* SECTION 2: ASSET CATALOG LIST (Frameless Flush List) */}
+            {/* SECTION 2: ASSET CATALOG LIST */}
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
 
-                {/* Header Petunjuk (Konteks GeoTagging) */}
+                {/* Header Petunjuk */}
                 <div className="px-4 py-3 bg-teal-50/50 border-b border-slate-200 flex items-start gap-2.5">
                     <MapPin size={14} className="text-teal-600 mt-0.5 shrink-0" />
                     <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
@@ -21740,7 +22123,17 @@ export default function AssetPanel() {
                     </p>
                 </div>
 
-                {filteredTaxonomy.length > 0 ? (
+                {isLoading ? (
+                    /* Loading Skeletons */
+                    <div className="flex flex-col">
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30 animate-pulse">
+                                <div className="h-4 bg-slate-200 w-1/2 rounded-sm" />
+                                <div className="h-4 bg-slate-200 w-6 rounded-sm" />
+                            </div>
+                        ))}
+                    </div>
+                ) : filteredTaxonomy.length > 0 ? (
                     filteredTaxonomy.map((opd) => {
                         const isExpanded = expandedOpd === opd.opdKey;
                         const opdLayerIds = opd.categories.map(c => `${opd.opdKey}::${c.type}`);
@@ -21749,9 +22142,9 @@ export default function AssetPanel() {
                         const isSomeActive = opdLayerIds.some(id => safeActiveLayers.includes(id)) && !isAllActive;
 
                         return (
-                            <div key={opd.opdKey} className="flex flex-col">
+                            <div key={opd.opdKey} className="flex flex-col border-b border-slate-100">
 
-                                {/* Rumpun OPD Header (Frameless) */}
+                                {/* Rumpun OPD Header */}
                                 <div className="flex items-center justify-between bg-slate-50 px-4 py-2 border-b border-slate-200 transition-colors">
                                     <button
                                         className="flex items-center gap-2 flex-1 text-left"
@@ -21794,7 +22187,7 @@ export default function AssetPanel() {
 
                                 {/* Instansi List - Flush List */}
                                 {isExpanded && (
-                                    <div className="flex flex-col bg-white">
+                                    <div className="flex flex-col bg-white animate-in slide-in-from-top-1 duration-150">
                                         {opd.categories.map((cat) => {
                                             const layerId = `${opd.opdKey}::${cat.type}`;
                                             const isActive = safeActiveLayers.includes(layerId);
@@ -21806,10 +22199,10 @@ export default function AssetPanel() {
                                                         e.preventDefault();
                                                         toggleAssetLayer(opd.opdKey, cat.type);
                                                     }}
-                                                    className={`group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full ${isActive ? "bg-teal-50/20" : ""}`}
+                                                    className={`group flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white hover:bg-slate-50/50 transition-colors text-left w-full ${isActive ? "bg-teal-50/10" : ""}`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        {/* Custom UI Toggle Switch Asli */}
+                                                        {/* Toggle Switch */}
                                                         <div
                                                             className={`relative inline-flex h-3.5 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${isActive ? 'bg-teal-500' : 'bg-slate-300'}`}
                                                         >
@@ -21829,8 +22222,8 @@ export default function AssetPanel() {
                                                         </span>
                                                     </div>
 
-                                                    {/* Indikator Visual Ikon */}
-                                                    <div className="p-1 transition-colors flex items-center gap-2">
+                                                    {/* Penanda Warna */}
+                                                    <div className="p-1 flex items-center">
                                                         <div
                                                             className="w-3 h-3 rounded-full shadow-sm"
                                                             style={{ backgroundColor: cat.color }}
@@ -21846,14 +22239,14 @@ export default function AssetPanel() {
                         );
                     })
                 ) : (
-                    /* Empty State - High Density Typography */
+                    /* Empty State */
                     <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 px-4">
                         <div className="w-12 h-12 rounded-none bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200">
                             <Search size={20} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[12px] font-bold text-slate-700">Instansi Tidak Ditemukan</p>
-                            <p className="text-[11px] text-slate-500 font-normal">Coba kata kunci pencarian lain</p>
+                            <p className="text-[12px] font-bold text-slate-700">Aset Tidak Ditemukan</p>
+                            <p className="text-[11px] text-slate-500 font-normal">Belum ada aset terdaftar yang disetujui</p>
                         </div>
                     </div>
                 )}

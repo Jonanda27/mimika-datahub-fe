@@ -26,14 +26,14 @@ export const getBasemapUrl = (baseMapId: string): string => {
 };
 
 /**
- * Mengkalkulasi kode warna (Hex) untuk peta choropleth berdasarkan nilai data dan kategori indikator.
- * @param value Nilai aktual dari distrik/poligon.
- * @param max Nilai maksimum dari seluruh dataset indikator saat ini.
- * @param indicatorKey Kata kunci indikator untuk menentukan skema warna (Semantic Color).
- * @returns String kode warna Hexadecimal.
+ * [REFACTOR] Mengkalkulasi kode warna (Hex) berbasis EQUAL INTERVAL dinamis (Pilar 1).
+ * Menggunakan rentang batas bawah (min) dan batas atas (max) rill hasil kalkulasi backend
+ * sehingga menghasilkan kontras warna spasial yang akurat dan seimbang.
  */
-export const getSemanticColor = (value: number, max: number, indicatorKey: string): string => {
-    const ratio = value / max;
+export const getSemanticColor = (value: number, min: number, max: number, indicatorKey: string): string => {
+    const range = max - min;
+    // Hindari pembagian dengan nol jika seluruh daerah bernilai seragam
+    const ratio = range > 0 ? (value - min) / range : 0.5;
     const key = indicatorKey.toLowerCase();
 
     // KESEHATAN / SOSIAL: Magenta - Deep Pink (Sangat Berani & Mencolok)
@@ -60,4 +60,68 @@ export const getSemanticColor = (value: number, max: number, indicatorKey: strin
         if (ratio > 0.2) return '#fbbf24'; // Amber-400
         return '#fde68a';                  // Amber-200
     }
+};
+
+export interface SectoralStatus {
+    level: number;       // Skor normalisasi 1-5
+    label: string;       // Label semantik kontekstual
+    color: string;       // Warna heksagonal representatif
+}
+
+/**
+ * [NEW - PURE FABRICATION]
+ * Mesin Klasifikasi Status Capaian Sektoral (Pilar 3).
+ * Menerjemahkan angka mentah apa pun menjadi status kualitatif yang ramah orang awam (bebas ambigu),
+ * dengan menyesuaikan arah evaluasi indikator positif vs negatif secara otomatis.
+ */
+export const getSectoralStatus = (
+    value: number,
+    min: number,
+    max: number,
+    direction: 'positive' | 'negative',
+    indicatorKey: string
+): SectoralStatus => {
+    const range = max - min;
+    const ratio = range > 0 ? (value - min) / range : 0.5;
+
+    // 1. Tentukan nomor bin (1-5) dari terendah ke tertinggi
+    let bin = 1;
+    if (ratio > 0.8) bin = 5;
+    else if (ratio > 0.6) bin = 4;
+    else if (ratio > 0.4) bin = 3;
+    else if (ratio > 0.2) bin = 2;
+
+    // 2. Ambil warna heksadesimal representatif berdasarkan indikator aktif
+    const color = getSemanticColor(value, min, max, indicatorKey);
+
+    let label = "";
+    let level = bin;
+
+    // 3. Klasifikasi Semantik Kontekstual (Menolak istilah "Padat" untuk data umum)
+    if (direction === 'positive') {
+        // MAKIN TINGGI = MAKIN BAIK (Guru, IPM, PDRB)
+        level = bin;
+        const positiveLabels = [
+            "Sangat Kurang",
+            "Kurang",
+            "Cukup",
+            "Memadai",
+            "Sangat Memadai"
+        ];
+        label = positiveLabels[bin - 1];
+    } else {
+        // MAKIN TINGGI = MAKIN KRITIS (Stunting, Gizi Buruk, Kemiskinan)
+        // Nilai paling rendah (bin 1) adalah level terbaik (Sangat Aman)
+        level = 6 - bin;
+        const negativeLabels = [
+            "Sangat Aman",
+            "Aman",
+            "Cukup / Sedang",
+            "Waspada",
+            "Kritis"
+        ];
+        label = negativeLabels[bin - 1];
+    }
+
+    return { level, label, color };
 };

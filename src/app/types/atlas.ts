@@ -15,6 +15,7 @@ export interface AtlasMetadata {
     unit: string;
     description: string;
     color_scheme: string; // Contoh: 'Reds', 'Blues', 'Greens'
+    direction: 'positive' | 'negative'; // [REFACTOR] Ditambahkan untuk klasifikasi arah evaluasi data (Pilar 3) [3]
     source?: string;      // Institusi penyedia data (OPD)
 }
 
@@ -25,11 +26,14 @@ export interface AtlasMetadata {
 export type AtlasSpatialData = Record<string, number>;
 
 /**
- * Response DTO utama dari API /api/v1/atlas/indicators/{type}
+ * Response DTO utama dari API /api/v1/atlas/indicators/{type}.
+ * Memuat batas ekstrem jangkar min/max dinamis langsung dari API untuk kebutuhan legenda kontinu [2].
  */
 export interface AtlasIndicatorResponse {
     indicator: string;
     metadata: AtlasMetadata;
+    min_value: number; // [REFACTOR] Batas bawah absolut data aktif [2]
+    max_value: number; // [REFACTOR] Batas atas absolut data aktif [2]
     data: AtlasSpatialData;
 }
 

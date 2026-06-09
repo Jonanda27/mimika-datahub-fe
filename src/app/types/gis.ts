@@ -81,3 +81,13 @@ export interface SpatialStatResponse {
     total_rows?: number | null;
     avg_quality?: number | null;
 }
+
+/**
+ * [REFACTOR] Kontrak pembungkus agregasi statistik sebaran di peta.
+ * Digunakan untuk mendukung batas jangkar legenda spasial dinamis (Continuous Anchoring) [2].
+ */
+export interface SpatialStatsWrapper {
+    min_value: number;
+    max_value: number;
+    data: SpatialStatResponse[];
+}

@@ -11,7 +11,7 @@ import { DistrictDrilldownResponse } from '@/src/app/types/gis';
 import { useExplorerStore } from '@/src/app/store/useExplorerStore';
 import AssetMarkers from "./AssetMarkers";
 
-import { getSemanticColor } from '@/src/app/lib/gisUtils';
+import { getSemanticColor, getSectoralStatus } from '@/src/app/lib/gisUtils';
 
 import type { LatLngExpression, PathOptions, Layer, Map as LeafletMap } from 'leaflet';
 
@@ -37,6 +37,7 @@ function calculateLayerStyle(
     districtName: string,
     state: any,
     indicatorValues: Record<string, number> | null,
+    minValue: number,
     maxValue: number,
     zoomLevel: number
 ): PathOptions {
@@ -50,7 +51,7 @@ function calculateLayerStyle(
     let fillColor = state.activeBaseMap === 'dark' ? '#ffffff' : '#000000';
 
     if (state.activeIndicator && indicatorValues && indicatorValues[key] !== undefined) {
-        fillColor = getSemanticColor(indicatorValues[key], maxValue, state.activeIndicator);
+        fillColor = getSemanticColor(indicatorValues[key], minValue, maxValue, state.activeIndicator);
         fillOpacity = zoomLevel >= 14 ? 0 : (state.mapOpacity / 100);
         color = state.activeBaseMap === 'dark' ? '#000000' : '#ffffff';
         dashArray = undefined;
@@ -104,10 +105,9 @@ function ExternalMapController() {
 // CONTROLLER: Cinematic Spotlight & Imperative GeoJSON Updater
 // Terbagi menjadi dua entitas terpisah untuk mencegah Infinite Loop
 // ============================================================================
-function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, maxValue, zoomLevel }: any) {
+function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, minValue, maxValue, zoomLevel }: any) {
     const map = useMap();
 
-    // [FIX 1] Ekstraksi Primitif Murni: Menghindari error "getSnapshot should be cached"
     const focusedDistrict = useExplorerStore((state) => state.focusedDistrict);
     const activeIndicator = useExplorerStore((state) => state.activeIndicator);
     const mapOpacity = useExplorerStore((state) => state.mapOpacity);
@@ -124,7 +124,7 @@ function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, ma
             const districtName = layer.feature.properties?.district_name || "";
             const isFocused = focusedDistrict && focusedDistrict.toLowerCase() === districtName.toLowerCase();
 
-            const newStyle = calculateLayerStyle(districtName, stateSnapshot, indicatorValues, maxValue, zoomLevel);
+            const newStyle = calculateLayerStyle(districtName, stateSnapshot, indicatorValues, minValue, maxValue, zoomLevel);
             layer.setStyle(newStyle);
 
             if (isFocused) {
@@ -132,11 +132,9 @@ function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, ma
             }
         });
 
-    }, [focusedDistrict, activeIndicator, mapOpacity, activeBaseMap, zoomLevel, geoData, indicatorValues, maxValue, geoJsonRef]);
+    }, [focusedDistrict, activeIndicator, mapOpacity, activeBaseMap, zoomLevel, geoData, indicatorValues, minValue, maxValue, geoJsonRef]);
 
     // EFEK B: Mengurus murni KAMERA (Zoom/FlyTo)
-    // [FIX 2] Ketergantungan (Dependencies) Dibatasi secara ekstrim HANYA pada focusedDistrict.
-    // Menghilangkan zoomLevel dari array dependency agar tidak memicu infinite loop.
     useEffect(() => {
         if (!geoJsonRef.current || !geoData) return;
 
@@ -157,7 +155,7 @@ function CinematicSpotlightController({ geoData, geoJsonRef, indicatorValues, ma
         } else {
             map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 1.5 });
         }
-    }, [focusedDistrict, geoData, geoJsonRef, map]); // <--- KUNCI ANTI INFINITE LOOP
+    }, [focusedDistrict, geoData, geoJsonRef, map]);
 
     return null;
 }
@@ -167,6 +165,18 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const { openPanel, setFocusDistrict } = useExplorerStore();
 
+    // State Hover Pengendali Kursor Global
+    const hoveredDistrict = useExplorerStore((state) => state.hoveredDistrict);
+    const hoveredAsset = useExplorerStore((state) => state.hoveredAsset);
+    const setHoveredDistrict = useExplorerStore((state) => state.setHoveredDistrict);
+    const setHoveredAsset = useExplorerStore((state) => state.setHoveredAsset);
+
+    const activeMin = useExplorerStore((state) => state.activeMin);
+    const activeMax = useExplorerStore((state) => state.activeMax);
+    const activeUnit = useExplorerStore((state) => state.activeUnit);
+    const activeDirection = useExplorerStore((state) => state.activeDirection);
+    const activeIndicator = useExplorerStore((state) => state.activeIndicator);
+
     const geoJsonRef = useRef<L.GeoJSON>(null);
 
     const [geoData, setGeoData] = useState<any>(null);
@@ -175,20 +185,31 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     const [mapKey, setMapKey] = useState(Date.now());
 
     const [indicatorValues, setIndicatorValues] = useState<Record<string, number> | null>(null);
+    const [minValue, setMinValue] = useState<number>(0);
     const [maxValue, setMaxValue] = useState<number>(100);
 
+    // Kordinat Melayang Pelacak Kursor Tooltip (Pilar 3)
+    const [mouseCoords, setMouseCoords] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+
     const indicatorValuesRef = useRef(indicatorValues);
+    const minValueRef = useRef(minValue);
     const maxValueRef = useRef(maxValue);
 
     useEffect(() => { indicatorValuesRef.current = indicatorValues; }, [indicatorValues]);
+    useEffect(() => { minValueRef.current = minValue; }, [minValue]);
     useEffect(() => { maxValueRef.current = maxValue; }, [maxValue]);
 
-    const [popupInfo, setPopupInfo] = useState<{ name: string; latlng: any; id: number } | null>(null);
-    const [profileData, setProfileData] = useState<DistrictDrilldownResponse | null>(null);
-    const [loadingProfile, setLoadingProfile] = useState(false);
-    const [isTextExpanded, setIsTextExpanded] = useState(false);
+    // Integrasi kursor pelacak koordinat mouse
+    const handleMouseMove = (e: MouseEvent) => {
+        setMouseCoords({ x: e.clientX, y: e.clientY });
+    };
 
-    useEffect(() => { return () => setMapKey(Date.now()); }, []);
+    useEffect(() => {
+        if (!isAtlasMode && !isPreviewMode) {
+            window.addEventListener("mousemove", handleMouseMove);
+        }
+        return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, [isAtlasMode, isPreviewMode]);
 
     useEffect(() => {
         const loadMapResources = async () => {
@@ -204,20 +225,8 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
     }, []);
 
     useEffect(() => {
-        if (!isAtlasMode && !isPreviewMode && popupInfo && popupInfo.id > 0) {
-            let isMounted = true;
-            setLoadingProfile(true);
-            gisService.fetchDistrictDrilldown(popupInfo.id)
-                .then(data => { if (isMounted) setProfileData(data); })
-                .catch(err => console.error("Gagal memuat profil wilayah:", err))
-                .finally(() => { if (isMounted) setLoadingProfile(false); });
-            return () => { isMounted = false; };
-        }
-    }, [popupInfo, isAtlasMode, isPreviewMode]);
-
-    useEffect(() => {
         let isMounted = true;
-        if (useExplorerStore.getState().activeIndicator) {
+        if (activeIndicator) {
             const generateMockData = async () => {
                 await new Promise(res => setTimeout(res, 300));
                 if (!isMounted) return;
@@ -226,14 +235,26 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                     mockData[k] = Math.floor(Math.random() * 90) + 10;
                 });
                 setIndicatorValues(mockData);
-                setMaxValue(100);
+
+                // Set local boundaries jika tidak disuplai secara dinamis dari store
+                const vals = Object.values(mockData);
+                const localMin = min_val(vals);
+                const localMax = max_val(vals);
+                setMinValue(activeMin ?? localMin);
+                setMaxValue(activeMax ?? localMax);
             };
             generateMockData();
         } else {
             setIndicatorValues(null);
+            setMinValue(0);
+            setMaxValue(100);
         }
         return () => { isMounted = false; };
-    }, [useExplorerStore.getState().activeIndicator]);
+    }, [activeIndicator, activeMin, activeMax]);
+
+    // Helpers matematika array pembantu
+    const min_val = (arr: number[]) => arr.length ? Math.min(...arr) : 0;
+    const max_val = (arr: number[]) => arr.length ? Math.max(...arr) : 100;
 
     const maskingPositions = useMemo(() => {
         if (!geoData) return [];
@@ -253,14 +274,10 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
         return [worldBounds, ...holes];
     }, [geoData]);
 
+    // PEMBARUAN EVENT LISTENER PETA (HOVER OVER PORTAL)
     const onEachFeature = (feature: any, layer: Layer) => {
         const districtName = feature.properties?.district_name || "Unknown";
         const key = districtName.toLowerCase().replace(/\s/g, '');
-
-        layer.bindTooltip(
-            `<div class="font-sans text-[10px] font-black text-slate-800 uppercase tracking-tighter">Distrik ${districtName}</div>`,
-            { sticky: true, direction: 'top', className: 'rounded-none shadow-none border border-slate-300 px-3 py-1.5 bg-white' }
-        );
 
         layer.on({
             mouseover: (e: any) => {
@@ -269,8 +286,10 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 const currentZoom = target._map.getZoom();
                 if (currentZoom >= 14) return;
 
-                const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
+                // Set State Hover Global di Store
+                setHoveredDistrict(districtName);
 
+                const isFocused = state.focusedDistrict && state.focusedDistrict.toLowerCase() === districtName.toLowerCase();
                 if (isFocused) return;
 
                 if (state.focusedDistrict) {
@@ -279,14 +298,25 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 }
 
                 if (state.activeIndicator) {
-                    target.setStyle({ weight: 2.5, color: '#ffffff', fillOpacity: Math.min((state.mapOpacity / 100) + 0.15, 1) });
+                    target.setStyle({
+                        weight: 2.5,
+                        color: '#ffffff',
+                        fillOpacity: Math.min((state.mapOpacity / 100) + 0.15, 1)
+                    });
                 } else {
                     const isDarkMode = state.activeBaseMap === 'dark';
-                    target.setStyle({ weight: 2, color: isDarkMode ? '#ffffff' : '#000000', fillOpacity: isDarkMode ? 0 : 0.15 });
+                    target.setStyle({
+                        weight: 2,
+                        color: isDarkMode ? '#ffffff' : '#000000',
+                        fillOpacity: isDarkMode ? 0 : 0.15
+                    });
                 }
                 target.bringToFront();
             },
             mouseout: (e: any) => {
+                // Bersihkan State Hover Global di Store
+                setHoveredDistrict(null);
+
                 const state = useExplorerStore.getState();
                 const target = e.target;
                 const currentZoom = target._map.getZoom();
@@ -300,6 +330,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                         activeBaseMap: state.activeBaseMap
                     },
                     indicatorValuesRef.current,
+                    minValueRef.current,
                     maxValueRef.current,
                     currentZoom
                 );
@@ -312,19 +343,12 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 }
 
                 const distId = DISTRICT_MAP[key] || 0;
-
                 setFocusDistrict(districtName);
 
-                if (isAtlasMode) {
-                    openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
-                        id: distId,
-                        name: districtName
-                    });
-                } else {
-                    setProfileData(null);
-                    setIsTextExpanded(false);
-                    setPopupInfo({ name: districtName, latlng: e.target.getBounds().getCenter(), id: distId });
-                }
+                openPanel("detil-distrik", `Profil Distrik ${districtName}`, {
+                    id: distId,
+                    name: districtName
+                });
             }
         });
     };
@@ -342,46 +366,31 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
 
     const getTileMaxZoom = () => useExplorerStore.getState().activeBaseMap === 'satellite' ? 22 : 20;
 
+    // Evaluasi Status Semantik untuk Rich Tooltip Wilayah yang di-Hover
+    const hoverDistrictStatus = useMemo(() => {
+        if (!hoveredDistrict || !activeIndicator || !indicatorValues) return null;
+        const key = hoveredDistrict.toLowerCase().replace(/\s/g, '');
+        const rawValue = indicatorValues[key];
+        if (rawValue === undefined) return null;
+
+        return {
+            value: rawValue,
+            status: getSectoralStatus(
+                rawValue,
+                minValue,
+                maxValue,
+                activeDirection || 'positive',
+                activeIndicator
+            )
+        };
+    }, [hoveredDistrict, activeIndicator, indicatorValues, minValue, maxValue, activeDirection]);
+
     if (loading) return null;
 
     const SafeMapContainer = MapContainer as any;
     const SafeTileLayer = TileLayer as any;
     const SafeGeoJSON = GeoJSON as any;
-    const SafePopup = Popup as any;
     const SafePolygon = Polygon as any;
-
-    const renderPopupContent = () => {
-        if (loadingProfile) {
-            return (
-                <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-none animate-spin"></div>
-                </div>
-            );
-        }
-        if (popupInfo?.id === 0) return <p className="text-xs text-slate-500 py-4 text-center font-bold uppercase tracking-widest">Data belum terdaftar.</p>;
-        if (!profileData) return <p className="text-xs text-rose-600 py-4 text-center font-bold uppercase tracking-widest">Koneksi terputus.</p>;
-
-        const deskripsi = profileData.profile.deskripsi || "Data profil kewilayahan belum tersedia.";
-        const isLongText = deskripsi.length > 150;
-
-        return (
-            <div className="space-y-4">
-                <div className="text-sm text-slate-700 space-y-1">
-                    <div className={`transition-all duration-300 ${isTextExpanded ? 'max-h-40 overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
-                        <p className={`leading-relaxed text-justify ${!isTextExpanded ? 'line-clamp-4' : ''}`}>{deskripsi}</p>
-                    </div>
-                    {isLongText && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setIsTextExpanded(!isTextExpanded); }}
-                            className="text-[10px] font-black uppercase tracking-widest text-teal-700 hover:text-teal-900 transition-colors mt-2 inline-block"
-                        >
-                            {isTextExpanded ? "Tutup" : "Selengkapnya"}
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    };
 
     const getMaskingOpacity = () => {
         const state = useExplorerStore.getState();
@@ -408,10 +417,12 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 <MapEventsHandler onZoomChange={setZoomLevel} />
                 <ExternalMapController />
 
+                {/* Perbaikan Typo Sintaks Tag Komponen [FIXED] */}
                 <CinematicSpotlightController
                     geoData={geoData}
                     geoJsonRef={geoJsonRef}
                     indicatorValues={indicatorValues}
+                    minValue={minValue}
                     maxValue={maxValue}
                     zoomLevel={zoomLevel}
                 />
@@ -442,18 +453,57 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 )}
 
                 <AssetMarkers />
-
-                {!isAtlasMode && !isPreviewMode && popupInfo && (
-                    <SafePopup position={popupInfo.latlng} onClose={() => setPopupInfo(null)}>
-                        <div className="w-72 p-2 font-sans rounded-none">
-                            <h3 className="text-[13px] uppercase tracking-widest font-black text-slate-900 border-b border-slate-300 pb-2 mb-3">
-                                {popupInfo.name}
-                            </h3>
-                            {renderPopupContent()}
-                        </div>
-                    </SafePopup>
-                )}
             </SafeMapContainer>
+
+            {/* PORTAL RICH HOVER TOOLTIP (THEATER HUD OVERLAY) */}
+            {hoveredDistrict && hoverDistrictStatus && (
+                <div
+                    className="fixed pointer-events-none z-9999 bg-white border border-slate-200 shadow-2xl p-4 w-64 rounded-none animate-in fade-in zoom-in-95 duration-150 text-slate-800"
+                    style={{
+                        left: `${mouseCoords.x + 15}px`,
+                        top: `${mouseCoords.y + 15}px`
+                    }}
+                >
+                    <div className="flex flex-col gap-2.5">
+                        {/* Judul Distrik */}
+                        <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: hoverDistrictStatus.status.color }} />
+                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                Distrik {hoveredDistrict}
+                            </h3>
+                        </div>
+
+                        {/* Detail Konten Data Sektoral */}
+                        <div className="flex flex-col gap-1 text-[11px] font-bold">
+                            <div className="flex justify-between text-slate-400">
+                                <span>Indikator:</span>
+                                <span className="text-slate-600 truncate max-w-40 text-right uppercase tracking-tighter">
+                                    {activeIndicator?.replace(/_/g, ' ')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-slate-400">
+                                <span>Nilai Aktual:</span>
+                                <span className="text-slate-800 font-mono">
+                                    {hoverDistrictStatus.value.toLocaleString('id-ID')}{activeUnit || ""}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center mt-1.5 pt-2 border-t border-slate-100">
+                                <span className="text-[10px] uppercase tracking-widest text-slate-400">Status Capaian:</span>
+                                <span
+                                    className="px-2 py-0.5 text-[9px] uppercase tracking-wider border font-black"
+                                    style={{
+                                        color: hoverDistrictStatus.status.color,
+                                        borderColor: `${hoverDistrictStatus.status.color}50`,
+                                        backgroundColor: `${hoverDistrictStatus.status.color}10`
+                                    }}
+                                >
+                                    {hoverDistrictStatus.status.label}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

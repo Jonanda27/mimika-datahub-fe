@@ -2,10 +2,9 @@
 "use client";
 
 import React, { useMemo, useEffect, useState } from "react";
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Tooltip } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import { ArrowRight } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { assetService } from "@/src/app/services/asset.service";
 
@@ -111,48 +110,97 @@ export default function AssetMarkers() {
                 const markerColor = marker.config?.color || "#0071bc";
                 const markerIconUrl = marker.config?.iconUrl || "/icons/markers/office.svg";
 
+                // [REFACTOR FASE 4.1] Adaptor Gambar Dinamis
+                const primaryImage = (marker.images && marker.images.length > 0)
+                    ? marker.images[0]
+                    : (marker.image_url || null);
+
+                const hasMultipleImages = marker.images && marker.images.length > 1;
+
+                // [REFACTOR FASE 4.1] Mengambil Dynamic Metadata JSON details
+                const details = marker.details || {};
+                const hasDetails = Object.keys(details).length > 0;
+
                 return (
                     <Marker
                         key={`${marker.id}-${index}`}
                         position={[marker.lat, marker.lng]}
                         icon={createCustomPin(markerIconUrl, markerColor)}
+                        // [UX ENHANCEMENT] Klik langsung membuka drawer detail aset secara halus
+                        eventHandlers={{
+                            click: (e) => {
+                                e.originalEvent.stopPropagation();
+                                openPanel("detil-aset", marker.name, marker);
+                            }
+                        }}
                     >
-                        <Popup className="asset-popup">
-                            <div className="flex flex-col p-0.5 w-50">
+                        {/* 
+                            [NEW - PILAR 3] PORTAL RICH HOVER TOOLTIP ASET
+                            Mengabaikan box padding bawaan Leaflet demi menghadirkan kartu visual frameless.
+                        */}
+                        <Tooltip
+                            direction="top"
+                            offset={[0, -25]}
+                            opacity={1}
+                            sticky={true}
+                            className="p-0! border-none! bg-transparent! shadow-none! rounded-none!"
+                        >
+                            <div className="w-64 bg-white border border-slate-200 shadow-2xl p-0 overflow-hidden flex flex-col font-sans text-slate-800 rounded-none">
 
-                                <span
-                                    className="text-[9px] font-bold uppercase tracking-widest mb-1 border-b border-slate-200 pb-1"
-                                    style={{ color: markerColor }}
-                                >
-                                    {marker.type}
-                                </span>
+                                {/* Micro-Thumbnail Image Header */}
+                                {primaryImage && (
+                                    <div className="relative w-full h-24 shrink-0 bg-slate-100">
+                                        <img
+                                            src={primaryImage}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                            draggable={false}
+                                        />
+                                        {/* Indikator sisa foto di dalam slider galeri */}
+                                        {hasMultipleImages && (
+                                            <div className="absolute bottom-1.5 right-1.5 bg-slate-900/80 backdrop-blur-md px-1.5 py-0.5 text-[8px] font-black uppercase text-white border border-white/20 tracking-wider">
+                                                +{marker.images.length - 1} Foto
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
-                                <h4 className="text-[12px] font-bold text-slate-800 leading-tight mb-1.5">
-                                    {marker.name}
-                                </h4>
+                                <div className="p-3.5 flex flex-col gap-2">
+                                    {/* Identitas Aset */}
+                                    <div className="flex flex-col">
+                                        <span
+                                            className="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
+                                            style={{ color: markerColor }}
+                                        >
+                                            {marker.type || "Aset Daerah"}
+                                        </span>
+                                        <h4 className="text-xs font-bold text-slate-900 leading-tight">
+                                            {marker.name}
+                                        </h4>
+                                    </div>
 
-                                <div className="flex flex-col gap-0.5 bg-slate-50 p-1.5 rounded-xs border border-slate-100 mb-2">
-                                    <span className="text-[10px] text-slate-500 font-medium">Koordinat:</span>
-                                    <span className="text-[10px] font-medium text-slate-700 font-mono">
-                                        {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
-                                    </span>
+                                    {/* Dynamic Metadata (JSON details) - Maksimal 3 Baris agar Tooltip tetap ramping [10] */}
+                                    {hasDetails ? (
+                                        <div className="flex flex-col gap-1 text-[10px] font-medium border-t border-slate-100 pt-2 text-slate-500">
+                                            {Object.entries(details).slice(0, 3).map(([key, value], idx) => (
+                                                <div key={idx} className="flex justify-between items-center gap-2">
+                                                    <span className="uppercase tracking-wider text-[8px] font-black text-slate-400 truncate max-w-22.5">
+                                                        {key}:
+                                                    </span>
+                                                    <span className="text-slate-700 truncate max-w-32.5 font-bold">
+                                                        {value as React.ReactNode}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-[9px] font-bold text-slate-400 italic border-t border-slate-100 pt-2 text-center tracking-wide">
+                                            Belum ada spesifikasi khusus
+                                        </p>
+                                    )}
                                 </div>
-
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        openPanel("detil-aset", marker.name, marker);
-                                    }}
-                                    className="w-full flex items-center justify-between px-2 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 transition-colors rounded-none group"
-                                >
-                                    <span className="text-[9px] font-bold text-slate-600 group-hover:text-teal-700 uppercase tracking-widest">
-                                        Analisis Detail
-                                    </span>
-                                    <ArrowRight size={12} className="text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition-all" />
-                                </button>
-
                             </div>
-                        </Popup>
+                        </Tooltip>
                     </Marker>
                 );
             })}

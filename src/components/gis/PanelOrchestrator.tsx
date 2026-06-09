@@ -1,8 +1,8 @@
 // src/components/gis/PanelOrchestrator.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { X, Map as MapIcon } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { X, Map as MapIcon, Info, HelpCircle } from "lucide-react";
 import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 import { ExplorerPanelType } from "@/src/app/types/gis";
 
@@ -153,63 +153,78 @@ function renderPanelContent(type: ExplorerPanelType, data: any, panelId: string,
 }
 
 /**
- * Komponen Legenda (Ultra-Compact Continuous Color Ramp).
+ * [REFACTOR - PILAR 1]
+ * Komponen Legenda (Continuous Color Ramp).
+ * Merender satu batang gradasi visual linier murni tanpa sekat-sekat kotak pembatas,
+ * serta merefleksikan angka batas riil minimum dan maksimum hasil kalkulasi backend.
  */
 function MapLegend({ indicatorKey }: { indicatorKey: string }) {
+    const activeMin = useExplorerStore((state) => state.activeMin);
+    const activeMax = useExplorerStore((state) => state.activeMax);
+    const activeUnit = useExplorerStore((state) => state.activeUnit);
+
+    // Formatter Judul Legenda
     const formattedTitle = indicatorKey
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 
-    const scaleBins = [
-        { label: "Sangat Padat (>80%)", value: 90 },
-        { label: "Padat (60-80%)", value: 70 },
-        { label: "Sedang (40-60%)", value: 50 },
-        { label: "Rendah (20-40%)", value: 30 },
-        { label: "Sgt. Rendah (<20%)", value: 10 },
-    ];
+    const minVal = activeMin ?? 0;
+    const maxVal = activeMax ?? 100;
+    const unitText = activeUnit || "";
 
-    const MAX_VALUE = 100;
+    // [PURE FABRICATION]
+    // Menghasilkan CSS Linear Gradient dinamis berdasarkan sampel klasifikasi warna di gisUtils
+    const gradientStyle = useMemo(() => {
+        const sampleRatios = [0.0, 0.25, 0.5, 0.75, 1.0];
+        const colors = sampleRatios.map((ratio) => {
+            const calculatedVal = minVal + (ratio * (maxVal - minVal));
+            return getSemanticColor(calculatedVal, minVal, maxVal, indicatorKey);
+        });
+        return `linear-gradient(to right, ${colors.join(", ")})`;
+    }, [minVal, maxVal, indicatorKey]);
 
     return (
-        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-42.5 rounded-none animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-8 right-19.5 pointer-events-auto z-50 bg-white border border-slate-200 shadow-lg w-56 rounded-none animate-in fade-in slide-in-from-bottom-4 text-slate-800">
 
-            <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+            {/* Header Legenda */}
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center gap-1.5">
-                    <MapIcon size={10} className="text-teal-700" />
-                    <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider truncate">
-                        Legenda
+                    <MapIcon size={12} className="text-teal-700" />
+                    <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-wider truncate">
+                        Legenda Peta
                     </h4>
                 </div>
             </div>
 
-            <div className="px-2.5 py-2.5 flex flex-col gap-1.5">
-                <h5 className="text-[9px] font-bold text-slate-800 leading-tight line-clamp-2">
-                    {formattedTitle}
-                </h5>
+            {/* Konten Legenda */}
+            <div className="p-3.5 flex flex-col gap-3">
+                <div className="space-y-0.5">
+                    <h5 className="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2 uppercase tracking-wide">
+                        {formattedTitle}
+                    </h5>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                        Tingkat Sebaran Data Sektoral
+                    </p>
+                </div>
 
-                <div className="flex mt-0.5">
-                    <div className="flex flex-col w-2.5 border border-slate-200 rounded-none shrink-0 shadow-sm">
-                        {scaleBins.map((bin, idx) => {
-                            const boxColor = getSemanticColor(bin.value, MAX_VALUE, indicatorKey);
-                            return (
-                                <div
-                                    key={`color-${idx}`}
-                                    className="h-4 w-full"
-                                    style={{ backgroundColor: boxColor }}
-                                />
-                            );
-                        })}
-                    </div>
+                {/* BATANG GRADASI UTUH (Continuous Gradient) */}
+                <div className="space-y-2">
+                    <div
+                        className="h-2 w-full border border-slate-200/50 shadow-inner"
+                        style={{ background: gradientStyle }}
+                    />
 
-                    <div className="flex flex-col justify-between ml-2 py-0">
-                        {scaleBins.map((bin, idx) => (
-                            <div key={`label-${idx}`} className="h-4 flex items-center">
-                                <span className="text-[9px] font-medium text-slate-600 tracking-tight whitespace-nowrap">
-                                    {bin.label}
-                                </span>
-                            </div>
-                        ))}
+                    {/* JANGKAR NOMINAL EKSTREM (Min-Max Anchors) */}
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 font-mono">
+                        <div className="flex flex-col">
+                            <span>{minVal.toLocaleString('id-ID')}{unitText}</span>
+                            <span className="text-[8px] text-slate-400 font-sans uppercase tracking-wider">Terendah</span>
+                        </div>
+                        <div className="flex flex-col text-right">
+                            <span>{maxVal.toLocaleString('id-ID')}{unitText}</span>
+                            <span className="text-[8px] text-slate-400 font-sans uppercase tracking-wider">Tertinggi</span>
+                        </div>
                     </div>
                 </div>
             </div>
