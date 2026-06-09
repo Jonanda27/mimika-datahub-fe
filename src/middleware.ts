@@ -1,4 +1,4 @@
-// middleware.ts
+// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -8,8 +8,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Daftar rute yang harus diproteksi (Halaman Admin & User)
-  const isProtectedRoute = 
-    pathname.startsWith('/dashboard') || 
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin-dashboard') ||
     pathname.startsWith('/upload-data') ||
     pathname.startsWith('/data-brida') ||
@@ -21,18 +21,31 @@ export function middleware(request: NextRequest) {
 
   // 1. Jika mencoba akses halaman internal tapi tidak ada token, tendang ke /login
   if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    const response = NextResponse.redirect(new URL('/login', request.url));
+
+    // Menonaktifkan cache middleware dan memaksa revalidasi request [cite: 1042]
+    response.headers.set('x-middleware-cache', 'no-cache');
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   }
 
-  // 2. Jika sudah login tapi mencoba akses halaman login lagi, arahkan ke dashboard
+  // 2. Jika sudah login tapi mencoba akses halaman login lagi, arahkan ke dashboard yang sesuai
   if (pathname === '/login' && token) {
     const role = request.cookies.get('user_role')?.value;
-    return NextResponse.redirect(
-      new URL(role === 'admin' ? '/admin-dashboard' : '/dashboard', request.url)
-    );
+    const redirectUrl = role === 'admin' ? '/admin-dashboard' : '/dashboard';
+
+    const response = NextResponse.redirect(new URL(redirectUrl, request.url));
+
+    // Menonaktifkan cache middleware dan memaksa revalidasi request [cite: 1042]
+    response.headers.set('x-middleware-cache', 'no-cache');
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   }
 
-  return NextResponse.next();
+  // 3. Untuk request rute yang di-match lainnya, matikan cache agar transisi state cookie terbaca instan
+  const response = NextResponse.next();
+  response.headers.set('x-middleware-cache', 'no-cache');
+  return response;
 }
 
 // Konfigurasi agar middleware hanya berjalan pada rute tertentu saja

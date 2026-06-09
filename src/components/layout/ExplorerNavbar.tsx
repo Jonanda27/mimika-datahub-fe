@@ -17,6 +17,7 @@ import { useExplorerStore } from "@/src/app/store/useExplorerStore";
 /**
  * ExplorerNavbar - Komponen Navigasi Frameless
  * Menggunakan sudut siku tegas dan tata letak padat untuk memaksimalkan ruang fungsional.
+ * [REFACTOR] Desain datar tanpa kotak ganda (no nested boxes) sesuai referensi visual.
  */
 export default function ExplorerNavbar() {
     const { profile, isLoading } = useAuthStore();
@@ -144,45 +145,50 @@ export default function ExplorerNavbar() {
             </div>
 
             {/* KANAN: Single Tool & Profile */}
-            <div className="flex items-center gap-3 md:gap-5">
+            <div className="flex items-center gap-4">
 
-                {/* UNITARY TOOL: Enhanced Share Button */}
+                {/* [REFACTOR] UNITARY TOOL: Enhanced Share Button - Tanpa Box/Border Kontainer */}
                 <button
                     onClick={handleShareClick}
-                    className={`flex items-center gap-2 px-4 py-2 border transition-all active:scale-95 rounded-none ${isCopied
-                        ? "bg-teal-50 border-teal-600 text-teal-700"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                    className={`flex items-center gap-2 px-1.5 py-2 transition-all active:scale-95 ${isCopied
+                        ? "text-teal-600"
+                        : "text-slate-600 hover:text-teal-700"
                         }`}
                     title="Bagikan tampilan peta saat ini"
                 >
-                    {isCopied ? <Check size={18} /> : <Share2 size={18} />}
-                    <span className="text-xs font-black uppercase tracking-widest hidden sm:block">
+                    {isCopied ? <Check size={18} className="stroke-[2.5px]" /> : <Share2 size={18} />}
+                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">
                         {isCopied ? "Tersalin" : "Bagikan"}
                     </span>
                 </button>
 
+                {/* Separator Vertikal Tipis */}
                 <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                {/* Profile */}
+                {/* [REFACTOR] Profile / Login Link - Tanpa Box/Border Kontainer */}
                 <Link
                     href="/login"
-                    className="flex items-center gap-3 p-1.5 pl-1.5 pr-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all group rounded-none"
+                    className="flex items-center gap-3 py-1.5 transition-all group rounded-none"
                 >
-                    {/* Avatar tetap bulat sempurna sebagai pengecualian elemen wajah/profil */}
-                    <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-xs font-black text-white group-hover:bg-teal-700 transition-colors">
+                    {/* 
+                        [REFACTOR] Square Avatar (Gaya AV pada Mockup)
+                        Menggunakan sudut siku tegas (rounded-none), latar belakang mint/teal yang sangat tipis (bg-teal-50),
+                        serta inisial tebal (font-black text-teal-700) untuk mencerminkan identitas verifikator.
+                    */}
+                    <div className="w-9 h-9 bg-teal-50 text-teal-700 flex items-center justify-center text-xs font-black group-hover:bg-teal-100 border border-teal-100/50 transition-colors rounded-none shrink-0 shadow-sm">
                         {isLoading ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-teal-600/30 border-t-teal-700 rounded-none animate-spin"></div>
                         ) : profile ? (
                             getInitials(profile.full_name)
                         ) : (
                             <UserIcon size={14} />
                         )}
                     </div>
-                    <div className="hidden sm:flex flex-col items-start">
-                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight line-clamp-1 max-w-20">
+                    <div className="hidden sm:flex flex-col items-start leading-tight">
+                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight line-clamp-1 max-w-28 group-hover:text-teal-700 transition-colors">
                             {profile?.full_name || "Login"}
                         </span>
-                        <span className="text-[8px] text-teal-600 font-bold uppercase tracking-widest">
+                        <span className="text-[9px] text-teal-600 font-bold uppercase tracking-widest mt-0.5">
                             {profile?.role || "Publik"}
                         </span>
                     </div>

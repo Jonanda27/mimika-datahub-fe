@@ -1,7 +1,7 @@
 // src/app/store/useAuthStore.ts
 import { create } from 'zustand';
-import { UserAuth, UserProfile } from '../types/auth'; 
-import { authService } from '../services/auth.service'; 
+import { UserAuth, UserProfile } from '../types/auth';
+import { authService } from '../services/auth.service';
 
 interface AuthState {
   user: UserAuth | null;         // Status ringkas (username & role) [cite: 583]
@@ -10,17 +10,35 @@ interface AuthState {
   error: string | null;
 
   // Actions
-  setAuth: (token: string, role: string, username: string) => void; 
+  setAuth: (token: string, role: string, username: string) => void;
   fetchProfile: () => Promise<void>; // Fungsi untuk memanggil endpoint /me
+  hydrateAuth: () => void;           // Fungsi pemulih state pasca-reboot/hydration
   logout: () => Promise<void>;
-  clearAuth: () => void; 
+  clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   isLoading: false,
   error: null,
+
+  /**
+   * Action untuk memulihkan state login secara aman dari localStorage (SSR-Safe)
+   */
+  hydrateAuth: () => {
+    if (typeof window === "undefined") return;
+
+    const token = localStorage.getItem("auth_token");
+    const role = localStorage.getItem("user_role");
+    const username = localStorage.getItem("auth_username") || "User";
+
+    if (token && role) {
+      set({
+        user: { username, role, isAuthenticated: true }
+      });
+    }
+  },
 
   /**
    * Action untuk logout: Memanggil API dan mereset state global
@@ -32,22 +50,33 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err: any) {
       console.error("Logout error:", err.message);
     } finally {
+      // Bersihkan penyimpanan lokal secara konsisten
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_role");
+        localStorage.removeItem("auth_username");
+      }
+
       // Reset state terlepas dari hasil API (karena token lokal sudah dihapus)
-      set({ 
-        user: null, 
-        profile: null, 
-        isLoading: false, 
-        error: null 
+      set({
+        user: null,
+        profile: null,
+        isLoading: false,
+        error: null
       });
     }
   },
-  
 
   setAuth: (token, role, username) => {
-    localStorage.setItem("auth_token", token); 
-    set({ 
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auth_token", token);
+      localStorage.setItem("user_role", role);
+      localStorage.setItem("auth_username", username);
+    }
+
+    set({
       user: { username, role, isAuthenticated: true },
-      error: null 
+      error: null
     });
   },
 
@@ -55,8 +84,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await authService.getMe();
-      set({ 
-        profile: data, 
+
+      // Sinkronisasi ke penyimpanan lokal demi stabilitas state
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user_role", data.role);
+        localStorage.setItem("auth_username", data.username);
+      }
+
+      set({
+        profile: data,
         isLoading: false,
         // Sinkronisasi data user ringkas jika diperlukan
         user: { username: data.username, role: data.role, isAuthenticated: true }
@@ -67,7 +103,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: () => {
-    authService.logout();
-    set({ user: null, profile: null, error: null }); 
+    // Memanggil internal logout untuk membersihkan seluruh sisa session
+    get().logout();
   },
 }));

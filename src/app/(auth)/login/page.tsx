@@ -1,15 +1,16 @@
+// src/app/(auth)/login/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
+import {
+  ArrowLeft,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
   ChevronRight,
   ShieldCheck,
   LayoutDashboard,
@@ -23,6 +24,7 @@ import { useAuthStore } from "./../../store/useAuthStore";
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state: any) => state.setAuth);
+  const hydrateAuth = useAuthStore((state: any) => state.hydrateAuth);
 
   // State untuk form input
   const [username, setUsername] = useState("");
@@ -31,13 +33,14 @@ export default function LoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Solusi Hydration
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    hydrateAuth(); // Memulihkan sisa state login terdahulu secara aman saat aplikasi dimuat
+  }, [hydrateAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,18 +50,23 @@ export default function LoginPage() {
     try {
       const data = await authService.login(username, password);
       setAuth(data.access_token, data.role, username);
-      
-      // LOGIKA REDIRECT DIPERBARUI DI SINI
-      if (data.role === "admin") {
-        router.push("/admin-dashboard");
-      } else if (data.role === "brida") {
-        router.push("/brida-dashboard");
-      } else {
-        router.push("/dashboard"); // Default untuk OPD / User
-      }
+
+      // Jeda mikro memberikan waktu bagi browser menyelesaikan penulisan cookie,
+      // dilanjutkan dengan memicu hard-redirect via window.location agar Next.js Server 
+      // Layouts membaca ulang headers cookie secara bersih dan bebas bug layout mismatch.
+      setTimeout(() => {
+        let targetPath = "/dashboard";
+        if (data.role === "admin") {
+          targetPath = "/admin-dashboard";
+        } else if (data.role === "brida") {
+          targetPath = "/brida-dashboard";
+        }
+
+        window.location.href = targetPath;
+      }, 100);
+
     } catch (err: any) {
       setErrorMsg(err.message || "Terjadi kesalahan saat login");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -68,20 +76,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="h-screen h-[100dvh] w-full bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white overflow-hidden">
-      
+    <div className="h-screen w-full bg-white flex flex-col md:flex-row font-sans selection:bg-blue-600 selection:text-white overflow-hidden">
+
       {/* --- KIRI: VISUAL BRANDING (Desktop & iPad Landscape) --- */}
       <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] h-full relative bg-slate-900 overflow-hidden">
-        <Image 
-          src="/mimika.jpg" 
+        <Image
+          src="/mimika.jpg"
           alt="Mimika Landscape"
           fill
           className="object-cover opacity-80" // Opacity ditingkatkan agar gambar lebih jelas
           priority
         />
         {/* Gradient diperhalus: Menggunakan Slate-950/20 ke Slate-950/80 agar gambar di tengah tetap terlihat */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/40"></div>
-        
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/20 to-slate-950/40"></div>
+
         <div className="relative z-10 w-full h-full p-12 xl:p-16 flex flex-col justify-between">
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 group-hover:bg-white/40 transition-all">
@@ -114,15 +122,15 @@ export default function LoginPage() {
       {/* --- KANAN: FORM LOGIN --- */}
       <div className="flex-1 h-full flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white overflow-y-auto">
         <div className="w-full max-w-md py-8">
-          
+
           <div className="space-y-3 mb-10 text-black">
             <div className="lg:hidden flex justify-center mb-8">
-               <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                  <Image src="/logo-mimika.png" alt="Logo" width={32} height={32} />
-                  <span className="font-black tracking-tighter text-slate-900">MIMIKA DATAHUB</span>
-               </div>
+              <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <Image src="/logo-mimika.png" alt="Logo" width={32} height={32} />
+                <span className="font-black tracking-tighter text-slate-900">MIMIKA DATAHUB</span>
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight text-black">Selamat Datang</h1>
+            <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight">Selamat Datang</h1>
             <p className="text-slate-500 font-medium text-sm sm:text-base">Silakan masukkan akun resmi Anda untuk melanjutkan ke sistem.</p>
           </div>
 
@@ -142,8 +150,8 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                     <Mail size={18} />
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="nama@mimika.go.id"
@@ -163,8 +171,8 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                     <Lock size={18} />
                   </div>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
+                  <input
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -172,7 +180,7 @@ export default function LoginPage() {
                     required
                     autoComplete="current-password"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
@@ -188,8 +196,8 @@ export default function LoginPage() {
               <label htmlFor="remember" className="text-sm font-bold text-slate-500 cursor-pointer select-none">Ingat perangkat ini</label>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
               className="w-full bg-slate-900 text-white py-4 sm:py-5 rounded-2xl font-bold text-sm shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all flex items-center justify-center gap-3 group active:scale-[0.98] disabled:opacity-70"
             >
@@ -205,15 +213,15 @@ export default function LoginPage() {
 
           <div className="mt-10 pt-8 border-t border-slate-100 flex flex-col items-center gap-6 text-center">
             <p className="text-slate-400 text-sm font-medium">Belum memiliki akses? <a href="#" className="text-blue-600 font-bold hover:underline">Hubungi Admin IT</a></p>
-            
+
             <div className="flex gap-4 items-center">
-               <div className="h-[1px] w-12 bg-slate-200"></div>
-               <LayoutDashboard size={16} className="text-slate-300" />
-               <div className="h-[1px] w-12 bg-slate-200"></div>
+              <div className="h-px w-12 bg-slate-200"></div>
+              <LayoutDashboard size={16} className="text-slate-300" />
+              <div className="h-px w-12 bg-slate-200"></div>
             </div>
-            
+
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-              Dikelola oleh Bidang Statistik & Persandian <br /> BRIDA 
+              Dikelola oleh Bidang Statistik & Persandian <br /> BRIDA
             </p>
           </div>
         </div>

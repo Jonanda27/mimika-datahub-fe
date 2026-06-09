@@ -1,4 +1,4 @@
-// src/services/auth.service.ts
+// src/app/services/auth.service.ts
 import { API_BASE_URL } from "../lib/config";
 import { LoginResponse, UserProfile, LogoutResponse } from "../types/auth";
 
@@ -22,11 +22,15 @@ export const authService = {
     }
 
     const data = await response.json();
-    
+
+    // Deteksi protokol HTTPS secara dinamis di client-side
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const secureFlag = isSecure ? '; Secure' : '';
+
     // 1. SIMPAN KE COOKIE agar bisa dibaca Middleware (Server-side)
-    // max-age=86400 adalah 24 jam dalam detik
-    document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
-    document.cookie = `user_role=${data.role}; path=/; max-age=86400; SameSite=Strict`;
+    // Diubah menggunakan SameSite=Lax dan Secure Flag dinamis agar lolos verifikasi HTTPS
+    document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax${secureFlag}`;
+    document.cookie = `user_role=${data.role}; path=/; max-age=86400; SameSite=Lax${secureFlag}`;
 
     // 2. SIMPAN KE LOCALSTORAGE untuk kebutuhan store Zustand/Client-side
     localStorage.setItem("auth_token", data.access_token);
@@ -40,9 +44,8 @@ export const authService = {
    * Endpoint: GET /api/v1/auth/me
    */
   async getMe(): Promise<UserProfile> {
-    // Gunakan localStorage untuk request dari client
     const token = localStorage.getItem("auth_token");
-    
+
     const response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       method: "GET",
       headers: {
@@ -52,8 +55,8 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json(); 
-      throw new Error(errorData.detail || "Gagal mengambil data profil"); 
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Gagal mengambil data profil");
     }
 
     return response.json();
@@ -63,8 +66,11 @@ export const authService = {
    * Melakukan proses logout ke Backend dan membersihkan session lokal
    */
   async logout(): Promise<LogoutResponse> {
-    const token = localStorage.getItem("auth_token"); // [cite: 863]
-    
+    const token = localStorage.getItem("auth_token");
+
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const secureFlag = isSecure ? '; Secure' : '';
+
     try {
       // 1. Panggil endpoint logout di BE
       const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
@@ -78,16 +84,16 @@ export const authService = {
       if (!response.ok) {
         console.warn("Backend logout failed, proceeding with local cleanup");
       }
-      
+
       return await response.json();
     } finally {
-      // 2. BERSIHKAN LOCAL STORAGE [cite: 867]
+      // 2. BERSIHKAN LOCAL STORAGE
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_role");
 
-      // 3. BERSIHKAN COOKIES (Penting agar Middleware tidak tertipu) [cite: 861]
-      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict";
-      document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict";
+      // 3. BERSIHKAN COOKIES (Penting agar Middleware tidak tertipu)
+      document.cookie = `auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax${secureFlag}`;
+      document.cookie = `user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax${secureFlag}`;
     }
   },
 };
