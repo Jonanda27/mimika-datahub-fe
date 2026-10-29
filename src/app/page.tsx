@@ -9,7 +9,6 @@ import { useDatasetStore } from "@/src/app/store/useDatasetStore";
 // --- IMPORT KOMPONEN LANDING (Arsitektur Modular) ---
 import Navbar from "@/src/components/landing/Navbar";
 import HeroSection from "@/src/components/landing/HeroSection";
-import QuickLinks from "@/src/components/landing/QuickLinks";
 import InfographicSection from "@/src/components/landing/InfographicSection";
 import ThematicSection from "@/src/components/landing/ThematicSection";
 import GisSection from "@/src/components/landing/GisSection";
@@ -36,10 +35,8 @@ export default function LandingPage() {
       <Navbar />
 
       <main>
-        {/* HeroSection mengelola state pencarian & dropdown secara internal */}
+        {/* HeroSection mengelola video full-height, pencarian & quick links terintegrasi */}
         <HeroSection />
-
-        <QuickLinks />
 
         <InfographicSection />
 
