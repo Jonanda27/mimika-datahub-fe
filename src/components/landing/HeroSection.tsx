@@ -1,26 +1,53 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image"; // Diperlukan untuk render background yang teroptimasi
+import Image from "next/image";
 import Link from "next/link";
-import { Search, ChevronDown, Loader2, Filter, X, Database } from "lucide-react";
+import { Search, ChevronDown, Loader2, Filter, X, Database, Play, Pause } from "lucide-react";
 import { useSearchStore } from "@/src/app/store/useSearchStore";
-import { useCategoryStore } from "@/src/app/store/useCategoryStore"; // [FIX] Import diperbaiki ke store yang benar
+import { useCategoryStore } from "@/src/app/store/useCategoryStore";
+
+const HERO_SCENES = [
+    {
+        src: "/video/hero-civil-servants.mp4",
+        title: "Pelayanan Publik & Kolaborasi OPD",
+        tag: "Aparatur Daerah",
+    },
+    {
+        src: "/video/hero-field-surveyor.mp4",
+        title: "Survei Aset & Infrastruktur Daerah",
+        tag: "Infrastruktur",
+    },
+    {
+        src: "/video/hero-local-merchant.mp4",
+        title: "Denyut Perekonomian & Kesejahteraan Warga",
+        tag: "Ekonomi Rakyat",
+    },
+    {
+        src: "/video/hero-researchers.mp4",
+        title: "Riset Kebijakan & Analisis Terpadu",
+        tag: "Riset & Sains",
+    },
+];
 
 export default function HeroSection() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<{ id: string | number, name: string } | null>(null);
     const searchContainerRef = useRef<HTMLDivElement>(null);
 
-    // [FIX] Menggunakan state dari CategoryStore
-    const { categories, fetchCategories, isLoading: isCategoryLoading } = useCategoryStore();
+    // Video State
+    const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(true);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
+    // Store Kategori & Search
+    const { categories, fetchCategories, isLoading: isCategoryLoading } = useCategoryStore();
     const {
         fetchSuggestions, clearSuggestions, searchResults,
         isSearching, fetchByCategory, clearResults, isLoadingSuggestions
     } = useSearchStore();
 
-    // [FIX] Trigger fetch data kategori saat halaman pertama kali dimuat
+    // Trigger fetch kategori saat halaman pertama dimuat
     useEffect(() => {
         fetchCategories();
     }, [fetchCategories]);
@@ -50,26 +77,62 @@ export default function HeroSection() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery, fetchSuggestions, clearSuggestions, clearResults]);
 
+    // Video switch & play effect
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.load();
+            if (isPlaying) {
+                const playPromise = videoRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        // Browser autoplay policy handling
+                    });
+                }
+            }
+        }
+    }, [activeVideoIndex]);
+
+    const handleVideoEnded = () => {
+        setActiveVideoIndex((prev) => (prev + 1) % HERO_SCENES.length);
+    };
+
+    const togglePlayPause = () => {
+        if (!videoRef.current) return;
+        if (isPlaying) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            videoRef.current.play();
+            setIsPlaying(true);
+        }
+    };
+
     const handleCategoryClick = (categoryId: string | number, categoryName: string) => {
         setSelectedCategory({ id: categoryId, name: categoryName });
         fetchByCategory(Number(categoryId), searchQuery);
     };
 
     return (
-        <header className="relative py-16 md:py-24 border-b border-gray-200 overflow-hidden">
-            {/* LAYER 0: Background Image */}
-            <div className="absolute inset-0 z-0">
-                <Image
-                    src="/bg-mimika.jpg" // Pastikan asset ini ada di direktori public/
-                    alt="GovDataHub Background"
-                    fill
-                    className="object-cover object-center"
-                    priority // Flag priority agar gambar hero dimuat lebih awal (LCP optimization)
-                />
+        <header className="relative py-16 md:py-24 border-b border-gray-200 overflow-hidden bg-slate-900">
+            {/* LAYER 0: Background Video dengan Poster Fallback */}
+            <div className="absolute inset-0 z-0 overflow-hidden">
+                <video
+                    ref={videoRef}
+                    key={HERO_SCENES[activeVideoIndex].src}
+                    autoPlay
+                    muted
+                    playsInline
+                    preload="auto"
+                    poster="/bg-mimika.jpg"
+                    onEnded={handleVideoEnded}
+                    className="w-full h-full object-cover object-center transition-opacity duration-700"
+                >
+                    <source src={HERO_SCENES[activeVideoIndex].src} type="video/mp4" />
+                </video>
             </div>
 
-            {/* LAYER 1: Overlay / Masking untuk Readability (Transparansi diturunkan) */}
-            <div className="absolute inset-0 z-0 bg-white/25 sm:bg-gradient-to-r sm:from-white/35 sm:via-white/20 sm:to-transparent backdrop-blur-[2px]"></div>
+            {/* LAYER 1: Overlay / Masking Gradient untuk Readability Teks Maksimal */}
+            <div className="absolute inset-0 z-0 bg-white/45 sm:bg-gradient-to-r sm:from-white/90 sm:via-white/75 sm:to-white/20 backdrop-blur-[0.5px]"></div>
 
             {/* LAYER 2: Foreground Content (Elevasi Z-Index 10) */}
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end gap-10">
@@ -81,7 +144,6 @@ export default function HeroSection() {
                     </div>
 
                     {/* INPUT SEARCH */}
-                    {/* Shadow ditingkatkan sedikit untuk membedakan kedalaman form dari background */}
                     <div className="relative flex items-center bg-white border border-gray-300 rounded-md shadow-md focus-within:border-[#0071bc] focus-within:ring-1 focus-within:ring-[#0071bc] transition-all">
                         <div className="pl-4"><Search className="text-gray-400" size={20} /></div>
                         <input
@@ -95,7 +157,6 @@ export default function HeroSection() {
                     </div>
 
                     {/* CHIPS CATEGORY (Muncul saat ngetik) */}
-                    {/* [FIX] Looping disesuaikan menggunakan array categories murni dari API */}
                     {searchQuery.trim() !== "" && !isCategoryLoading && categories.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-4">
                             {categories.map((category: any) => (
@@ -114,7 +175,6 @@ export default function HeroSection() {
                     )}
 
                     {/* DROPDOWN HASIL PENCARIAN */}
-                    {/* Z-index ditingkatkan agar tidak tertimpa elemen lain di bawah hero section */}
                     {selectedCategory && (
                         <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-200 shadow-2xl rounded-md overflow-hidden z-50">
                             <div className="max-h-60 overflow-y-auto divide-y divide-gray-50 custom-scrollbar">
@@ -133,13 +193,48 @@ export default function HeroSection() {
                             </div>
                         </div>
                     )}
+
+                    {/* MINI SCENE CONTROLLER BAR */}
+                    <div className="pt-2 flex items-center gap-2.5 text-xs text-gray-700">
+                        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/80 shadow-xs">
+                            <button
+                                onClick={togglePlayPause}
+                                className="p-0.5 hover:text-[#0071bc] transition-colors focus:outline-none"
+                                title={isPlaying ? "Jeda Tayangan" : "Putar Tayangan"}
+                                aria-label="Toggle play pause"
+                            >
+                                {isPlaying ? <Pause size={13} className="text-gray-700 hover:text-[#0071bc]" /> : <Play size={13} className="text-gray-700 hover:text-[#0071bc]" />}
+                            </button>
+                            <span className="font-semibold text-gray-900 text-[11px] uppercase tracking-wide">
+                                {HERO_SCENES[activeVideoIndex].tag}
+                            </span>
+                            <span className="text-gray-300">|</span>
+                            <span className="hidden sm:inline text-gray-600 text-[11px]">
+                                {HERO_SCENES[activeVideoIndex].title}
+                            </span>
+                            <div className="flex items-center gap-1.5 ml-1">
+                                {HERO_SCENES.map((scene, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setActiveVideoIndex(idx)}
+                                        className={`h-1.5 rounded-full transition-all focus:outline-none ${activeVideoIndex === idx
+                                            ? "w-4 bg-[#0071bc]"
+                                            : "w-1.5 bg-gray-300 hover:bg-gray-400"
+                                            }`}
+                                        title={scene.title}
+                                        aria-label={`Pindah ke ${scene.title}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="md:w-4/12 pb-2">
-                    <p className="text-black text-sm mb-2 font-medium drop-shadow-sm">Jelajahi Indikator berdasarkan</p>
+                    <p className="text-gray-800 text-sm mb-2 font-medium drop-shadow-sm">Jelajahi Indikator berdasarkan</p>
                     <div className="flex gap-2 text-sm font-bold text-[#0071bc]">
                         <a href="#fitur" className="hover:underline drop-shadow-sm">Sektor OPD</a>
-                        <span className="text-black font-normal">atau</span>
+                        <span className="text-gray-700 font-normal">atau</span>
                         <a href="#tematik" className="hover:underline drop-shadow-sm">Tematik</a>
                     </div>
                 </div>
