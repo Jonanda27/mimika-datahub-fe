@@ -9,9 +9,7 @@ import {
     ChevronDown,
     Building2,
     Users2,
-    ClipboardList,
-    BarChart3,
-    Info
+    ClipboardList
 } from "lucide-react";
 
 export default function Navbar() {
@@ -23,7 +21,7 @@ export default function Navbar() {
     // Logika deteksi scroll untuk efek sticky/shadow
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
+            setScrolled(window.scrollY > 20);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
@@ -41,8 +39,9 @@ export default function Navbar() {
     }, []);
 
     return (
-        <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-2" : "bg-white py-4"
-            } border-b border-gray-200`}>
+        <nav className={`fixed top-0 left-0 right-0 w-full z-[999] transition-all duration-300 ${
+            scrolled ? "bg-white/95 backdrop-blur-md shadow-md py-2 border-b border-gray-200" : "bg-white py-3 sm:py-4 border-b border-gray-200"
+            }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
@@ -153,7 +152,7 @@ export default function Navbar() {
 
             {/* --- MOBILE MENU DRAWER --- */}
             {isMenuOpen && (
-                <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 space-y-3 absolute w-full shadow-2xl z-50 font-black text-[#002244] text-[13px] uppercase tracking-widest animate-in slide-in-from-top">
+                <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 space-y-3 absolute top-full left-0 w-full shadow-2xl z-[999] font-black text-[#002244] text-[13px] uppercase tracking-widest animate-in slide-in-from-top">
                     <Link href="/explorer" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Geospatial GIS</Link>
                     <Link href="/atlas" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Atlas Pembangunan</Link>
                     <Link href="/public-data-pemerintah" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 text-[#0071bc]">Data Pemerintah</Link>

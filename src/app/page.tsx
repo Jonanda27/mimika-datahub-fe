@@ -32,10 +32,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-800 selection:bg-[#0071bc] selection:text-white overflow-x-hidden">
 
-      {/* Komponen Navigasi Utama */}
+      {/* Komponen Navigasi Utama (Fixed Sticky Always on Top) */}
       <Navbar />
 
-      <main>
+      <main className="pt-[74px] sm:pt-[82px]">
         {/* HeroSection dengan video jernih dan search di bagian bawah hero */}
         <HeroSection />
 
