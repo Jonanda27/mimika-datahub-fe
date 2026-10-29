@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Search, ChevronDown, Loader2, Filter, X, Database, Play, Pause } from "lucide-react";
+import { Search, Loader2, Play, Pause } from "lucide-react";
 import { useSearchStore } from "@/src/app/store/useSearchStore";
 import { useCategoryStore } from "@/src/app/store/useCategoryStore";
 
@@ -113,8 +112,8 @@ export default function HeroSection() {
     };
 
     return (
-        <header className="relative py-16 md:py-24 border-b border-gray-200 overflow-hidden bg-slate-900">
-            {/* LAYER 0: Background Video dengan Poster Fallback */}
+        <header className="relative py-16 md:py-24 border-b border-gray-900/10 overflow-hidden bg-slate-950">
+            {/* LAYER 0: Background Video 100% Jernih (Tanpa Blur) */}
             <div className="absolute inset-0 z-0 overflow-hidden">
                 <video
                     ref={videoRef}
@@ -125,26 +124,30 @@ export default function HeroSection() {
                     preload="auto"
                     poster="/bg-mimika.jpg"
                     onEnded={handleVideoEnded}
-                    className="w-full h-full object-cover object-center transition-opacity duration-700"
+                    className="w-full h-full object-cover object-center"
                 >
                     <source src={HERO_SCENES[activeVideoIndex].src} type="video/mp4" />
                 </video>
             </div>
 
-            {/* LAYER 1: Overlay / Masking Gradient untuk Readability Teks Maksimal */}
-            <div className="absolute inset-0 z-0 bg-white/45 sm:bg-gradient-to-r sm:from-white/90 sm:via-white/75 sm:to-white/20 backdrop-blur-[0.5px]"></div>
+            {/* LAYER 1: Subtle Cinematic Dark Vignette (Tanpa Blur, Video Tajam & Jelas) */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-r from-slate-950/75 via-slate-950/40 to-slate-950/15"></div>
 
             {/* LAYER 2: Foreground Content (Elevasi Z-Index 10) */}
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end gap-10">
 
                 <div className="md:w-8/12 space-y-6 relative" ref={searchContainerRef}>
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight drop-shadow-sm">GovDataHub Open Data</h1>
-                        <p className="text-xl text-gray-700 mt-2 font-light drop-shadow-sm">Akses gratis dan terbuka untuk data pembangunan Pemerintah Daerah</p>
+                        <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight drop-shadow-md">
+                            GovDataHub Open Data
+                        </h1>
+                        <p className="text-xl text-gray-100 mt-2 font-normal drop-shadow">
+                            Akses gratis dan terbuka untuk data pembangunan Pemerintah Daerah
+                        </p>
                     </div>
 
                     {/* INPUT SEARCH */}
-                    <div className="relative flex items-center bg-white border border-gray-300 rounded-md shadow-md focus-within:border-[#0071bc] focus-within:ring-1 focus-within:ring-[#0071bc] transition-all">
+                    <div className="relative flex items-center bg-white border border-white/20 rounded-md shadow-2xl focus-within:border-[#0071bc] focus-within:ring-2 focus-within:ring-[#0071bc] transition-all">
                         <div className="pl-4"><Search className="text-gray-400" size={20} /></div>
                         <input
                             type="text"
@@ -163,9 +166,9 @@ export default function HeroSection() {
                                 <button
                                     key={category.id}
                                     onClick={() => handleCategoryClick(category.id, category.name)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all shadow-sm ${selectedCategory?.name === category.name
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all shadow-md ${selectedCategory?.name === category.name
                                         ? "bg-[#0071bc] text-white border-[#0071bc]"
-                                        : "bg-white text-gray-700 border-gray-200 hover:border-[#0071bc] hover:text-[#0071bc]"
+                                        : "bg-white/90 text-gray-800 border-white/40 hover:bg-white hover:text-[#0071bc]"
                                         }`}
                                 >
                                     {category.name}
@@ -195,21 +198,21 @@ export default function HeroSection() {
                     )}
 
                     {/* MINI SCENE CONTROLLER BAR */}
-                    <div className="pt-2 flex items-center gap-2.5 text-xs text-gray-700">
-                        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/80 shadow-xs">
+                    <div className="pt-2 flex items-center gap-2.5 text-xs">
+                        <div className="flex items-center gap-2.5 bg-slate-900/70 border border-white/20 px-3.5 py-1.5 rounded-full shadow-lg">
                             <button
                                 onClick={togglePlayPause}
-                                className="p-0.5 hover:text-[#0071bc] transition-colors focus:outline-none"
+                                className="p-0.5 text-white/80 hover:text-white transition-colors focus:outline-none"
                                 title={isPlaying ? "Jeda Tayangan" : "Putar Tayangan"}
                                 aria-label="Toggle play pause"
                             >
-                                {isPlaying ? <Pause size={13} className="text-gray-700 hover:text-[#0071bc]" /> : <Play size={13} className="text-gray-700 hover:text-[#0071bc]" />}
+                                {isPlaying ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white" />}
                             </button>
-                            <span className="font-semibold text-gray-900 text-[11px] uppercase tracking-wide">
+                            <span className="font-semibold text-white text-[11px] uppercase tracking-wide">
                                 {HERO_SCENES[activeVideoIndex].tag}
                             </span>
-                            <span className="text-gray-300">|</span>
-                            <span className="hidden sm:inline text-gray-600 text-[11px]">
+                            <span className="text-white/30">|</span>
+                            <span className="hidden sm:inline text-gray-200 text-[11px]">
                                 {HERO_SCENES[activeVideoIndex].title}
                             </span>
                             <div className="flex items-center gap-1.5 ml-1">
@@ -218,8 +221,8 @@ export default function HeroSection() {
                                         key={idx}
                                         onClick={() => setActiveVideoIndex(idx)}
                                         className={`h-1.5 rounded-full transition-all focus:outline-none ${activeVideoIndex === idx
-                                            ? "w-4 bg-[#0071bc]"
-                                            : "w-1.5 bg-gray-300 hover:bg-gray-400"
+                                            ? "w-4 bg-sky-400"
+                                            : "w-1.5 bg-white/40 hover:bg-white/70"
                                             }`}
                                         title={scene.title}
                                         aria-label={`Pindah ke ${scene.title}`}
@@ -231,11 +234,11 @@ export default function HeroSection() {
                 </div>
 
                 <div className="md:w-4/12 pb-2">
-                    <p className="text-gray-800 text-sm mb-2 font-medium drop-shadow-sm">Jelajahi Indikator berdasarkan</p>
-                    <div className="flex gap-2 text-sm font-bold text-[#0071bc]">
-                        <a href="#fitur" className="hover:underline drop-shadow-sm">Sektor OPD</a>
-                        <span className="text-gray-700 font-normal">atau</span>
-                        <a href="#tematik" className="hover:underline drop-shadow-sm">Tematik</a>
+                    <p className="text-white text-sm mb-2 font-medium drop-shadow">Jelajahi Indikator berdasarkan</p>
+                    <div className="flex gap-2 text-sm font-bold">
+                        <a href="#fitur" className="text-sky-300 hover:text-white hover:underline drop-shadow">Sektor OPD</a>
+                        <span className="text-white/80 font-normal">atau</span>
+                        <a href="#tematik" className="text-sky-300 hover:text-white hover:underline drop-shadow">Tematik</a>
                     </div>
                 </div>
             </div>
