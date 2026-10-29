@@ -42,7 +42,7 @@ export default function PageHeader({ title, subtitle, withSearch, onSearch }: Pa
       <div className="absolute inset-0 z-0">
         <Image
           src="/background-papua.jpg"
-          alt="Background Papua"
+          alt="Background Portal"
           fill
           priority
           className="object-cover object-center grayscale-20"

@@ -70,7 +70,7 @@ export default function PemerintahFilter({
       <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20 shrink-0">
         <div>
           <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Filters</h2>
-          <p className="text-[10px] text-gray-400 font-bold uppercase md:hidden">Saring Data Mimika</p>
+          <p className="text-[10px] text-gray-400 font-bold uppercase md:hidden">Saring Data Daerah</p>
         </div>
         <button 
           onClick={onReset} 

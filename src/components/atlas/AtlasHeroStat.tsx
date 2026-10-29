@@ -102,7 +102,7 @@ export default function AtlasHeroStat() {
                     <div className="flex items-center gap-2 mb-4">
                         <Target size={18} className={theme.text} />
                         <h3 className={`text-xs font-black uppercase tracking-[0.2em] opacity-80 ${theme.text}`}>
-                            Rata-Rata Mimika
+                            Rata-Rata Daerah
                         </h3>
                     </div>
 

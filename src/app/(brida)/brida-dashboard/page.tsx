@@ -54,7 +54,7 @@ export default function ManagerDashboardPage() {
         {/* Wrapper Container disamakan */}
         <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Dashboard" subtitle="Memuat ringkasan data..." />
-          <LoadingState message="Menyiapkan statistik Mimika DataHub..." />
+          <LoadingState message="Menyiapkan statistik GovDataHub..." />
         </div>
       </div>
     );
@@ -75,7 +75,7 @@ export default function ManagerDashboardPage() {
         {/* 1. HEADER BANNER */}
         <PageHeader 
           title="Dashboard Utama" 
-          subtitle="Selamat datang di Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika" 
+          subtitle="Selamat datang di GovDataHub - Pusat Data Terintegrasi Pemerintah Daerah" 
         />
 
         {/* 2. SUMMARY CARDS - Responsive Grid */}
@@ -210,7 +210,7 @@ export default function ManagerDashboardPage() {
         </div>
 
         <footer className="mt-6 md:mt-8 text-center text-gray-400 text-[9px] md:text-[10px] font-medium tracking-widest uppercase pb-4">
-          © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+          © 2026 GovDataHub - Pusat Data Terintegrasi Pemerintah Daerah
         </footer>
       </div>
     </div>

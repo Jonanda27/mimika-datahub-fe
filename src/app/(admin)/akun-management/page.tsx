@@ -145,7 +145,7 @@ export default function AkunManagementPage() {
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
         <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Manajemen Akun" subtitle="Memuat daftar pengguna..." />
-          <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+          <LoadingState message="Menghubungkan ke server GovDataHub..." />
         </div>
       </div>
     );
@@ -338,7 +338,7 @@ export default function AkunManagementPage() {
                         type="email" required value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
-                        placeholder="nama@mimikakab.go.id"
+                        placeholder="nama@pemda.go.id"
                       />
                     </div>
                   </div>
@@ -383,7 +383,7 @@ export default function AkunManagementPage() {
         )}
 
         <footer className="mt-auto text-center text-gray-400 text-[10px] font-medium tracking-widest uppercase pb-4">
-          © 2026 Mimika DataHub - Sistem Keamanan & Autentikasi Pengguna
+          © 2026 GovDataHub - Sistem Keamanan & Autentikasi Pengguna
         </footer>
       </div>
     </div>

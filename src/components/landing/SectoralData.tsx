@@ -41,7 +41,7 @@ export default function SectoralData() {
                                 Analisis Indikator Makro Ekonomi
                             </h3>
                             <p className="text-gray-600 mb-10 leading-relaxed text-[15px] max-w-3xl">
-                                Mimika DataHub menyediakan dasbor interaktif yang dirancang untuk membantu pengambil kebijakan dan publik memantau pertumbuhan ekonomi serta tata kelola data secara efisien sesuai standar nasional.
+                                GovDataHub menyediakan dasbor interaktif yang dirancang untuk membantu pengambil kebijakan dan publik memantau pertumbuhan ekonomi serta tata kelola data secara efisien sesuai standar nasional.
                             </p>
 
                             {/* Feature Grid (Icon dengan bg light-blue agar lebih premium) */}

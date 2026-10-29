@@ -344,7 +344,7 @@ export default function AdminManajemenAsetPage() {
             </div>
 
             <footer className="mt-10 text-center text-gray-400 text-[10px] uppercase tracking-[0.3em] pb-6">
-                Sistem Moderasi Spasial - Administrator Mimika DataHub
+                Sistem Moderasi Spasial - Administrator GovDataHub
             </footer>
 
             {/* Menampilkan Modal Detail */}

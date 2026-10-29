@@ -50,7 +50,7 @@ export default function DistrictListPanel() {
     // Handler Klik Baris Utama: Toggle Zoom & Spotlight pada Peta
     const handleDistrictClick = (districtName: string) => {
         if (focusedDistrict === districtName) {
-            setFocusDistrict(null); // Toggle Off (Peta kembali ke tampilan seluruh Mimika)
+            setFocusDistrict(null); // Toggle Off (Peta kembali ke tampilan seluruh Daerah)
         } else {
             setFocusDistrict(districtName); // Toggle On (Peta terbang ke wilayah terkait)
         }

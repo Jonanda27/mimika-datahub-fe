@@ -83,10 +83,10 @@ export default function AdminNavbar() {
 
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
-          <Image src="/logo-mimika.png" alt="Logo Mimika" width={50} height={15} className="object-contain" priority />
+          <Image src="/logo-govdatahub.svg" alt="Logo GovDataHub" width={50} height={15} className="object-contain" priority />
           <div className="h-8 w-px bg-gray-300 hidden sm:block"></div>
           <h1 className="text-lg md:text-xl font-bold text-[#004b87] tracking-wide hidden sm:block">
-            Mimika DataHub
+            GovDataHub
           </h1>
         </div>
 
@@ -134,7 +134,7 @@ export default function AdminNavbar() {
               <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
                 <div className="bg-gray-50/80 px-5 py-4 border-b border-gray-100">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Masuk Sebagai</p>
-                  <p className="text-sm font-black text-[#002244] truncate">{profile?.username || "admin_mimika"}</p>
+                  <p className="text-sm font-black text-[#002244] truncate">{profile?.username || "admin_govdatahub"}</p>
                 </div>
 
                 <div className="p-2 space-y-1">

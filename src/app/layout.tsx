@@ -15,8 +15,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mimika Datahub | GIS Explorer",
-  description: "Platform Eksplorasi Spasial dan Data Statistik Kabupaten Mimika",
+  title: "GovDataHub | GIS Explorer",
+  description: "Platform Eksplorasi Spasial dan Data Statistik Pemerintah Daerah",
 };
 
 export default function RootLayout({

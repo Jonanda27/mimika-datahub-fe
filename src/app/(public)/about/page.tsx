@@ -20,10 +20,10 @@ export default function AboutPage() {
       <header className="bg-[#002244] py-16 lg:py-20 border-b-4 border-[#0071bc]">
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">
-            Tentang Mimika DataHub
+            Tentang GovDataHub
           </h1>
           <p className="text-blue-100 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-            Sistem Informasi dan Manajemen Data Terpadu Kabupaten Mimika guna mewujudkan kebijakan pembangunan berbasis fakta (Evidence-Based Policy).
+            Sistem Informasi dan Manajemen Data Terpadu Pemerintah Daerah guna mewujudkan kebijakan pembangunan berbasis fakta (Evidence-Based Policy).
           </p>
         </div>
       </header>
@@ -42,10 +42,10 @@ export default function AboutPage() {
             </div>
             <div className="space-y-4 text-gray-600 leading-relaxed text-[15px] md:text-base">
               <p>
-                Pembangunan <strong>Mimika DataHub</strong> didorong oleh amanat <strong>Undang-Undang No. 14 Tahun 2008</strong> tentang Keterbukaan Informasi Publik dan <strong>Peraturan Presiden No. 39 Tahun 2019</strong> tentang Satu Data Indonesia.
+                Pembangunan <strong>GovDataHub</strong> didorong oleh amanat <strong>Undang-Undang No. 14 Tahun 2008</strong> tentang Keterbukaan Informasi Publik dan <strong>Peraturan Presiden No. 39 Tahun 2019</strong> tentang Satu Data Indonesia.
               </p>
               <p>
-                Kabupaten Mimika menyadari perlunya sebuah platform terpusat yang dikoordinasikan oleh BAPPEDA untuk mengintegrasikan data sektoral dari berbagai Organisasi Perangkat Daerah (OPD). Platform ini dibangun untuk memastikan data yang dikumpulkan akurat, mutakhir, terpadu, serta dapat diakses dengan mudah oleh publik maupun para pembuat kebijakan.
+                Pemerintah Daerah menyadari perlunya sebuah platform terpusat yang dikoordinasikan oleh BAPPEDA untuk mengintegrasikan data sektoral dari berbagai Organisasi Perangkat Daerah (OPD). Platform ini dibangun untuk memastikan data yang dikumpulkan akurat, mutakhir, terpadu, serta dapat diakses dengan mudah oleh publik maupun para pembuat kebijakan.
               </p>
             </div>
           </section>
@@ -65,7 +65,7 @@ export default function AboutPage() {
               <GoalItem 
                 icon={Database} 
                 title="Integrasi Data" 
-                desc="Menyediakan portal terpusat untuk seluruh data statistik sektoral dan geospasial Kabupaten Mimika." 
+                desc="Menyediakan portal terpusat untuk seluruh data statistik sektoral dan geospasial Pemerintah Daerah." 
               />
               <GoalItem 
                 icon={ShieldCheck} 
@@ -115,7 +115,7 @@ export default function AboutPage() {
               <FeatureItem 
                 icon={Map}
                 title="Integrasi Geospasial (WebGIS)"
-                desc="Pemetaan visual berbasis lokasi untuk memantau sebaran infrastruktur dan kondisi sosial ekonomi di seluruh distrik Kabupaten Mimika."
+                desc="Pemetaan visual berbasis lokasi untuk memantau sebaran infrastruktur dan kondisi sosial ekonomi di seluruh distrik Pemerintah Daerah."
               />
             </div>
           </section>

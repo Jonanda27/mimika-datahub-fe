@@ -116,7 +116,7 @@ export default function ExplorerSidebar() {
                     <button
                         onClick={() => {
                             closePanelsToTheRight(-1);
-                            openPanel("tentang", "Tentang Mimika DataHub");
+                            openPanel("tentang", "Tentang GovDataHub");
                         }}
                         className="w-full h-16 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors active:bg-slate-100 rounded-none border-l-[3px] border-transparent"
                     >

@@ -80,7 +80,7 @@ export default function DataQualityPage() {
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
         <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Data Quality" subtitle="Menyiapkan data audit..." />
-          <LoadingState message="Menghubungkan ke pusat validasi data Mimika..." />
+          <LoadingState message="Menghubungkan ke pusat validasi data Daerah..." />
         </div>
       </div>
     );
@@ -351,7 +351,7 @@ export default function DataQualityPage() {
         )}
 
         <footer className="mt-8 md:mt-10 text-center text-gray-400 text-[9px] sm:text-[10px] font-medium tracking-widest uppercase pb-6">
-          © 2026 Mimika DataHub - Pusat Validasi Data Terpadu
+          © 2026 GovDataHub - Pusat Validasi Data Terpadu
         </footer>
       </div>
     </div>

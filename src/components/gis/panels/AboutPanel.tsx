@@ -29,8 +29,8 @@ export default function AboutPanel() {
                 {/* Sharp Logo Container (Tanpa Rounded) */}
                 <div className="relative w-24 h-24 bg-transparent pointer-events-none">
                     <Image
-                        src="/logo-mimika.png"
-                        alt="Logo Mimika"
+                        src="/logo-govdatahub.svg"
+                        alt="Logo GovDataHub"
                         fill
                         sizes="256px"
                         className="object-contain p-1.5"
@@ -38,7 +38,7 @@ export default function AboutPanel() {
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none uppercase">
-                        Mimika <span className="text-teal-700">DataHub</span>
+                        Gov<span className="text-teal-700">DataHub</span>
                     </h2>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">
                         v1.0.0-beta Eksplorasi Spasial
@@ -55,7 +55,7 @@ export default function AboutPanel() {
 
                 <div className="px-4 py-5 bg-teal-50/30 border-b border-slate-200">
                     <p className="text-[11px] font-bold text-teal-900 italic leading-relaxed text-center">
-                        "Mewujudkan Tata Kelola Data Kabupaten Mimika yang Terintegrasi, Akurat, dan Akuntabel untuk Pengambilan Kebijakan Berbasis Data."
+                        "Mewujudkan Tata Kelola Data Pemerintah Daerah yang Terintegrasi, Akurat, dan Akuntabel untuk Pengambilan Kebijakan Berbasis Data."
                     </p>
                 </div>
 
@@ -84,7 +84,7 @@ export default function AboutPanel() {
                 <div className="flex flex-col bg-white">
                     <div className="px-4 py-4 border-b border-slate-200">
                         <p className="text-[11px] text-slate-600 font-medium leading-relaxed text-justify">
-                            Data yang tersaji dikelola secara kolaboratif oleh walidata dan produsen data di lingkungan <strong className="text-slate-800 font-black">Pemerintah Kabupaten Mimika</strong>.
+                            Data yang tersaji dikelola secara kolaboratif oleh walidata dan produsen data di lingkungan <strong className="text-slate-800 font-black">Pemerintah Daerah</strong>.
                         </p>
                     </div>
 
@@ -93,7 +93,7 @@ export default function AboutPanel() {
                         {[
                             { name: "Bappeda", icon: Building2 },
                             { name: "Dinas Kesehatan", icon: Users },
-                            { name: "BPS Mimika", icon: Globe },
+                            { name: "BPS Daerah", icon: Globe },
                             { name: "Dinas Pendidikan", icon: CheckCircle2 }
                         ].map((opd, i) => (
                             <div key={i} className="flex items-center gap-2 px-4 py-3">
@@ -129,7 +129,7 @@ export default function AboutPanel() {
 
                 <div className="px-4 py-6 bg-white">
                     <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest text-center leading-relaxed">
-                        © 2026 Pemerintah Kabupaten Mimika. <br /> All rights reserved.
+                        © 2026 GovDataHub. <br /> All rights reserved.
                     </p>
                 </div>
             </div>

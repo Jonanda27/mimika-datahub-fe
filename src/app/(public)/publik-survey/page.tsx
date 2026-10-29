@@ -72,7 +72,7 @@ export default function PublicSurveyListPage() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">Portal Survey Publik</h1>
           <p className="text-blue-100 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-            Partisipasi Anda membantu kami dalam merumuskan kebijakan pembangunan Kabupaten Mimika yang lebih baik.
+            Partisipasi Anda membantu kami dalam merumuskan kebijakan pembangunan Pemerintah Daerah yang lebih baik.
           </p>
         </div>
       </div>
@@ -155,7 +155,7 @@ export default function PublicSurveyListPage() {
 
       {/* Footer */}
       <footer className="bg-slate-900 py-10 text-center text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mt-auto">
-        © 2026 Mimika DataHub • BRIDA Kabupaten Mimika
+        © 2026 GovDataHub • BRIDA Pemerintah Daerah
       </footer>
     </div>
   );

@@ -11,8 +11,10 @@ import {
   Menu,
   X,
   LogOut,
-  MapPin, // [REFACTOR] Icon baru untuk menu GeoTagging
-  ChevronDown
+  MapPin,
+  ChevronDown,
+  Building2,
+  Globe
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -44,8 +46,8 @@ export default function UserNavbar() {
   // [REFACTOR] Tambahkan menu Manajemen Aset untuk OPD
   const menuItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Data Pemerintah", href: "/user-data-pemerintah", icon: Upload },
-    { name: "Data Non-Pemerintah", href: "/user-data-non-pemerintah", icon: Upload },
+    { name: "Data Pemerintah", href: "/user-data-pemerintah", icon: Building2 },
+    { name: "Data Non-Pemerintah", href: "/user-data-non-pemerintah", icon: Globe },
     { name: "Unggah Data", href: "/upload-data", icon: Upload },
     { name: "Manajemen Aset", href: "/user-manajemen-aset", icon: MapPin }, // <--- TAMBAHAN BARU
   ];
@@ -74,10 +76,10 @@ export default function UserNavbar() {
 
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
-          <Image src="/logo-mimika.png" alt="Logo Mimika" width={50} height={15} className="object-contain" priority />
+          <Image src="/logo-govdatahub.svg" alt="Logo GovDataHub" width={50} height={15} className="object-contain" priority />
           <div className="h-8 w-px bg-gray-300 hidden sm:block"></div>
           <h1 className="text-lg md:text-xl font-bold text-[#004b87] tracking-wide hidden sm:block">
-            Mimika DataHub
+            GovDataHub
           </h1>
         </div>
 

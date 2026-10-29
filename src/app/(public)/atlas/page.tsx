@@ -33,10 +33,10 @@ export default function AtlasPage() {
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-[#002244] tracking-tighter mb-4 uppercase">
-              Mimika <span className="text-[#0071bc]">Data360</span> Explore
+              Gov<span className="text-[#0071bc]">Data360</span> Explore
             </h1>
             <p className="text-gray-500 font-medium text-lg leading-relaxed">
-              Platform eksplorasi indikator pembangunan Kabupaten Mimika secara spasial dan analitikal.
+              Platform eksplorasi indikator pembangunan Pemerintah Daerah secara spasial dan analitikal.
               Gunakan kontrol di bawah untuk mengganti dimensi data.
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function AtlasPage() {
               href="/public-data-pemerintah"
               className="inline-flex items-center gap-3 px-8 py-4 bg-white text-[#002244] rounded-2xl font-black hover:bg-blue-50 transition-all"
             >
-              Buka Katalog Data Mimika
+              Buka Katalog Data Daerah
             </a>
           </div>
           <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">

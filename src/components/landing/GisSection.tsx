@@ -29,7 +29,7 @@ export default function GisSection() {
                                 <span className="text-[#0071bc]">Berbasis Kewilayahan</span>
                             </h2>
                             <p className="text-gray-600 text-[15px] leading-relaxed">
-                                Platform GIS (Geographic Information System) terintegrasi untuk menganalisis sebaran infrastruktur, kepadatan penduduk, dan indikator sosial ekonomi antar distrik di Kabupaten Mimika.
+                                Platform GIS (Geographic Information System) terintegrasi untuk menganalisis sebaran infrastruktur, kepadatan penduduk, dan indikator sosial ekonomi antar distrik di Pemerintah Daerah.
                             </p>
                         </div>
 
@@ -62,7 +62,7 @@ export default function GisSection() {
                                 href="/explorer"
                                 className="inline-flex items-center gap-2 bg-[#002244] hover:bg-[#0071bc] text-white px-8 py-3.5 font-bold text-[12px] uppercase tracking-widest transition-colors shadow-md group"
                             >
-                                Buka WebGIS Mimika
+                                Buka WebGIS Daerah
                                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                             </Link>
                         </div>

@@ -77,7 +77,7 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             description: "Intensitas distribusi publikasi dan pengumpulan data yang dilakukan oleh Dinas Kesehatan.",
             color_scheme: "Reds",
             direction: "positive", // [FIXED] [3]
-            source: "Sistem DataHub Mimika"
+            source: "Sistem GovDataHub"
         },
         data: {
             "mimikabaru": 85, "kualakencana": 60, "tembagapura": 45, "wania": 69, "kwamkinarama": 55, "iwaka": 42,
@@ -95,7 +95,7 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             description: "Distribusi pelaporan program bantuan sosial dan pemberdayaan masyarakat.",
             color_scheme: "Oranges",
             direction: "positive", // [FIXED] [3]
-            source: "Sistem DataHub Mimika"
+            source: "Sistem GovDataHub"
         },
         data: {
             "mimikabaru": 95, "kualakencana": 21, "tembagapura": 15, "wania": 72, "kwamkinarama": 68, "mimikatimur": 54,
@@ -113,7 +113,7 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             description: "Intensitas laporan proyek infrastruktur dan sanitasi.",
             color_scheme: "Blues",
             direction: "positive", // [FIXED] [3]
-            source: "Sistem DataHub Mimika"
+            source: "Sistem GovDataHub"
         },
         data: {
             "mimikabaru": 88, "kualakencana": 78, "tembagapura": 55, "wania": 42, "kwamkinarama": 35, "iwaka": 38,
@@ -131,7 +131,7 @@ export const MOCK_INDICATOR_DETAILS: Record<string, AtlasIndicatorResponse> = {
             description: "Data perencanaan strategis, musrenbang, dan evaluasi pembangunan.",
             color_scheme: "Greens",
             direction: "positive", // [FIXED] [3]
-            source: "Sistem DataHub Mimika"
+            source: "Sistem GovDataHub"
         },
         data: {
             "mimikabaru": 100, "kualakencana": 80, "tembagapura": 85, "wania": 65, "iwaka": 45, "kwamkinarama": 50,

@@ -161,7 +161,7 @@ export default function PublicSurveyDetailPage() {
                   <Info size={20} />
                </div>
                <div className="text-xs text-blue-900 leading-relaxed font-medium">
-                  Informasi pengumpulan data ini dikelola secara resmi oleh  <b>BRIDA Mimika</b>. Jawaban Anda dilindungi secara anonim.
+                  Informasi pengumpulan data ini dikelola secara resmi oleh  <b>BRIDA</b>. Jawaban Anda dilindungi secara anonim.
                </div>
             </div>
           </div>
@@ -313,7 +313,7 @@ export default function PublicSurveyDetailPage() {
 
         <div className="py-16 text-center">
             <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.4em] leading-relaxed">
-              Masyarakat Mimika Membangun <br /> Bidang Statistik & Persandian BRIDA
+              Masyarakat Daerah Membangun <br /> Bidang Statistik & Persandian BRIDA
             </p>
         </div>
       </form>

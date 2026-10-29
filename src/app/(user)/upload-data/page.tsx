@@ -191,7 +191,7 @@ export default function UploadDataPage() {
       // Eksekusi fungsi refactoring dari HEAD
       await executeUpload(requestData);
 
-      showAlert("Data berhasil diolah dan dipetakan ke wilayah Mimika!", "success");
+      showAlert("Data berhasil diolah dan dipetakan ke wilayah Daerah!", "success");
 
       await fetchMyDatasets();
 
@@ -212,7 +212,7 @@ export default function UploadDataPage() {
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
         <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul Ingest v2.0..." />
-          <LoadingState message="Menghubungkan ke Cleaning Engine Mimika DataHub..." />
+          <LoadingState message="Menghubungkan ke Cleaning Engine GovDataHub..." />
         </div>
       </div>
     );
@@ -273,7 +273,7 @@ export default function UploadDataPage() {
         </div>
 
         <footer className="mt-12 text-center text-gray-400 text-[10px] uppercase tracking-[0.3em] pb-10">
-          Infrastruktur Data Statistik Sektoral - BRIDA Mimika 2026
+          Infrastruktur Data Statistik Sektoral - BRIDA 2026
         </footer>
 
         <AddItemModal

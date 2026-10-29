@@ -20,7 +20,7 @@ export default function ThematicSection() {
                             Fokus Tematik
                         </h2>
                         <p className="mt-4 text-gray-500 text-lg max-w-4xl font-light leading-relaxed">
-                            Koleksi data terkurasi untuk mendukung perencanaan pembangunan Kabupaten Mimika melalui fokus tematik Satu Data Indonesia.
+                            Koleksi data terkurasi untuk mendukung perencanaan pembangunan Pemerintah Daerah melalui fokus tematik Satu Data Indonesia.
                         </p>
                     </div>
 

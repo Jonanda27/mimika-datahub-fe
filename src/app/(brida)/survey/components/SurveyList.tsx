@@ -144,7 +144,7 @@ export default function SurveyList() {
                 <div className="flex flex-wrap items-center gap-y-2 gap-x-6">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
                     <MapPin size={14} className="text-blue-500" />
-                    {survey.location || 'Seluruh Wilayah Mimika'}
+                    {survey.location || 'Seluruh Wilayah Daerah'}
                   </div>
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
                     <HelpCircle size={14} className="text-blue-500" />

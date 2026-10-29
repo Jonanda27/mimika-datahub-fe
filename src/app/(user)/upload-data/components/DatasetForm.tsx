@@ -8,7 +8,7 @@ import { Info, Plus, Send, Image as ImageIcon, X } from "lucide-react";
 import { Item } from "@/src/app/types/dataset";
 import { SourceType } from "@/src/app/types/source-type";
 
-// Data Master Hardcode (MVP) - 18 Distrik Kabupaten Mimika
+// Data Master Hardcode (MVP) - 18 Distrik Pemerintah Daerah
 // Sesuai urutan ID di Backend (Alembic Seeder)
 const MIMIKA_DISTRICTS = [
   { id: 1, name: "Mimika Baru" },
@@ -134,7 +134,7 @@ export default function DatasetForm({
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Dataset <span className="text-red-500">*</span></label>
           <input
-            name="title" type="text" placeholder="Contoh: Jumlah Penduduk Mimika 2025" required
+            name="title" type="text" placeholder="Contoh: Jumlah Penduduk Wilayah 2025" required
             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] transition-all text-black placeholder:text-gray-400"
             disabled={isProcessing}
           />
@@ -239,7 +239,7 @@ export default function DatasetForm({
               disabled={isProcessing}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e61d0] outline-none text-black"
             >
-              <option value="" className="text-gray-500">-- Seluruh Kabupaten Mimika --</option>
+              <option value="" className="text-gray-500">-- Seluruh Pemerintah Daerah --</option>
               {MIMIKA_DISTRICTS.map(d => (
                 <option key={d.id} value={d.id} className="text-black">{d.name}</option>
               ))}

@@ -16,7 +16,7 @@ import {
 const INFOGRAFIK_DATA = [
     {
         id: 1,
-        title: "Capaian Makro Ekonomi Kabupaten Mimika Kuartal I 2026",
+        title: "Capaian Makro Ekonomi Pemerintah Daerah Kuartal I 2026",
         date: "08 Mei 2026",
         category: "Ekonomi",
         image: "/infografik/ekonomi/ekonomi-01.jpg",
@@ -30,14 +30,14 @@ const INFOGRAFIK_DATA = [
     },
     {
         id: 3,
-        title: "Piramida Penduduk & Ketenagakerjaan Mimika 2026",
+        title: "Piramida Penduduk & Ketenagakerjaan Daerah 2026",
         date: "15 Maret 2026",
         category: "Demografi",
         image: "/infografik/sosial/sosial-04.jpg",
     },
     {
         id: 4,
-        title: "Perkembangan Infrastruktur Dasar Kabupaten Mimika",
+        title: "Perkembangan Infrastruktur Dasar Pemerintah Daerah",
         date: "10 Februari 2026",
         category: "Infrastruktur",
         image: "/infografik/ekonomi/ekonomi-02.jpg",
@@ -85,7 +85,7 @@ export default function InfographicSection() {
                     <div className="text-left">
                         <h2 className="text-2xl md:text-3xl font-bold text-[#002244] uppercase tracking-tight">Kilas Visual Data</h2>
                         <p className="mt-2 text-gray-500 text-sm md:text-base font-light">
-                            Rangkuman statistik strategis Mimika dalam format infografis.
+                            Rangkuman statistik strategis daerah dalam format infografis.
                         </p>
                     </div>
                     <Link href="/infografis" className="text-[#0071bc] font-bold text-xs md:text-sm flex items-center gap-1 hover:text-[#002244] uppercase tracking-widest shrink-0 mb-1">

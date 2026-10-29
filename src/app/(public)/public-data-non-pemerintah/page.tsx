@@ -220,12 +220,12 @@ function DataNonPemerintahContent() {
             sourceTypes={sourceTypes}
             categories={categories}
             onClose={handleCloseDetail}
-            onDownload={(d) => downloadDataset(d.id, `mimika_${d.title.replace(/\s+/g, '_')}`)}
+            onDownload={(d) => downloadDataset(d.id, `govdatahub_${d.title.replace(/\s+/g, '_')}`)}
           />
         )}
 
         <footer className="mt-12 text-center text-gray-400 text-[10px] md:text-xs font-medium pb-8">
-          © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+          © 2026 GovDataHub - Pusat Data Terintegrasi Pemerintah Daerah
         </footer>
       </div>
     </div>

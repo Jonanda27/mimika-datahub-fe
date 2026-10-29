@@ -8,7 +8,10 @@ import {
     X,
     ChevronDown,
     Building2,
-    Users2
+    Users2,
+    ClipboardList,
+    BarChart3,
+    Info
 } from "lucide-react";
 
 export default function Navbar() {
@@ -47,8 +50,8 @@ export default function Navbar() {
                     <Link href="/" className="flex items-center gap-4 group">
                         <div className="relative w-11 h-11 transition-transform group-hover:scale-105">
                             <Image
-                                src="/logo-mimika.png"
-                                alt="Logo Mimika"
+                                src="/logo-govdatahub.svg"
+                                alt="Logo GovDataHub"
                                 fill
                                 sizes="44px"
                                 className="object-contain"
@@ -57,16 +60,20 @@ export default function Navbar() {
                         <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
                         <div className="flex flex-col">
                             <span className="text-xl md:text-2xl font-bold text-black tracking-tight leading-none">
-                                Mimika <span className="text-[#0071bc]">DataHub</span>
+                                Gov<span className="text-[#0071bc]">DataHub</span>
                             </span>
                         </div>
                     </Link>
 
                     {/* --- DESKTOP MENU --- */}
-                    <div className="hidden md:flex items-center gap-8 text-[12px] font-black uppercase tracking-widest text-[#002244]">
+                    <div className="hidden md:flex items-center gap-7 text-[12px] font-black uppercase tracking-widest text-[#002244]">
 
                         <Link href="/explorer" className="hover:text-[#0071bc] transition-colors flex items-center gap-2">
                             GIS Peta
+                        </Link>
+
+                        <Link href="/atlas" className="hover:text-[#0071bc] transition-colors flex items-center gap-2">
+                            Atlas Data
                         </Link>
 
                         {/* Dropdown Data & Resources */}
@@ -79,8 +86,8 @@ export default function Navbar() {
                             </button>
 
                             {isDropdownOpen && (
-                                <div className="absolute top-full left-0 mt-4 w-64 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
-                                    <div className="p-2">
+                                <div className="absolute top-full left-0 mt-4 w-72 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+                                    <div className="p-2 space-y-1">
                                         <Link
                                             href="/public-data-pemerintah"
                                             onClick={() => setIsDropdownOpen(false)}
@@ -107,10 +114,27 @@ export default function Navbar() {
                                                 <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Non-Pemerintah</span>
                                             </div>
                                         </Link>
+                                        <Link
+                                            href="/publik-survey"
+                                            onClick={() => setIsDropdownOpen(false)}
+                                            className="flex items-center gap-3 p-3 hover:bg-rose-50 rounded-lg transition-colors"
+                                        >
+                                            <div className="w-8 h-8 bg-rose-100 rounded-md flex items-center justify-center text-[#e94560]">
+                                                <ClipboardList size={18} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[11px] font-black text-[#002244]">Survei Publik</span>
+                                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Partisipasi & Riset Warga</span>
+                                            </div>
+                                        </Link>
                                     </div>
                                 </div>
                             )}
                         </div>
+
+                        <Link href="/about" className="hover:text-[#0071bc] transition-colors flex items-center gap-1.5">
+                            Tentang
+                        </Link>
 
                         <Link href="/login" className="bg-[#0071bc] text-white px-6 py-2.5 rounded-sm hover:bg-[#005a96] transition-all shadow-md active:scale-95">
                             MASUK
@@ -129,9 +153,13 @@ export default function Navbar() {
 
             {/* --- MOBILE MENU DRAWER --- */}
             {isMenuOpen && (
-                <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 space-y-4 absolute w-full shadow-2xl z-50 font-black text-[#002244] text-[13px] uppercase tracking-widest animate-in slide-in-from-top">
-                    <Link href="/explorer" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Geospatial</Link>
+                <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 space-y-3 absolute w-full shadow-2xl z-50 font-black text-[#002244] text-[13px] uppercase tracking-widest animate-in slide-in-from-top">
+                    <Link href="/explorer" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Geospatial GIS</Link>
+                    <Link href="/atlas" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Atlas Pembangunan</Link>
                     <Link href="/public-data-pemerintah" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 text-[#0071bc]">Data Pemerintah</Link>
+                    <Link href="/public-data-non-pemerintah" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 text-emerald-600">Data Mitra</Link>
+                    <Link href="/publik-survey" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50 text-rose-600">Survei Publik</Link>
+                    <Link href="/about" onClick={() => setIsMenuOpen(false)} className="block p-2 border-b border-gray-50">Tentang Kami</Link>
                     <Link href="/login" className="block w-full bg-[#0071bc] text-white text-center py-4 rounded-sm">Portal Masuk</Link>
                 </div>
             )}

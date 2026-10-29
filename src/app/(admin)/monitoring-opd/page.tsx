@@ -111,7 +111,7 @@ export default function MonitoringOpdPage() {
         
         <PageHeader 
             title="Monitoring OPD" 
-            subtitle="Pantau kepatuhan dan status pengiriman data dari seluruh OPD Kabupaten Mimika" 
+            subtitle="Pantau kepatuhan dan status pengiriman data dari seluruh OPD Pemerintah Daerah" 
         />
 
         {/* STATS GRID */}
@@ -267,7 +267,7 @@ export default function MonitoringOpdPage() {
 
         {/* FOOTER */}
         <footer className="mt-6 md:mt-10 text-center text-gray-400 text-[9px] sm:text-[10px] font-medium tracking-widest uppercase pb-6 px-4">
-            © 2026 Mimika DataHub - Sistem Monitoring Kepatuhan Pengiriman Data
+            © 2026 GovDataHub - Sistem Monitoring Kepatuhan Pengiriman Data
         </footer>
 
       </div>

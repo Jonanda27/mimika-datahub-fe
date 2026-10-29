@@ -20,7 +20,7 @@ export default function SensusData() {
       }));
 
       const defaultSensus = [
-        { id: 'd1', name: "Sensus Penduduk Lokal Mimika 2024", year: "2024", type: "Sensus", records: 125000, quality: 92 },
+        { id: 'd1', name: "Sensus Penduduk Wilayah 2024", year: "2024", type: "Sensus", records: 125000, quality: 92 },
         { id: 'd2', name: "Pendataan Potensi Desa (Podes) 2024", year: "2024", type: "Sensus", records: 185, quality: 94 },
         { id: 'd3', name: "Data UMKM Binaan BRIDA 2025", year: "2025", type: "Pendataan", records: 1245, quality: 88 }
       ];

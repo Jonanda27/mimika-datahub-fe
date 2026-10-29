@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronDown,
   Globe,
-  Globe2
+  Globe2,
+  Building2
 } from "lucide-react";
 
 import { useAuthStore } from "@/src/app/store/useAuthStore";
@@ -47,8 +48,8 @@ export default function BridaNavbar() {
 
   const menuItems = [
     { name: "Dashboard", href: "/brida-dashboard", icon: LayoutDashboard },
-    { name: "Data Pemerintah", href: "/brida-user-data-pemerintah", icon: Upload },
-    { name: "Data Non-Pemerintah", href: "/brida-user-data-non-pemerintah", icon: Upload },
+    { name: "Data Pemerintah", href: "/brida-user-data-pemerintah", icon: Building2 },
+    { name: "Data Non-Pemerintah", href: "/brida-user-data-non-pemerintah", icon: Globe },
     { name: "Data Survey", href: "/survey", icon: Globe2 },
     { name: "Unggah Data", href: "/brida-upload-data", icon: Upload },
   ];
@@ -85,10 +86,10 @@ export default function BridaNavbar() {
         
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
-          <Image src="/logo-mimika.png" alt="Logo Mimika" width={50} height={15} className="object-contain" priority />
+          <Image src="/logo-govdatahub.svg" alt="Logo GovDataHub" width={50} height={15} className="object-contain" priority />
           <div className="h-8 w-px bg-gray-300 hidden sm:block"></div>
           <h1 className="text-lg md:text-xl font-bold text-[#004b87] tracking-wide hidden sm:block">
-            Mimika DataHub
+            GovDataHub
           </h1>
         </div>
 

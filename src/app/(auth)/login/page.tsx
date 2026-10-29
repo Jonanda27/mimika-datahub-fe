@@ -82,7 +82,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] h-full relative bg-slate-900 overflow-hidden">
         <Image
           src="/mimika.jpg"
-          alt="Mimika Landscape"
+          alt="Lanskap Wilayah"
           fill
           className="object-cover opacity-80" // Opacity ditingkatkan agar gambar lebih jelas
           priority
@@ -126,8 +126,8 @@ export default function LoginPage() {
           <div className="space-y-3 mb-10 text-black">
             <div className="lg:hidden flex justify-center mb-8">
               <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                <Image src="/logo-mimika.png" alt="Logo" width={32} height={32} />
-                <span className="font-black tracking-tighter text-slate-900">MIMIKA DATAHUB</span>
+                <Image src="/logo-govdatahub.svg" alt="Logo" width={32} height={32} />
+                <span className="font-black tracking-tighter text-slate-900">GOVDATAHUB</span>
               </div>
             </div>
             <h1 className="text-3xl sm:text-4xl font-[1000] text-slate-900 tracking-tight">Selamat Datang</h1>
@@ -154,7 +154,7 @@ export default function LoginPage() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="nama@mimika.go.id"
+                    placeholder="nama@pemda.go.id"
                     className="w-full bg-slate-50 border border-slate-200 py-3.5 sm:py-4 pl-14 pr-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-medium text-slate-900 placeholder:text-slate-300"
                     required
                   />

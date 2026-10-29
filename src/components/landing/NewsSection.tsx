@@ -8,21 +8,21 @@ import { ArrowRight } from "lucide-react";
 const NEWS_DATA = {
     featured: {
         id: 1,
-        title: "Freeport Setor Tambahan Rp2,88 Triliun untuk Pemda di Papua Tengah dari Bagian Keuntungan Bersih 2025",
+        title: "Peningkatan Pendapatan Asli Daerah (PAD) dan Realisasi Investasi Strategis Pemda",
         date: "08 Mei 2026",
         category: "Ekonomi dan Pembangunan",
-        excerpt: "PT Freeport Indonesia (PTFI) pada tanggal 8 April 2026 menyetorkan Rp2,88 triliun bagian keuntungan bersih tahun 2025 kepada Pemerintah Provinsi Papua Tengah termasuk delapan kabupaten di wilayahnya sebagai tambahan dari setoran sebesar Rp10,6 trilliun yang sudah dibayarkan sepanjang tahun 2025.",
+        excerpt: "Pemerintah Daerah mencatat lonjakan realisasi investasi strategis dan bagi hasil sektor unggulan yang melampaui target tahun anggaran sebelumnya, memperkuat ketahanan fiskal daerah.",
         image: "/berita.jpeg",
-        url: "https://beritamimika.com"
+        url: "#"
     },
     list: [
         {
             id: 2,
-            title: "8 Pemuda Suku Kamoro Lulus IPN, Siap Kerja di Industri Perhotelan",
+            title: "Program Pelatihan Vokasi Daerah Sukses Cetak SDM Siap Kerja di Sektor Unggulan",
             date: "12 Mei 2026",
             category: "Ekonomi dan Pembangunan",
             image: "/berita2.jpeg",
-            url: "https://beritamimika.com"
+            url: "#"
         },
         {
             id: 3,
@@ -30,15 +30,15 @@ const NEWS_DATA = {
             date: "08 Mei 2026",
             category: "Ekonomi dan Pembangunan",
             image: "/berita3.jpeg",
-            url: "https://beritamimika.com"
+            url: "#"
         },
         {
             id: 4,
-            title: "Warga Mimika Masih Bandel, Mickey Mouse Akhirnya Turun ke Jalan",
+            title: "Sosialisasi Protokol Kesehatan dan Sanitasi Lingkungan Terus Digencarkan",
             date: "02 Februari 2021",
             category: "Kesehatan",
             image: "/berita4.jpeg",
-            url: "https://beritamimika.com"
+            url: "#"
         }
     ]
 };
@@ -54,7 +54,7 @@ export default function NewsSection() {
                         Berita & Publikasi
                     </h2>
                     <a
-                        href="https://beritamimika.com"
+                        href="#"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hidden sm:flex text-[#0071bc] font-bold text-sm items-center gap-1 hover:text-[#002244] transition-colors uppercase tracking-widest"

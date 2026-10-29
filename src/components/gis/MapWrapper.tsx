@@ -12,7 +12,7 @@ interface MapWrapperProps {
 
 /**
  * Import dinamis MimikaMap dengan bypass SSR.
- * Loading state disesuaikan dengan tema "Papuan Midnight & Neon" 
+ * Loading state disesuaikan dengan tema "Dark Slate & Neon" 
  * agar transisi visual lebih halus pada halaman Explorer dan Dashboard.
  */
 const DynamicMimikaMap = dynamic(
@@ -30,7 +30,7 @@ const DynamicMimikaMap = dynamic(
                         Inisialisasi Mesin Spasial...
                     </p>
                     <p className="text-[10px] text-white/40 mt-2 font-medium">
-                        Menyiapkan kanvas geospasial Mimika
+                        Menyiapkan kanvas geospasial Daerah
                     </p>
                 </div>
             </div>
@@ -46,7 +46,7 @@ const DynamicMimikaMap = dynamic(
 export default function MapWrapper({ isAtlasMode = false, isPreviewMode = false }: MapWrapperProps) {
     return (
         // Memastikan lebar dan tinggi 100% mengikuti parent (Infinite Canvas).
-        // Background diset ke Papuan Midnight agar saat tile belum termuat, layarnya tidak berkedip putih.
+        // Background diset ke Dark Slate agar saat tile belum termuat, layarnya tidak berkedip putih.
         <div className={`w-full h-full relative z-0 overflow-hidden ${isAtlasMode ? 'bg-[#0A192F]' : 'bg-gray-50'}`}>
 
             {/* isAtlasMode dan isPreviewMode dikirimkan ke MimikaMap untuk menentukan 

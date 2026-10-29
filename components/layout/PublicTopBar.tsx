@@ -47,10 +47,10 @@ export default function PublicTopBar() {
 
         {/* Kiri: Logo & Branding */}
         <div className="flex items-center gap-4">
-          <Image src="/logo-mimika.png" alt="Logo Mimika" width={50} height={15} className="object-contain" priority />
+          <Image src="/logo-govdatahub.svg" alt="Logo GovDataHub" width={50} height={15} className="object-contain" priority />
           <div className="h-8 w-px bg-gray-300 hidden sm:block"></div>
           <h1 className="text-lg md:text-xl font-bold text-[#004b87] tracking-wide hidden sm:block">
-            Mimika DataHub
+            GovDataHub
           </h1>
         </div>
 

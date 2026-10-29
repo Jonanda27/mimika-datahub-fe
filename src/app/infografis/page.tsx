@@ -23,7 +23,7 @@ const ALL_DATA = [
     { id: 8, title: "Statistik Imunisasi Nasional", category: "Kesehatan", image: "/infografik/kesehatan/kesehatan-04.jpg", date: "01 Mei 2026" },
 
     // --- KATEGORI SOSIAL ---
-    { id: 9, title: "Piramida Penduduk Mimika", category: "Sosial", image: "/infografik/sosial/sosial-01.jpg", date: "18 Mei 2026" },
+    { id: 9, title: "Piramida Penduduk Daerah", category: "Sosial", image: "/infografik/sosial/sosial-01.jpg", date: "18 Mei 2026" },
     { id: 10, title: "Tingkat Pengangguran Masyarakat", category: "Sosial", image: "/infografik/sosial/sosial-02.jpg", date: "14 Mei 2026" },
     { id: 11, title: "Bantuan Sosial Masyarakat", category: "Sosial", image: "/infografik/sosial/sosial-03.jpg", date: "10 Mei 2026" },
     { id: 12, title: "Index Pendidikan", category: "Sosial", image: "/infografik/sosial/sosial-04.jpg", date: "05 Mei 2026" },
@@ -61,7 +61,7 @@ export default function InfografisPage() {
                                 Pusat <span className="text-[#0071bc]">Visualisasi</span> Data
                             </h1>
                             <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                                Eksplorasi ribuan data statistik sektoral Kabupaten Mimika dalam format visual yang ringkas, akurat, dan mudah dipahami.
+                                Eksplorasi ribuan data statistik sektoral Pemerintah Daerah dalam format visual yang ringkas, akurat, dan mudah dipahami.
                             </p>
                         </div>
                         <div className="relative w-full md:w-72">

@@ -563,7 +563,7 @@ export default function ManajemenAsetPage() {
                             <div>
                                 <p className="text-xs font-bold">Informasi Antrean Moderasi ({pendingCount} Aset)</p>
                                 <p className="text-[11px] font-medium leading-relaxed text-amber-700 mt-0.5">
-                                    Aset berstatus "Menunggu" telah tersimpan dengan aman di basis data, namun dalam status karantina sementara. Aset tersebut baru akan ditayangkan pada peta WebGIS publik setelah disetujui (Approved) oleh Admin Bappeda Kabupaten Mimika.
+                                    Aset berstatus "Menunggu" telah tersimpan dengan aman di basis data, namun dalam status karantina sementara. Aset tersebut baru akan ditayangkan pada peta WebGIS publik setelah disetujui (Approved) oleh Admin Bappeda Pemerintah Daerah.
                                 </p>
                             </div>
                         </div>

@@ -88,7 +88,7 @@ function DataPemerintahContent() {
   if (isInitialLoading || isStoreLoading) {
     return (
       <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
-        <LoadingState message="Menyiapkan data resmi Kabupaten Mimika..." />
+        <LoadingState message="Menyiapkan data resmi Pemerintah Daerah..." />
       </div>
     );
   }
@@ -218,12 +218,12 @@ function DataPemerintahContent() {
               setSelectedDataset(null);
               resetContent();
             }}
-            onDownload={(d) => downloadDataset(d.id, `mimika_${d.title}`)}
+            onDownload={(d) => downloadDataset(d.id, `govdatahub_${d.title}`)}
           />
         )}
         
         <footer className="mt-12 text-center text-gray-400 text-xs font-medium pb-8">
-          © 2026 Mimika DataHub - Pusat Data Terintegrasi Kabupaten Mimika
+          © 2026 GovDataHub - Pusat Data Terintegrasi Pemerintah Daerah
         </footer>
       </div>
     </div>

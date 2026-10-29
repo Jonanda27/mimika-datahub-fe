@@ -213,7 +213,7 @@ export default function UploadDataPage() {
       <div className="bg-[#f4f7fb] min-h-screen font-sans text-black">
         <div className="max-w-350 mx-auto p-4 md:p-6 lg:p-8">
           <PageHeader title="Upload Data" subtitle="Menyiapkan modul pengiriman data..." />
-          <LoadingState message="Menghubungkan ke server Mimika DataHub..." />
+          <LoadingState message="Menghubungkan ke server GovDataHub..." />
         </div>
       </div>
     );
@@ -225,7 +225,7 @@ export default function UploadDataPage() {
 
         <PageHeader
           title="Upload Data"
-          subtitle="Upload dataset baru ke Mimika DataHub (Excel/CSV/JSON/PDF)"
+          subtitle="Upload dataset baru ke GovDataHub (Excel/CSV/JSON/PDF)"
         />
 
         {alert && (
@@ -264,7 +264,7 @@ export default function UploadDataPage() {
         <UploadLogTable logs={logs} />
 
         <footer className="mt-10 text-center text-gray-400 text-xs pb-4">
-          © 2026 Mimika DataHub - Pemerintah Kabupaten Mimika
+          © 2026 GovDataHub - Pemerintah Daerah
         </footer>
 
         <AddItemModal

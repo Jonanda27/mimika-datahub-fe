@@ -12,7 +12,7 @@ import { point } from '@turf/helpers';
 
 import { MapPin, X, Check, Layers, AlertCircle, Map } from 'lucide-react';
 
-// Titik tengah default: Kabupaten Mimika (Format Tuple Explicit untuk TS)
+// Titik tengah default: Pemerintah Daerah (Format Tuple Explicit untuk TS)
 const DEFAULT_CENTER: [number, number] = [-4.5421, 136.8945];
 
 interface MapPickerProps {

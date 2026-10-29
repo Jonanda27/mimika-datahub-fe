@@ -35,7 +35,7 @@ export const DUMMY_ATLAS_DATA: Record<string, AtlasIndicatorContent> = {
             mimikatimurjauh: 29.8, mimikabaratjauh: 31.4, mimikabarattengah: 27.5,
             amar: 26.8, hoya: 41.2, alama: 44.5
         },
-        // Tren Rata-rata Kabupaten Mimika
+        // Tren Rata-rata Pemerintah Daerah
         trendData: [
             { year: 2020, value: 28.5 },
             { year: 2021, value: 26.2 },

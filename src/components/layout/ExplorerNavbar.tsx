@@ -69,7 +69,7 @@ export default function ExplorerNavbar() {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Mimika DataHub - Eksplorasi Spasial',
+                    title: 'GovDataHub - Eksplorasi Spasial',
                     text: `Lihat data spasial ${activeIndicator || 'Kabupaten Mimika'} di DataHub.`,
                     url: shareUrl,
                 });
@@ -112,8 +112,8 @@ export default function ExplorerNavbar() {
                 <button onClick={handleLogoClick} className="flex items-center gap-3 active:scale-95 transition-transform group rounded-none">
                     <div className="relative w-8 h-8">
                         <Image
-                            src="/logo-mimika.png"
-                            alt="Logo Mimika"
+                            src="/logo-govdatahub.svg"
+                            alt="Logo GovDataHub"
                             fill
                             sizes="32px"
                             className="object-contain filter group-hover:brightness-110"
@@ -121,7 +121,7 @@ export default function ExplorerNavbar() {
                     </div>
                     <div className="flex flex-col leading-none text-left">
                         <span className="text-sm font-black text-slate-800 tracking-tighter uppercase">
-                            Mimika <span className="text-teal-600">DataHub</span>
+                            Gov<span className="text-teal-600">DataHub</span>
                         </span>
                         <span className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">
                             Eksplorasi Spasial

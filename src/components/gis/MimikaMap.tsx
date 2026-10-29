@@ -434,7 +434,7 @@ export default function MimikaMap({ isAtlasMode = false, isPreviewMode = false }
                 />
 
                 <SafeTileLayer
-                    attribution='&copy; Mimika DataHub | Map data &copy; Google'
+                    attribution='&copy; GovDataHub | Map data &copy; Google'
                     url={getTileLayerUrl()}
                     maxZoom={getTileMaxZoom()}
                 />

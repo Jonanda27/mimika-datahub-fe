@@ -20,7 +20,7 @@ export default function QuickLinks() {
                         <div className="flex flex-col">
                             <h3 className="text-[15px] font-bold text-[#002244] mb-1">Data Sektoral</h3>
                             <p className="text-gray-600 text-[13px] leading-snug mb-3">
-                                Eksplorasi data mentah berdasarkan Organisasi Perangkat Daerah (OPD) Mimika.
+                                Eksplorasi data mentah berdasarkan Organisasi Perangkat Daerah (OPD).
                             </p>
                             <a href="#fitur" className="text-[#0071bc] font-bold text-[12px] uppercase tracking-wider hover:underline flex items-center gap-1 mt-auto">
                                 Lihat Sektor <ChevronRight size={14} />
@@ -44,13 +44,13 @@ export default function QuickLinks() {
                         </div>
                     </div>
 
-                    {/* Item 3: GIS Mimika */}
+                    {/* Item 3: GIS Daerah */}
                     <div className="flex items-start gap-4 md:px-8">
                         <div className="bg-white p-2 rounded-md shadow-sm border border-gray-100 shrink-0 mt-1">
                             <Globe className="text-[#0071bc]" size={24} strokeWidth={1.5} />
                         </div>
                         <div className="flex flex-col">
-                            <h3 className="text-[15px] font-bold text-[#002244] mb-1">GIS Mimika</h3>
+                            <h3 className="text-[15px] font-bold text-[#002244] mb-1">GIS Daerah</h3>
                             <p className="text-gray-600 text-[13px] leading-snug mb-3">
                                 Visualisasi geospasial kondisi pembangunan antar distrik secara interaktif.
                             </p>

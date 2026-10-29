@@ -61,7 +61,7 @@ export default function HeroSection() {
             <div className="absolute inset-0 z-0">
                 <Image
                     src="/bg-mimika.jpg" // Pastikan asset ini ada di direktori public/
-                    alt="Mimika Datahub Background"
+                    alt="GovDataHub Background"
                     fill
                     className="object-cover object-center"
                     priority // Flag priority agar gambar hero dimuat lebih awal (LCP optimization)
@@ -76,8 +76,8 @@ export default function HeroSection() {
 
                 <div className="md:w-8/12 space-y-6 relative" ref={searchContainerRef}>
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight drop-shadow-sm">Mimika Open Data</h1>
-                        <p className="text-xl text-gray-700 mt-2 font-light drop-shadow-sm">Akses gratis dan terbuka untuk data pembangunan Mimika</p>
+                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight drop-shadow-sm">GovDataHub Open Data</h1>
+                        <p className="text-xl text-gray-700 mt-2 font-light drop-shadow-sm">Akses gratis dan terbuka untuk data pembangunan Pemerintah Daerah</p>
                     </div>
 
                     {/* INPUT SEARCH */}
