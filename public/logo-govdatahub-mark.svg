@@ -1,0 +1,94 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="shieldBg" x1="200" y1="40" x2="200" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#002B49" />
+      <stop offset="100%" stop-color="#00172D" />
+    </linearGradient>
+
+    <!-- Outer Shield Stroke Gradient -->
+    <linearGradient id="shieldBorder" x1="80" y1="50" x2="320" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00B4D8" />
+      <stop offset="50%" stop-color="#0077B6" />
+      <stop offset="100%" stop-color="#023E8A" />
+    </linearGradient>
+
+    <!-- Node Gradient Cyan -->
+    <linearGradient id="nodeCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#48CAE4" />
+      <stop offset="100%" stop-color="#0096C7" />
+    </linearGradient>
+
+    <!-- Node Gradient Emerald -->
+    <linearGradient id="nodeEmerald" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Node Gradient Amber -->
+    <linearGradient id="nodeAmber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="glowShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0077B6" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Shield -->
+  <path d="M200 44C270 44 324 76 324 132C324 220 252 300 200 334C148 300 76 220 76 132C76 76 130 44 200 44Z" 
+        fill="url(#shieldBg)" 
+        stroke="url(#shieldBorder)" 
+        stroke-width="7" 
+        filter="url(#glowShadow)" />
+
+  <!-- Inner Concentric Geospatial Isobars / Data Ribbons -->
+  <path d="M120 125C140 100 170 88 200 88C230 88 260 100 280 125C268 185 228 238 200 264C172 238 132 185 120 125Z" 
+        fill="none" 
+        stroke="#0096C7" 
+        stroke-width="2" 
+        stroke-dasharray="4 4" 
+        opacity="0.4" />
+
+  <!-- Central Data Spine & Hub Connections -->
+  <line x1="200" y1="108" x2="148" y2="168" stroke="#90E0EF" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+  <line x1="200" y1="108" x2="252" y2="168" stroke="#90E0EF" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+  <line x1="148" y1="168" x2="200" y2="228" stroke="#90E0EF" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+  <line x1="252" y1="168" x2="200" y2="228" stroke="#90E0EF" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+  <line x1="200" y1="108" x2="200" y2="228" stroke="#00B4D8" stroke-width="3.5" stroke-dasharray="6 4" />
+
+  <!-- Dynamic Secondary Satellite Nodes -->
+  <line x1="148" y1="168" x2="132" y2="218" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" opacity="0.7" />
+  <line x1="252" y1="168" x2="268" y2="218" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" opacity="0.7" />
+  <line x1="132" y1="218" x2="200" y2="272" stroke="#34D399" stroke-width="2" stroke-dasharray="3 3" opacity="0.6" />
+  <line x1="268" y1="218" x2="200" y2="272" stroke="#FBBF24" stroke-width="2" stroke-dasharray="3 3" opacity="0.6" />
+
+  <!-- Core Data Nodes (Vertices) -->
+  <!-- Top Master Node (Walidata / Governance) -->
+  <circle cx="200" cy="108" r="16" fill="url(#nodeCyan)" stroke="#FFFFFF" stroke-width="3" />
+  <circle cx="200" cy="108" r="6" fill="#FFFFFF" />
+
+  <!-- Left Node (Produsen Data OPD) -->
+  <circle cx="148" cy="168" r="13" fill="url(#nodeEmerald)" stroke="#FFFFFF" stroke-width="2.5" />
+  <circle cx="148" cy="168" r="4.5" fill="#FFFFFF" />
+
+  <!-- Right Node (Geospatial & Spasial) -->
+  <circle cx="252" cy="168" r="13" fill="url(#nodeAmber)" stroke="#FFFFFF" stroke-width="2.5" />
+  <circle cx="252" cy="168" r="4.5" fill="#FFFFFF" />
+
+  <!-- Bottom Core Hub Node (Terpadu / Analitik) -->
+  <circle cx="200" cy="228" r="15" fill="url(#nodeCyan)" stroke="#FFFFFF" stroke-width="3" />
+  <circle cx="200" cy="228" r="5.5" fill="#FFFFFF" />
+
+  <!-- Lower Satellites -->
+  <circle cx="132" cy="218" r="8" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+  <circle cx="268" cy="218" r="8" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+
+  <!-- Anchor Node (Satu Data Pintu Hilir) -->
+  <circle cx="200" cy="272" r="7" fill="#38BDF8" stroke="#FFFFFF" stroke-width="2" />
+
+  <!-- Stylized Monogram Sparkle / Precision Star -->
+  <path d="M200 48L204 60L216 64L204 68L200 80L196 68L184 64L196 60Z" fill="#FBBF24" />
+</svg>
